@@ -10,10 +10,10 @@ import PreviewModal from './PreviewModal';
 
 const diffStyle: Record<string, string> = {
   emerald: 'bg-emerald-100 text-emerald-700',
-  blue:    'bg-blue-100 text-blue-700',
-  violet:  'bg-violet-100 text-violet-700',
-  orange:  'bg-orange-100 text-orange-700',
-  red:     'bg-red-100 text-red-700',
+  blue: 'bg-blue-100 text-blue-700',
+  violet: 'bg-violet-100 text-violet-700',
+  orange: 'bg-orange-100 text-orange-700',
+  red: 'bg-red-100 text-red-700',
 };
 
 export default async function TeacherMaterialsPage({
@@ -26,8 +26,8 @@ export default async function TeacherMaterialsPage({
   if (!session || (role !== 'admin')) redirect('/m/materials');
 
   const isAdmin = role === 'admin';
-  const sp    = await searchParams;
-  const page  = Math.max(1, parseInt(sp.page || '1'));
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page || '1'));
   const limit = 30;
 
   await connectMongo();
@@ -38,57 +38,56 @@ export default async function TeacherMaterialsPage({
   const totalPage = Math.ceil(total / limit);
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-
+    <div className="min-h-screen">
       {/* ── 페이지 헤더 ── */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-sm font-bold text-red-500">관리자</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]" />
+                <span className="text-[13px] font-black text-red-500 tracking-wide">관리자 패널</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-[var(--color-dre-navy)] leading-tight">
+              <h1 className="text-3xl sm:text-[2.25rem] font-black text-gray-900 leading-tight tracking-tight">
                 자료 관리
               </h1>
-              <p className="text-base text-gray-400 mt-2">
-                총 <strong className="text-gray-700">{total}</strong>개 자료 등록됨
+              <p className="text-[15px] text-gray-400 font-medium mt-2">
+                총 <strong className="text-blue-600 font-black">{total.toLocaleString()}</strong>개 자료 등록됨
               </p>
             </div>
             {isAdmin && (
               <Link
                 href="/m/admin/materials/new"
-                className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-dre-blue)] text-white text-sm font-bold rounded-xl hover:bg-[var(--color-dre-blue-dark)] transition-all shadow-md shadow-blue-200 hover:shadow-lg hover:-translate-y-0.5 shrink-0"
+                className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white text-[14px] font-bold rounded-2xl transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:-translate-y-0.5 shrink-0"
               >
-                <PlusCircle size={16} />
-                자료 등록
+                <PlusCircle size={18} />
+                새 자료 등록
               </Link>
             )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8">
         {materials.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm flex flex-col items-center justify-center py-32">
-            <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mb-6 border border-gray-100">
+          <div className="bg-white rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-32">
+            <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100">
               <BookOpen size={34} className="text-gray-300" />
             </div>
-            <p className="text-xl font-bold text-gray-400 mb-2">등록된 자료가 없습니다</p>
+            <p className="text-[17px] font-bold text-gray-400 mb-2">등록된 자료가 없습니다</p>
             {isAdmin && (
-              <Link href="/m/admin/materials/new" className="mt-4 text-sm text-[var(--color-dre-blue)] font-semibold hover:underline">
+              <Link href="/m/admin/materials/new" className="mt-4 text-[14px] text-blue-600 font-bold hover:underline underline-offset-4">
                 첫 자료 등록하기 →
               </Link>
             )}
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden overflow-x-auto">
               <table className="w-full text-sm min-w-[720px]">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/60">
-                    <th className="text-left px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">자료</th>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left px-7 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest">자료</th>
                     <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">유형 / 난이도</th>
                     <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">형식 / 대상</th>
                     <th className="text-center px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">조회 / 다운</th>
@@ -103,7 +102,7 @@ export default async function TeacherMaterialsPage({
                     const dc = DIFFICULTY_COLOR[m.difficulty] || 'blue';
                     const title = [
                       m.schoolName,
-                      m.year        ? `${m.year}년`        : '',
+                      m.year ? `${m.year}년` : '',
                       m.gradeNumber ? `${m.gradeNumber}학년` : '',
                       m.subject,
                       m.topic,
@@ -112,7 +111,7 @@ export default async function TeacherMaterialsPage({
                     const taLabel = TARGET_AUDIENCE_LABEL[m.targetAudience] || m.targetAudience || '학생용';
 
                     return (
-                      <tr key={m.materialId} className="hover:bg-gray-50/70 transition-colors">
+                      <tr key={m.materialId} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
                             <div className="w-11 rounded-xl bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center" style={{ height: '52px' }}>
@@ -156,12 +155,12 @@ export default async function TeacherMaterialsPage({
                         </td>
                         <td className="px-5 py-4 text-center">
                           {m.isActive ? (
-                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
-                              <ToggleRight size={14} />공개
+                            <span className="inline-flex items-center gap-1.5 text-[12px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+                              <ToggleRight size={15} />공개
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-full">
-                              <ToggleLeft size={14} />비공개
+                            <span className="inline-flex items-center gap-1.5 text-[12px] font-black text-gray-400 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full">
+                              <ToggleLeft size={15} />비공개
                             </span>
                           )}
                         </td>
@@ -176,7 +175,7 @@ export default async function TeacherMaterialsPage({
                                 priceEtc: m.priceEtc, previewImages: m.previewImages || [],
                                 fileType: m.fileType, targetAudience: m.targetAudience,
                               }} />
-                              <Link href={`/m/admin/materials/${m.materialId}/edit`} className="p-2 text-gray-400 hover:text-[var(--color-dre-blue)] hover:bg-blue-50 rounded-xl transition-colors">
+                              <Link href={`/m/admin/materials/${m.materialId}/edit`} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
                                 <Edit2 size={16} />
                               </Link>
                               <DeleteButton materialId={m.materialId} />
@@ -200,8 +199,8 @@ export default async function TeacherMaterialsPage({
                       href={`/m/admin/materials?page=${p}`}
                       className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
                         p === page
-                          ? 'bg-[var(--color-dre-blue)] text-white shadow-md shadow-blue-200'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:border-[var(--color-dre-blue)]/50'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                          : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-400'
                       }`}
                     >
                       {p}

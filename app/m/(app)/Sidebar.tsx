@@ -32,41 +32,42 @@ export default function Sidebar({ userName, userRole, isAdmin, currentMode }: Pr
   };
 
   const sidebarContent = (
-    <aside className="w-64 bg-white border-r border-gray-100 flex flex-col h-full shadow-[4px_0_24px_-4px_rgba(0,0,0,0.02)]">
+    <aside className="w-64 bg-white border-r border-gray-100 flex flex-col h-full z-20">
       {/* 로고 */}
-      <div className="px-5 py-6 shrink-0">
+      <div className="px-6 py-8 shrink-0">
         <div className="flex items-center justify-between">
           <Link
             href={isAdmin ? '/m/admin/materials' : '/m/materials'}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3.5 group"
           >
-            <div className="w-10 h-10 bg-[var(--color-dre-blue)] rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
-              <span className="text-white font-bold text-lg">M</span>
+            <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-all duration-300">
+              <span className="text-white font-black text-xl">M</span>
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900 text-lg tracking-tight">DRE M</span>
+                <span className="font-extrabold text-gray-900 text-lg tracking-tight group-hover:text-blue-600 transition-colors">DRE M</span>
                 {isAdmin ? (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100 flex items-center gap-0.5">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-50 text-red-600 border border-red-100 flex items-center gap-1">
                     <ShieldCheck size={10} />관리자
                   </span>
                 ) : (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${currentMode === 'teacher'
-                      ? 'bg-orange-50 text-orange-600 border-orange-100'
-                      : 'bg-blue-50 text-blue-600 border-blue-100'
-                    }`}>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                    currentMode === 'teacher'
+                      ? 'bg-orange-50 text-orange-600 border-orange-200'
+                      : 'bg-blue-50 text-blue-600 border-blue-200'
+                  }`}>
                     {currentMode === 'teacher' ? '교사용' : '학생용'}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 font-medium mt-0.5">자료 플랫폼</p>
+              <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase mt-0.5">수학은 전략입니다</p>
             </div>
           </Link>
           <button
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+            className="lg:hidden p-2 text-gray-400 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition-colors"
           >
-            <X size={20} />
+            <X size={20} strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -133,54 +134,61 @@ export default function Sidebar({ userName, userRole, isAdmin, currentMode }: Pr
 
       {/* 모드 전환 버튼 (교사 회원만) */}
       {!isAdmin && userRole === 'teacher' && (
-        <div className="px-3 pb-3 shrink-0">
+        <div className="px-4 pb-4 shrink-0">
           <button
             onClick={toggleMode}
-            className={`w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-bold transition-all border ${currentMode === 'teacher'
-                ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'
-                : 'bg-orange-50 text-orange-600 border-orange-100 hover:bg-orange-100'
-              }`}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all duration-200 ${
+              currentMode === 'teacher'
+                ? 'bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100'
+                : 'bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100'
+            }`}
           >
-            {currentMode === 'teacher'
-              ? <><GraduationCap size={16} />학생용 자료 보기</>
-              : <><Users size={16} />교사용 자료 보기</>
-            }
+            <div className={`p-1.5 rounded-lg ${currentMode === 'teacher' ? 'bg-blue-100' : 'bg-orange-100'}`}>
+              {currentMode === 'teacher'
+                ? <GraduationCap size={16} strokeWidth={2.5} />
+                : <Users size={16} strokeWidth={2.5} />
+              }
+            </div>
+            <span className="tracking-wide">
+              {currentMode === 'teacher' ? '학생용 자료 보기' : '교사용 자료 보기'}
+            </span>
           </button>
         </div>
       )}
 
       {/* 사용자 정보 & 링크 */}
-      <div className="p-4 border-t border-gray-100 shrink-0 bg-gray-50/50">
+      <div className="p-5 mt-auto border-t border-gray-100 shrink-0">
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm ${isAdmin
-              ? 'bg-white text-red-500 border border-red-100'
+          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-base shrink-0 ${
+            isAdmin
+              ? 'bg-red-50 text-red-500 border border-red-100'
               : currentMode === 'teacher'
-                ? 'bg-white text-orange-500 border border-orange-100'
-                : 'bg-white text-blue-500 border border-blue-100'
-            }`}>
+                ? 'bg-orange-50 text-orange-500 border border-orange-100'
+                : 'bg-blue-50 text-blue-600 border border-blue-100'
+          }`}>
             {userName.charAt(0) || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900 truncate">{userName}</p>
-            <p className="text-xs text-gray-500 font-medium">
-              {userRole === 'admin' ? '관리자' : userRole === 'teacher' ? '교사 회원' : '학생 회원'}
+            <p className="text-[14px] font-extrabold text-gray-900 truncate tracking-tight">{userName}</p>
+            <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">
+              {userRole === 'admin' ? '관리자 계정' : userRole === 'teacher' ? '선생님 계정' : '학생 계정'}
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex gap-2.5">
           <Link
             href="/"
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-white bg-white border border-gray-200 rounded-lg transition-all shadow-sm hover:shadow"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold text-gray-600 hover:text-blue-600 bg-gray-50 hover:bg-blue-50 border border-gray-100 hover:border-blue-100 rounded-xl transition-all duration-200"
           >
-            <ExternalLink size={14} />
+            <ExternalLink size={15} strokeWidth={2.5} />
             DRE 홈
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: '/m' })}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 hover:border-red-100 bg-white border border-gray-200 rounded-lg transition-all shadow-sm hover:shadow"
+            className="flex items-center justify-center p-2.5 text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 border border-gray-100 hover:border-red-100 rounded-xl transition-all duration-200"
+            title="로그아웃"
           >
-            <LogOut size={14} />
-            로그아웃
+            <LogOut size={16} strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -189,8 +197,8 @@ export default function Sidebar({ userName, userRole, isAdmin, currentMode }: Pr
 
   return (
     <>
-      {/* ── 모바일 상단 바 (화이트) ── */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-4">
+      {/* ── 모바일 상단 바 ── */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-gray-100 flex items-center justify-between px-4">
         <button
           onClick={() => setMobileOpen(true)}
           className="p-2 -ml-1 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -198,7 +206,7 @@ export default function Sidebar({ userName, userRole, isAdmin, currentMode }: Pr
           <Menu size={20} />
         </button>
         <span className="font-bold text-gray-900 text-base tracking-tight">DRE M</span>
-        <div className="w-8" /> {/* 밸런스용 빈 공간 */}
+        <div className="w-8" />
       </div>
 
       {/* ── 데스크탑 사이드바 ── */}
@@ -228,15 +236,18 @@ function NavItem({ href, icon, label, active }: {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all group ${active
-          ? 'bg-[var(--color-dre-blue)] text-white shadow-md shadow-blue-500/20'
+      className={`relative flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[14px] font-bold transition-all duration-200 group ${
+        active
+          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
           : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-        }`}
+      }`}
     >
-      <span className={active ? 'text-white' : 'text-gray-400 group-hover:text-gray-600 transition-colors'}>
+      <span className={`flex items-center justify-center ${
+        active ? 'text-white' : 'text-gray-400 group-hover:text-blue-600 transition-colors'
+      }`}>
         {icon}
       </span>
-      {label}
+      <span className="tracking-wide">{label}</span>
     </Link>
   );
 }

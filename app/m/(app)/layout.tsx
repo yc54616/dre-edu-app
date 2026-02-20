@@ -21,7 +21,7 @@ export default async function MAppLayout({ children }: { children: React.ReactNo
       : 'student';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[#f7f8fc] flex">
       <Sidebar
         userName={user.name || ''}
         userRole={role}
