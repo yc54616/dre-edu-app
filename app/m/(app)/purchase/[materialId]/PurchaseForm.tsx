@@ -26,8 +26,7 @@ export default function PurchaseForm({
   const showProblem = hasProblemFile || priceProblem > 0;
   const showEtc = hasEtcFile || priceEtc > 0;
 
-  const [fileTypes, setFileTypes] = useState<string[]>(() => {
-    if (initialFileTypes && initialFileTypes.length > 0) return initialFileTypes;
+  const [fileTypes] = useState<string[]>(() => {
     return [
       ...(showProblem ? ['problem'] : []),
       ...(showEtc ? ['etc'] : []),
@@ -40,9 +39,6 @@ export default function PurchaseForm({
   const widgetRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const methodsWidgetRef = useRef<any>(null);
-
-  const toggleFileType = (t: string) =>
-    setFileTypes((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
 
   const amount =
     (fileTypes.includes('problem') ? priceProblem : 0) +
@@ -135,18 +131,15 @@ export default function PurchaseForm({
         <p className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-5">파일 선택</p>
         <div className="space-y-3">
           {showProblem && (
-            <label
-              onClick={() => toggleFileType('problem')}
-              className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
-                fileTypes.includes('problem')
+            <div
+              className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${fileTypes.includes('problem')
                   ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-100 hover:border-blue-300 hover:bg-gray-50'
-              }`}
+                  : 'border-gray-100'
+                }`}
             >
               <div className="flex items-center gap-3.5">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                  fileTypes.includes('problem') ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
-                }`}>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${fileTypes.includes('problem') ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
+                  }`}>
                   {fileTypes.includes('problem') && <div className="w-2 h-2 bg-white rounded-full" />}
                 </div>
                 <span className="text-[15px] font-bold text-gray-800">문제지</span>
@@ -155,21 +148,18 @@ export default function PurchaseForm({
                 ? <span className="font-black text-gray-900">{priceProblem.toLocaleString()}원</span>
                 : <span className="text-[13px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">포함됨</span>
               }
-            </label>
+            </div>
           )}
           {showEtc && (
-            <label
-              onClick={() => toggleFileType('etc')}
-              className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
-                fileTypes.includes('etc')
+            <div
+              className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${fileTypes.includes('etc')
                   ? 'border-indigo-500 bg-indigo-50'
-                  : 'border-gray-100 hover:border-indigo-300 hover:bg-gray-50'
-              }`}
+                  : 'border-gray-100'
+                }`}
             >
               <div className="flex items-center gap-3.5">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                  fileTypes.includes('etc') ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
-                }`}>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${fileTypes.includes('etc') ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
+                  }`}>
                   {fileTypes.includes('etc') && <div className="w-2 h-2 bg-white rounded-full" />}
                 </div>
                 <span className="text-[15px] font-bold text-gray-800">답지 / 기타</span>
@@ -178,7 +168,7 @@ export default function PurchaseForm({
                 ? <span className="font-black text-gray-900">{priceEtc.toLocaleString()}원</span>
                 : <span className="text-[13px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">포함됨</span>
               }
-            </label>
+            </div>
           )}
           {!showProblem && !showEtc && (
             <p className="text-[14px] font-medium text-gray-400 text-center py-3 bg-gray-50 rounded-2xl">파일 준비 중입니다</p>

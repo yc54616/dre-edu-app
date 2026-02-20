@@ -75,12 +75,10 @@ export default function MaterialDetail({
 }) {
   const showProblemOption = material.priceProblem > 0 || !!material.problemFile;
   const showEtcOption = material.priceEtc > 0 || !!material.etcFile;
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([
+  const [selectedFiles] = useState<string[]>([
     ...(showProblemOption ? ['problem'] : []),
     ...(showEtcOption ? ['etc'] : []),
   ]);
-  const toggleFile = (t: string) =>
-    setSelectedFiles((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
   const selectedAmount =
     (selectedFiles.includes('problem') ? material.priceProblem : 0) +
     (selectedFiles.includes('etc') ? material.priceEtc : 0);
@@ -251,11 +249,10 @@ export default function MaterialDetail({
                     <button
                       key={i}
                       onClick={() => setActivePreview(i)}
-                      className={`w-[4.5rem] h-[6rem] rounded-xl overflow-hidden border-[3px] shrink-0 transition-all duration-200 ${
-                        i === activePreview
+                      className={`w-[4.5rem] h-[6rem] rounded-xl overflow-hidden border-[3px] shrink-0 transition-all duration-200 ${i === activePreview
                           ? 'border-blue-600 shadow-md shadow-blue-200'
                           : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'
-                      }`}
+                        }`}
                     >
                       <img src={`/uploads/previews/${img}`} alt="" className="w-full h-full object-cover" />
                     </button>
@@ -382,46 +379,40 @@ export default function MaterialDetail({
                   {(showProblemOption || showEtcOption) && (
                     <div className="space-y-3 mb-5 relative z-10">
                       {showProblemOption && (
-                        <label className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
-                          selectedFiles.includes('problem')
+                        <div className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${selectedFiles.includes('problem')
                             ? 'border-blue-600 bg-blue-50'
-                            : 'border-gray-100 hover:border-blue-300 hover:bg-gray-50'
-                        }`}>
+                            : 'border-gray-100'
+                          }`}>
                           <div className="flex items-center gap-3.5">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                              selectedFiles.includes('problem') ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
-                            }`}>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('problem') ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
+                              }`}>
                               {selectedFiles.includes('problem') && <div className="w-2 h-2 bg-white rounded-full" />}
                             </div>
-                            <input type="checkbox" className="hidden" onChange={() => toggleFile('problem')} checked={selectedFiles.includes('problem')} />
                             <span className="text-[15px] font-bold text-gray-800">문제지</span>
                           </div>
                           {material.priceProblem > 0
                             ? <span className="font-black text-gray-900">{material.priceProblem.toLocaleString()}원</span>
                             : <span className="text-[13px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">포함됨</span>
                           }
-                        </label>
+                        </div>
                       )}
                       {showEtcOption && (
-                        <label className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${
-                          selectedFiles.includes('etc')
+                        <div className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${selectedFiles.includes('etc')
                             ? 'border-indigo-500 bg-indigo-50'
-                            : 'border-gray-100 hover:border-indigo-300 hover:bg-gray-50'
-                        }`}>
+                            : 'border-gray-100'
+                          }`}>
                           <div className="flex items-center gap-3.5">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                              selectedFiles.includes('etc') ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
-                            }`}>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('etc') ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
+                              }`}>
                               {selectedFiles.includes('etc') && <div className="w-2 h-2 bg-white rounded-full" />}
                             </div>
-                            <input type="checkbox" className="hidden" onChange={() => toggleFile('etc')} checked={selectedFiles.includes('etc')} />
                             <span className="text-[15px] font-bold text-gray-800">답지 / 기타</span>
                           </div>
                           {material.priceEtc > 0
                             ? <span className="font-black text-gray-900">{material.priceEtc.toLocaleString()}원</span>
                             : <span className="text-[13px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">포함됨</span>
                           }
-                        </label>
+                        </div>
                       )}
                       {selectedAmount > 0 && (
                         <div className="flex justify-between items-center pt-5 pb-2 border-t border-gray-100 mt-2">
