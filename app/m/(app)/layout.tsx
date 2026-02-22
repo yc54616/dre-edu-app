@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { cookies } from 'next/headers';
-import Sidebar from './Sidebar';
+import TopNav from './TopNav';
+import './m-theme.css';
 
 export default async function MAppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -21,14 +22,14 @@ export default async function MAppLayout({ children }: { children: React.ReactNo
       : 'student';
 
   return (
-    <div className="min-h-screen bg-[#f7f8fc] flex">
-      <Sidebar
+    <div className="m-theme m-page-bg min-h-screen">
+      <TopNav
         userName={user.name || ''}
         userRole={role}
         isAdmin={isAdmin}
         currentMode={currentMode}
       />
-      <main className="flex-1 lg:ml-64 min-h-screen pt-14 lg:pt-0">
+      <main className="min-h-screen pt-16">
         {children}
       </main>
     </div>

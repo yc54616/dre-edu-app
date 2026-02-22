@@ -42,12 +42,16 @@ export default async function EditMaterialPage({ params }: { params: Promise<{ m
   };
 
   return (
-    <div className="px-8 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">자료 수정</h1>
-        <p className="text-sm text-gray-500 mt-1">자료 정보를 수정합니다</p>
+    <div className="m-detail-page min-h-screen">
+      <div className="m-detail-header">
+        <div className="m-detail-container max-w-7xl py-7 sm:py-9">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">자료 수정</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1.5">자료 정보를 수정합니다</p>
+        </div>
       </div>
-      <MaterialFormWithPreview mode="edit" initialData={data} />
+      <div className="m-detail-container max-w-7xl py-8">
+        <MaterialFormWithPreview mode="edit" initialData={data} />
+      </div>
     </div>
   );
 }

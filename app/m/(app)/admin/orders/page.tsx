@@ -47,6 +47,43 @@ const SORT_MAP: Record<string, Record<string, 1 | -1>> = {
   amount_asc: { amount: 1 },
 };
 
+type QuickRange = 'all' | '7d' | '30d' | '90d' | '180d' | '1y';
+
+const isDateInput = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+const parseDateParam = (value: string, endOfDay = false) => {
+  if (!isDateInput(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  if (endOfDay) date.setUTCHours(23, 59, 59, 999);
+  return date;
+};
+
+const getRangeStart = (range: QuickRange, now: Date) => {
+  const start = new Date(now);
+  if (range === '7d') {
+    start.setDate(start.getDate() - 7);
+    return start;
+  }
+  if (range === '30d') {
+    start.setDate(start.getDate() - 30);
+    return start;
+  }
+  if (range === '90d') {
+    start.setDate(start.getDate() - 90);
+    return start;
+  }
+  if (range === '180d') {
+    start.setDate(start.getDate() - 180);
+    return start;
+  }
+  if (range === '1y') {
+    start.setFullYear(start.getFullYear() - 1);
+    return start;
+  }
+  return null;
+};
+
 export default async function AdminOrdersPage({
   searchParams,
 }: {
@@ -57,16 +94,38 @@ export default async function AdminOrdersPage({
   if (!session || role !== 'admin') redirect('/m/materials');
 
   const sp = await searchParams;
-  const status = sp.status || '';
+  const status = ['paid', 'pending', 'cancelled'].includes(sp.status || '') ? sp.status : '';
   const q = sp.q?.trim() || '';
-  const sort = sp.sort || 'newest';
+  const sort = ['newest', 'oldest', 'amount_desc', 'amount_asc'].includes(sp.sort || '')
+    ? sp.sort || 'newest'
+    : 'newest';
+  const range: QuickRange = ['7d', '30d', '90d', '180d', '1y'].includes(sp.range || '')
+    ? sp.range as QuickRange
+    : 'all';
+  const rawFrom = (sp.from || '').trim();
+  const rawTo = (sp.to || '').trim();
+  const safeFrom = isDateInput(rawFrom) ? rawFrom : '';
+  const safeTo = isDateInput(rawTo) ? rawTo : '';
+  const [fromInput, toInput] =
+    safeFrom && safeTo && safeFrom > safeTo ? [safeTo, safeFrom] : [safeFrom, safeTo];
+  const fromDate = parseDateParam(fromInput, false);
+  const toDate = parseDateParam(toInput, true);
+  const hasCustomDate = !!fromDate || !!toDate;
   const page = Math.max(1, parseInt(sp.page || '1'));
   const limit = 30;
+  const hasFilter = !!(status || q || sort !== 'newest' || range !== 'all' || hasCustomDate);
 
   await connectMongo();
 
   const filter: Record<string, unknown> = {};
   if (status) filter.status = status;
+  const rangeStart = hasCustomDate ? null : getRangeStart(range, new Date());
+  const createdAtFilter: Record<string, Date> = {};
+  if (fromDate) createdAtFilter.$gte = fromDate;
+  if (toDate) createdAtFilter.$lte = toDate;
+  if (!hasCustomDate && rangeStart) createdAtFilter.$gte = rangeStart;
+  if (Object.keys(createdAtFilter).length > 0) filter.createdAt = createdAtFilter;
+
   if (q) {
     filter.$or = [
       { orderId: { $regex: q, $options: 'i' } },
@@ -94,34 +153,44 @@ export default async function AdminOrdersPage({
   const totalPage = Math.ceil(total / limit);
 
   const buildUrl = (overrides: Record<string, string>) => {
-    const params = new URLSearchParams({
-      page: '1',
-      ...(status ? { status } : {}),
-      ...(q ? { q } : {}),
-      ...(sort !== 'newest' ? { sort } : {}),
-      ...overrides,
-    });
-    return `/m/admin/orders?${params.toString()}`;
+    const nextStatus = overrides.status ?? status;
+    const nextQ = overrides.q ?? q;
+    const nextSort = overrides.sort ?? sort;
+    const nextRange = overrides.range ?? range;
+    const nextFrom = overrides.from ?? fromInput;
+    const nextTo = overrides.to ?? toInput;
+    const nextPage = overrides.page ?? '1';
+
+    const params = new URLSearchParams();
+    if (nextStatus) params.set('status', nextStatus);
+    if (nextQ) params.set('q', nextQ);
+    if (nextSort && nextSort !== 'newest') params.set('sort', nextSort);
+    if (nextFrom) params.set('from', nextFrom);
+    if (nextTo) params.set('to', nextTo);
+    if (!nextFrom && !nextTo && nextRange !== 'all') params.set('range', nextRange);
+    if (nextPage && nextPage !== '1') params.set('page', nextPage);
+    const qs = params.toString();
+    return qs ? `/m/admin/orders?${qs}` : '/m/admin/orders';
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="m-detail-page min-h-screen">
       {/* ── 헤더 ── */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10">
+      <div className="m-detail-header">
+        <div className="m-detail-container max-w-7xl py-8 sm:py-10">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]" />
-            <span className="text-[13px] font-black text-red-500 tracking-wide">관리자 패널</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.25)]" />
+            <span className="text-[13px] font-extrabold text-blue-500 tracking-wide">관리자 패널</span>
           </div>
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-3xl sm:text-[2.25rem] font-black text-gray-900 tracking-tight leading-tight">주문 관리</h1>
-              <p className="text-[15px] text-gray-400 font-medium mt-1.5">전체 <strong className="text-blue-600 font-black">{totalAll.toLocaleString()}</strong>건</p>
+              <h1 className="text-3xl sm:text-[2.25rem] font-extrabold text-gray-900 tracking-tight leading-tight">주문 관리</h1>
+              <p className="text-[15px] text-gray-400 font-medium mt-1.5">전체 <strong className="text-blue-500 font-extrabold">{totalAll.toLocaleString()}</strong>건</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100">
-                <CheckCircle2 size={16} className="text-emerald-500" />
-                <span className="text-[14px] font-black text-emerald-600">{paidCount.toLocaleString()}건 완료</span>
+              <div className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
+                <CheckCircle2 size={16} className="text-blue-500" />
+                <span className="text-[14px] font-extrabold text-blue-600">{paidCount.toLocaleString()}건 완료</span>
               </div>
             </div>
           </div>
@@ -135,9 +204,9 @@ export default async function AdminOrdersPage({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8">
+      <div className="m-detail-container max-w-7xl py-8">
         {orders.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-32">
+          <div className="m-detail-card flex flex-col items-center justify-center py-32">
             <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100">
               <ShoppingBag size={34} className="text-gray-300" />
             </div>
@@ -150,16 +219,22 @@ export default async function AdminOrdersPage({
             {(q || status) && (
               <p className="text-[14px] text-gray-400 mb-5 font-bold">
                 {total.toLocaleString()}건 검색됨
-                {q && <span className="ml-2 font-black text-blue-600">&ldquo;{q}&rdquo;</span>}
+                {q && <span className="ml-2 font-extrabold text-blue-500">&ldquo;{q}&rdquo;</span>}
               </p>
             )}
 
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            {hasFilter && !q && (
+              <p className="text-[14px] text-gray-400 mb-5 font-bold">
+                필터 적용 결과 {total.toLocaleString()}건
+              </p>
+            )}
+
+            <div className="m-detail-card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[780px]">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="text-left px-7 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest w-[220px]">주문자</th>
+                      <th className="text-left px-7 py-4 text-[11px] font-extrabold text-gray-500 uppercase tracking-widest w-[220px]">주문자</th>
                       <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">자료</th>
                       <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[110px]">결제</th>
                       <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider w-[100px]">결제 시간</th>
@@ -196,7 +271,7 @@ export default async function AdminOrdersPage({
                             {order.amount.toLocaleString()}원
                           </p>
                           {order.status === 'paid' && (
-                            <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-500 mt-1">
+                            <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-blue-500 mt-1">
                               <CheckCircle2 size={12} />완료
                             </span>
                           )}
@@ -216,7 +291,7 @@ export default async function AdminOrdersPage({
                 </p>
                 <div className="flex items-center gap-2">
                   {page > 1 && (
-                    <Link href={buildUrl({ page: String(page - 1) })} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:border-blue-400 transition-colors">
+                    <Link href={buildUrl({ page: String(page - 1) })} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:border-blue-300 transition-colors">
                       <ChevronLeft size={16} />
                     </Link>
                   )}
@@ -235,15 +310,15 @@ export default async function AdminOrdersPage({
                           href={buildUrl({ page: String(p) })}
                           className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
                             p === page
-                              ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                              : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-400'
+                              ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                              : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
                           }`}
                         >
                           {p}
                         </Link>
                     )}
                   {page < totalPage && (
-                    <Link href={buildUrl({ page: String(page + 1) })} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:border-blue-400 transition-colors">
+                    <Link href={buildUrl({ page: String(page + 1) })} className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:border-blue-300 transition-colors">
                       <ChevronRight size={16} />
                     </Link>
                   )}

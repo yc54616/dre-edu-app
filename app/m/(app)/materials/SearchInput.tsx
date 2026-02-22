@@ -19,7 +19,7 @@ export default function SearchInput({ defaultValue }: { defaultValue: string }) 
     }
     params.set('page', '1');
     startTransition(() => {
-      router.push(`/m/materials?${params.toString()}`);
+      router.push(`/m/materials?${params.toString()}`, { scroll: false });
     });
   };
 

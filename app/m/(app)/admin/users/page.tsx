@@ -13,9 +13,9 @@ const roleLabel: Record<string, string> = {
 };
 
 const roleStyle: Record<string, string> = {
-  admin: 'bg-red-50 text-red-500 border-red-100',
-  teacher: 'bg-amber-50 text-amber-600 border-amber-100',
-  student: 'bg-blue-50 text-blue-600 border-blue-100',
+  admin: 'bg-blue-50 text-blue-600 border-blue-100',
+  teacher: 'bg-sky-50 text-sky-600 border-sky-100',
+  student: 'bg-indigo-50 text-indigo-600 border-indigo-100',
 };
 
 const RoleIcon = ({ role }: { role: string }) => {
@@ -36,18 +36,18 @@ export default async function AdminUsersPage() {
   for (const u of users) counts[u.role as keyof typeof counts] = (counts[u.role as keyof typeof counts] || 0) + 1;
 
   return (
-    <div className="min-h-screen">
+    <div className="m-detail-page min-h-screen">
       {/* ── 페이지 헤더 ── */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-6 sm:px-8 py-8 sm:py-10">
+      <div className="m-detail-header">
+        <div className="m-detail-container max-w-5xl py-8 sm:py-10">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]" />
-            <span className="text-[13px] font-black text-red-500 tracking-wide">관리자 패널</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.25)]" />
+            <span className="text-[13px] font-extrabold text-blue-500 tracking-wide">관리자 패널</span>
           </div>
-          <h1 className="text-3xl sm:text-[2.25rem] font-black text-gray-900 tracking-tight leading-tight">회원 관리</h1>
+          <h1 className="text-3xl sm:text-[2.25rem] font-extrabold text-gray-900 tracking-tight leading-tight">회원 관리</h1>
           <div className="flex items-center gap-4 mt-3 text-[14px] font-bold text-gray-500">
             <span className="flex items-center gap-1.5">
-              <Users size={16} className="text-blue-600" />전체 {users.length.toLocaleString()}명
+              <Users size={16} className="text-blue-500" />전체 {users.length.toLocaleString()}명
             </span>
             <span className="text-gray-300">|</span>
             <span>관리자 {counts.admin} <span className="text-gray-300 font-normal">/</span> 교사 {counts.teacher} <span className="text-gray-300 font-normal">/</span> 학생 {counts.student}</span>
@@ -55,16 +55,16 @@ export default async function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 py-8 space-y-6">
+      <div className="m-detail-container max-w-5xl py-8 space-y-6">
         {/* 계정 생성 */}
         <RegisterForm />
 
         {/* 사용자 목록 */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden overflow-x-auto">
+        <div className="m-detail-card overflow-hidden overflow-x-auto">
           <table className="w-full text-sm min-w-[540px]">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-7 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest">회원</th>
+                <th className="text-left px-7 py-4 text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">회원</th>
                 <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">역할</th>
                 <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">가입일</th>
                 <th className="text-right px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">관리</th>

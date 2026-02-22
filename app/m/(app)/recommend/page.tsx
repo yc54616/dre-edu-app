@@ -1,8 +1,15 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
 import UserSkill from '@/lib/models/UserSkill';
-import { getRecommendations, getSimilarUserRecs, ratingToLevel } from '@/lib/recommendation';
+import {
+  getRecommendations,
+  getSimilarUserRecs,
+  getTeacherRecommendations,
+  getSimilarTeacherRecs,
+  ratingToLevel,
+} from '@/lib/recommendation';
 import { DIFFICULTY_LABEL, DIFFICULTY_COLOR } from '@/lib/models/Material';
 import Link from 'next/link';
 import { Sparkles, BookOpen, ShoppingBag, TrendingUp, Star, Users } from 'lucide-react';
@@ -10,11 +17,11 @@ import { Sparkles, BookOpen, ShoppingBag, TrendingUp, Star, Users } from 'lucide
 export const dynamic = 'force-dynamic';
 
 const diffStyle: Record<string, string> = {
-  emerald: 'bg-emerald-100 text-emerald-700',
-  blue: 'bg-blue-100 text-blue-700',
-  violet: 'bg-violet-100 text-violet-700',
-  orange: 'bg-orange-100 text-orange-700',
-  red: 'bg-red-100 text-red-700',
+  emerald: 'bg-blue-50 text-blue-600',
+  blue: 'bg-blue-50 text-blue-600',
+  violet: 'bg-sky-50 text-sky-700',
+  orange: 'bg-indigo-50 text-indigo-700',
+  red: 'bg-slate-100 text-slate-700',
 };
 
 function buildTitle(m: {
@@ -39,80 +46,123 @@ export default async function RecommendPage() {
   const session = await auth();
   if (!session) redirect('/m');
 
-  const userId = (session.user as { id?: string }).id;
+  const user = session.user as { id?: string; role?: string };
+  const userId = user.id;
+  const role = user.role || 'student';
   if (!userId) redirect('/m');
+
+  const cookieStore = await cookies();
+  const modeCookie = cookieStore.get('dre-mode')?.value;
+  const currentMode: 'teacher' | 'student' =
+    role === 'student'
+      ? 'student'
+      : role === 'teacher'
+        ? (modeCookie === 'student' ? 'student' : 'teacher')
+        : 'student';
+  const isTeacherMode = currentMode === 'teacher';
 
   await connectMongo();
 
-  const userSkill = await UserSkill.findOne({ userId }).lean();
-  const overallRating = (userSkill as { overallRating?: number })?.overallRating ?? 1000;
-  const level = ratingToLevel(overallRating);
-
-  const rawSkills = (userSkill as unknown as { topicSkills?: Record<string, { rating: number; attempts: number }> } | null)?.topicSkills;
+  let overallRating = 1000;
   const topicSkills: { topic: string; rating: number; attempts: number }[] = [];
-  if (rawSkills && typeof rawSkills === 'object') {
-    for (const [topic, skill] of Object.entries(rawSkills)) {
-      topicSkills.push({ topic, rating: skill.rating, attempts: skill.attempts });
+
+  if (!isTeacherMode) {
+    const userSkill = await UserSkill.findOne({ userId }).lean();
+    overallRating = (userSkill as { overallRating?: number })?.overallRating ?? 1000;
+    const rawSkills = (userSkill as unknown as { topicSkills?: Record<string, { rating: number; attempts: number }> } | null)?.topicSkills;
+    if (rawSkills && typeof rawSkills === 'object') {
+      for (const [topic, skill] of Object.entries(rawSkills)) {
+        topicSkills.push({ topic, rating: skill.rating, attempts: skill.attempts });
+      }
+      topicSkills.sort((a, b) => a.rating - b.rating);
     }
-    topicSkills.sort((a, b) => a.rating - b.rating);
   }
 
+  const level = ratingToLevel(overallRating);
+
   const [materials, similarRecs] = await Promise.all([
-    getRecommendations(userId, 12),
-    getSimilarUserRecs(userId, 6),
+    isTeacherMode ? getTeacherRecommendations(userId, 12) : getRecommendations(userId, 12),
+    isTeacherMode ? getSimilarTeacherRecs(userId, 6) : getSimilarUserRecs(userId, 6),
   ]);
 
   const levelColors: Record<string, string> = {
-    red: 'text-red-500 bg-red-50 border-red-100',
-    orange: 'text-orange-500 bg-orange-50 border-orange-100',
-    violet: 'text-violet-500 bg-violet-50 border-violet-100',
+    red: 'text-slate-600 bg-slate-50 border-slate-200',
+    orange: 'text-indigo-600 bg-indigo-50 border-indigo-100',
+    violet: 'text-sky-600 bg-sky-50 border-sky-100',
     blue: 'text-blue-500 bg-blue-50 border-blue-100',
     gray: 'text-gray-500 bg-gray-100 border-gray-200',
   };
 
+  const heroKicker = isTeacherMode ? '수업 맞춤 추천' : 'ELO 맞춤 추천';
+  const heroTitle = isTeacherMode ? '선생님을 위한 추천 자료' : '나에게 딱 맞는 자료';
+  const heroSubtitle = isTeacherMode
+    ? '과목/학교급/최근 활용 패턴을 바탕으로 수업 준비에 맞는 자료를 추천합니다.'
+    : 'ELO 레이팅 기반으로 현재 실력에 맞는 최고 효율의 자료를 큐레이션합니다.';
+  const primarySectionTitle = isTeacherMode ? '수업 준비 맞춤 추천' : 'ELO 맞춤 추천';
+  const primarySectionDesc = isTeacherMode ? '최근 활용 패턴 기반 교사용 추천' : '현재 실력에 최적화된 자료';
+  const primaryBadgeLabel = isTeacherMode ? '교사 추천' : '강력 추천';
+  const primarySummaryLabel = isTeacherMode
+    ? `교사용 맞춤 추천 자료 ${materials.length}개`
+    : `ELO 레이팅 기반 맞춤 추천 자료 ${materials.length}개`;
+  const emptyTitle = isTeacherMode ? '추천할 교사용 자료가 없습니다' : '추천할 자료가 없습니다';
+  const emptyDesc = isTeacherMode
+    ? '교사용 자료를 활용할수록 수업 맞춤 추천 정확도가 높아집니다.'
+    : '자료를 학습하고 난이도 피드백을 남기면 맞춤 추천이 시작됩니다';
+  const emptyLink = isTeacherMode ? '교사용 자료에서 시작하기 →' : '자료 목록에서 시작하기 →';
+  const similarSectionTitle = isTeacherMode ? '비슷한 교사의 선택' : '비슷한 수준 학생들의 선택';
+  const similarSectionDesc = isTeacherMode ? '유사 활용 패턴 교사 추천' : '협업 필터링 추천';
+  const similarBadgeLabel = isTeacherMode ? '함께 선택' : '함께 구매';
+
   return (
-    <div className="min-h-screen">
+    <div className="m-detail-page min-h-screen">
 
       {/* ── 페이지 헤더 ── */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 sm:py-10">
+      <div className="m-detail-header">
+        <div className="m-detail-container max-w-7xl py-8 sm:py-10">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Sparkles size={16} className="text-blue-600" />
-                <span className="text-[13px] tracking-wide font-extrabold text-blue-600">ELO 맞춤 추천</span>
+                <Sparkles size={16} className="text-blue-500" />
+                <span className="text-[13px] tracking-wide font-extrabold text-blue-500">{heroKicker}</span>
               </div>
-              <h1 className="text-3xl sm:text-[2.5rem] font-black text-gray-900 leading-tight tracking-tight">
-                나에게 딱 맞는 자료
+              <h1 className="m-detail-title">
+                {heroTitle}
               </h1>
               <p className="text-[15px] font-medium text-gray-400 mt-2.5">
-                ELO 레이팅 기반으로 현재 실력에 맞는 최고 효율의 자료를 큐레이션합니다.
+                {heroSubtitle}
               </p>
             </div>
 
-            {/* 레이팅 배지 */}
-            <div className={`shrink-0 flex flex-col items-center px-6 py-5 rounded-2xl border bg-white ${levelColors[level.color] || levelColors.blue}`}>
-              <div className="flex items-center gap-1 mb-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    size={13}
-                    className={i < level.star ? 'fill-current' : 'opacity-30'}
-                  />
-                ))}
+            {!isTeacherMode ? (
+              <div className={`shrink-0 flex flex-col items-center px-6 py-5 rounded-2xl border bg-white ${levelColors[level.color] || levelColors.blue}`}>
+                <div className="flex items-center gap-1 mb-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      size={13}
+                      className={i < level.star ? 'fill-current' : 'opacity-30'}
+                    />
+                  ))}
+                </div>
+                <p className="text-2xl font-extrabold">{overallRating}</p>
+                <p className="text-xs font-bold mt-0.5">{level.label} 레벨</p>
               </div>
-              <p className="text-2xl font-black">{overallRating}</p>
-              <p className="text-xs font-bold mt-0.5">{level.label} 레벨</p>
-            </div>
+            ) : (
+              <div className="shrink-0 flex flex-col items-center justify-center px-6 py-5 rounded-2xl border bg-blue-50/70 border-blue-100">
+                <Users size={18} className="text-blue-500 mb-1.5" />
+                <p className="text-sm font-extrabold text-blue-600">교사 모드</p>
+                <p className="text-xs text-gray-500 mt-0.5">수업 활용 데이터 기반 추천</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 py-8 space-y-8">
+      <div className="m-detail-container max-w-7xl py-8 space-y-8">
 
         {/* 주제별 약점 분석 */}
-        {topicSkills.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        {!isTeacherMode && topicSkills.length > 0 && (
+          <div className="m-detail-card p-6">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={15} className="text-gray-500" />
               <p className="text-sm font-bold text-gray-700">주제별 실력 분석</p>
@@ -124,7 +174,7 @@ export default async function RecommendPage() {
                 return (
                   <div
                     key={topic}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-[13px] font-bold ${levelColors[lvl.color] || levelColors.blue}`}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-[14px] font-bold ${levelColors[lvl.color] || levelColors.blue}`}
                   >
                     <span>{topic}</span>
                     <span className="font-mono opacity-70 bg-white/60 px-1.5 rounded text-xs">{rating}</span>
@@ -137,25 +187,25 @@ export default async function RecommendPage() {
 
         {/* ELO 추천 자료 섹션 */}
         <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Sparkles size={18} className="text-white" />
+            <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-100 to-sky-100 flex items-center justify-center border border-blue-100 shadow-sm shadow-blue-100/60">
+              <Sparkles size={18} className="text-blue-500" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-gray-900">ELO 맞춤 추천</h2>
-              <p className="text-xs text-gray-400 font-medium">현재 실력에 최적화된 자료</p>
+              <h2 className="text-lg font-extrabold text-gray-900">{primarySectionTitle}</h2>
+              <p className="text-xs text-gray-400 font-medium">{primarySectionDesc}</p>
             </div>
           </div>
 
           {materials.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-32">
+            <div className="m-detail-card flex flex-col items-center justify-center py-32">
               <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100">
                 <BookOpen size={34} className="text-gray-300" />
               </div>
-              <p className="text-xl font-bold text-gray-400 mb-2">추천할 자료가 없습니다</p>
-              <p className="text-sm text-gray-400 mb-6">자료를 학습하고 난이도 피드백을 남기면 맞춤 추천이 시작됩니다</p>
-              <Link href="/m/materials" className="text-sm text-blue-600 font-semibold hover:underline">
-                자료 목록에서 시작하기 →
+              <p className="text-xl font-bold text-gray-400 mb-2">{emptyTitle}</p>
+              <p className="text-base text-gray-500 mb-6">{emptyDesc}</p>
+              <Link href="/m/materials" className="text-base text-blue-500 font-semibold hover:underline">
+                {emptyLink}
               </Link>
             </div>
           ) : (
@@ -169,7 +219,7 @@ export default async function RecommendPage() {
                     <Link
                       key={m.materialId}
                       href={`/m/materials/${m.materialId}`}
-                      className="group bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-200 overflow-hidden"
+                      className="group m-detail-card hover:border-blue-200 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-200 overflow-hidden"
                     >
                       <div className="aspect-[4/3] overflow-hidden relative">
                         {m.previewImages?.[0] ? (
@@ -179,27 +229,27 @@ export default async function RecommendPage() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-50 to-blue-100">
-                            <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center">
-                              <BookOpen size={26} className="text-blue-500" strokeWidth={2.5} />
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-50 to-sky-50">
+                            <div className="w-14 h-14 rounded-2xl bg-blue-100/80 flex items-center justify-center">
+                              <BookOpen size={26} className="text-blue-400" strokeWidth={2.5} />
                             </div>
-                            <span className="text-[12px] font-black text-blue-500 uppercase tracking-widest">{m.subject}</span>
+                            <span className="text-[12px] font-extrabold text-blue-400 uppercase tracking-widest">{m.subject}</span>
                           </div>
                         )}
                         {m.isFree && (
-                          <span className="absolute top-3 left-3 text-[10px] font-black bg-emerald-500 text-white px-2.5 py-1 rounded-full">
+                          <span className="absolute top-3 left-3 text-[10px] font-extrabold text-blue-600 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full">
                             FREE
                           </span>
                         )}
-                        <span className="absolute top-3 right-3 text-[10px] font-black bg-blue-600 text-white px-2.5 py-1 rounded-full flex items-center gap-1">
-                          <Sparkles size={10} />강력 추천
+                        <span className="absolute top-3 right-3 text-[10px] font-extrabold text-blue-600 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                          <Sparkles size={10} />{primaryBadgeLabel}
                         </span>
                         {/* 가격 배지 */}
                         <div className="absolute bottom-3 right-3">
                           {m.isFree ? (
-                            <span className="text-[11px] font-black bg-white/95 border border-gray-100 rounded-xl shadow-sm px-2.5 py-1 text-emerald-600">무료</span>
+                            <span className="text-[11px] font-extrabold bg-white/95 border border-gray-100 rounded-xl shadow-sm px-2.5 py-1 text-blue-500">무료</span>
                           ) : m.priceProblem > 0 ? (
-                            <span className="text-[11px] font-black bg-white/95 border border-gray-100 rounded-xl shadow-sm px-2.5 py-1 text-gray-900">
+                            <span className="text-[11px] font-extrabold bg-white/95 border border-gray-100 rounded-xl shadow-sm px-2.5 py-1 text-gray-900">
                               {m.priceProblem.toLocaleString()}원~
                             </span>
                           ) : null}
@@ -214,10 +264,10 @@ export default async function RecommendPage() {
                           <span className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full font-bold truncate max-w-[90px]">{m.type}</span>
                         </div>
 
-                        <p className="text-[15px] font-bold text-gray-900 truncate leading-snug mb-1 group-hover:text-blue-600 transition-colors">
-                          {title || m.subject}
-                        </p>
-                        <p className="text-sm text-gray-400 truncate">{m.subject}{m.topic ? ` · ${m.topic}` : ''}</p>
+                      <p className="text-[15px] font-bold text-gray-900 truncate leading-snug mb-1 group-hover:text-blue-500 transition-colors">
+                        {title || m.subject}
+                      </p>
+                      <p className="text-base text-gray-500 truncate">{m.subject}{m.topic ? ` · ${m.topic}` : ''}</p>
 
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
                           <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
@@ -232,9 +282,9 @@ export default async function RecommendPage() {
               </div>
 
               <div className="flex justify-center mt-6">
-                <p className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50 border border-blue-100 rounded-xl text-[14px] text-blue-600 font-bold">
+                <p className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50/70 border border-blue-100 rounded-xl text-[15px] text-blue-500 font-semibold">
                   <Sparkles size={14} />
-                  ELO 레이팅 기반 맞춤 추천 자료 {materials.length}개
+                  {primarySummaryLabel}
                 </p>
               </div>
             </>
@@ -245,12 +295,12 @@ export default async function RecommendPage() {
         {similarRecs.length > 0 && (
           <section>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-500/20">
-                <Users size={18} className="text-white" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-100 to-sky-100 flex items-center justify-center border border-blue-100 shadow-sm shadow-blue-100/60">
+                <Users size={18} className="text-blue-500" />
               </div>
               <div>
-                <h2 className="text-lg font-black text-gray-900">비슷한 수준 학생들의 선택</h2>
-                <p className="text-xs text-gray-400 font-medium">협업 필터링 추천</p>
+                <h2 className="text-lg font-extrabold text-gray-900">{similarSectionTitle}</h2>
+                <p className="text-xs text-gray-400 font-medium">{similarSectionDesc}</p>
               </div>
             </div>
 
@@ -263,7 +313,7 @@ export default async function RecommendPage() {
                   <Link
                     key={m.materialId}
                     href={`/m/materials/${m.materialId}`}
-                    className="group bg-white rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-200 overflow-hidden"
+                    className="group m-detail-card hover:border-blue-200 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-200 overflow-hidden"
                   >
                     <div className="aspect-[4/3] overflow-hidden relative">
                       {m.previewImages?.[0] ? (
@@ -273,26 +323,26 @@ export default async function RecommendPage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-indigo-50 to-indigo-100">
-                          <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center">
-                            <BookOpen size={26} className="text-indigo-500" strokeWidth={2.5} />
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-50 to-sky-50">
+                          <div className="w-14 h-14 rounded-2xl bg-blue-100/80 flex items-center justify-center">
+                            <BookOpen size={26} className="text-blue-400" strokeWidth={2.5} />
                           </div>
-                          <span className="text-[12px] font-black text-indigo-500 uppercase tracking-widest">{m.subject}</span>
+                          <span className="text-[12px] font-extrabold text-blue-400 uppercase tracking-widest">{m.subject}</span>
                         </div>
                       )}
                       {m.isFree && (
-                        <span className="absolute top-3 left-3 text-[10px] font-black bg-emerald-500 text-white px-2.5 py-1 rounded-full">
+                        <span className="absolute top-3 left-3 text-[10px] font-extrabold text-blue-600 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full">
                           FREE
                         </span>
                       )}
-                      <span className="absolute top-3 right-3 text-[10px] font-black bg-indigo-600 text-white px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <Users size={10} />함께 구매
+                      <span className="absolute top-3 right-3 text-[10px] font-extrabold text-blue-600 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <Users size={10} />{similarBadgeLabel}
                       </span>
                       <div className="absolute bottom-3 right-3">
                         {m.isFree ? (
-                          <span className="text-[11px] font-black bg-white/95 border border-gray-100 rounded-xl shadow-sm px-2.5 py-1 text-emerald-600">무료</span>
+                          <span className="text-[11px] font-extrabold bg-white/95 border border-gray-100 rounded-xl shadow-sm px-2.5 py-1 text-blue-500">무료</span>
                         ) : m.priceProblem > 0 ? (
-                          <span className="text-[11px] font-black bg-white/95 border border-gray-100 rounded-xl shadow-sm px-2.5 py-1 text-gray-900">
+                          <span className="text-[11px] font-extrabold bg-white/95 border border-gray-100 rounded-xl shadow-sm px-2.5 py-1 text-gray-900">
                             {m.priceProblem.toLocaleString()}원~
                           </span>
                         ) : null}
@@ -307,10 +357,10 @@ export default async function RecommendPage() {
                         <span className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full font-bold truncate max-w-[90px]">{m.type}</span>
                       </div>
 
-                      <p className="text-[15px] font-bold text-gray-900 truncate leading-snug mb-1 group-hover:text-indigo-600 transition-colors">
+                      <p className="text-[15px] font-bold text-gray-900 truncate leading-snug mb-1 group-hover:text-blue-500 transition-colors">
                         {title || m.subject}
                       </p>
-                      <p className="text-sm text-gray-400 truncate">{m.subject}{m.topic ? ` · ${m.topic}` : ''}</p>
+                      <p className="text-base text-gray-500 truncate">{m.subject}{m.topic ? ` · ${m.topic}` : ''}</p>
 
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">

@@ -7,6 +7,7 @@ import connectMongo from './mongoose';
 import Material, { IMaterial } from './models/Material';
 import UserSkill from './models/UserSkill';
 import Order from './models/Order';
+import User from './models/User';
 
 // Native MongoDB collection helper (Mongoose Map 변환 우회)
 async function userSkillsCol() {
@@ -214,7 +215,7 @@ export async function getRecommendations(
       ? Math.round(ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length)
       : 1000;
 
-  let materials = await Material.find({
+  const materials = await Material.find({
     isActive: true,
     difficultyRating: {
       $gte: overallRating - 350,
@@ -352,4 +353,211 @@ export async function getSimilarUserRecs(
     .lean();
 
   return materials as IMaterial[];
+}
+
+/**
+ * 교사용 추천 — 최근 수업 준비 패턴 기반
+ * 최근 구매한 자료의 과목/유형/학교급/학년 패턴을 가중치로 사용
+ */
+export async function getTeacherRecommendations(
+  userId: string,
+  limit = 12,
+): Promise<IMaterial[]> {
+  await connectMongo();
+
+  const teacherFilter = {
+    isActive: true,
+    targetAudience: { $in: ['teacher', 'all'] },
+    fileType: { $in: ['hwp', 'both'] },
+  };
+
+  const myPaidOrders = await Order.find({ userId, status: 'paid' })
+    .sort({ createdAt: -1 })
+    .limit(120)
+    .lean();
+
+  const myMaterialIds = [...new Set(myPaidOrders.map((o) => o.materialId))];
+  if (myMaterialIds.length === 0) {
+    const fallback = await Material.find(teacherFilter)
+      .sort({ downloadCount: -1, createdAt: -1 })
+      .limit(limit)
+      .lean();
+    return fallback as IMaterial[];
+  }
+
+  const rankMap = new Map<string, number>();
+  myPaidOrders.forEach((o, idx) => {
+    if (!rankMap.has(o.materialId)) rankMap.set(o.materialId, idx);
+  });
+
+  const myMaterials = await Material.find({
+    materialId: { $in: myMaterialIds },
+    ...teacherFilter,
+  }).lean();
+
+  const subjectWeight: Record<string, number> = {};
+  const typeWeight: Record<string, number> = {};
+  const levelWeight: Record<string, number> = {};
+  const gradeWeight: Record<string, number> = {};
+
+  for (const m of myMaterials) {
+    const rank = rankMap.get(m.materialId) ?? 60;
+    const recencyWeight = Math.max(1, 4 - rank / 20); // 최근 구매일수록 더 큰 비중
+
+    if (m.subject) subjectWeight[m.subject] = (subjectWeight[m.subject] || 0) + recencyWeight;
+    if (m.type) typeWeight[m.type] = (typeWeight[m.type] || 0) + recencyWeight;
+    if (m.schoolLevel) levelWeight[m.schoolLevel] = (levelWeight[m.schoolLevel] || 0) + recencyWeight;
+    if (m.gradeNumber) {
+      const key = String(m.gradeNumber);
+      gradeWeight[key] = (gradeWeight[key] || 0) + recencyWeight;
+    }
+  }
+
+  const candidates = await Material.find({
+    materialId: { $nin: myMaterialIds },
+    ...teacherFilter,
+  })
+    .sort({ createdAt: -1 })
+    .limit(320)
+    .lean();
+
+  if (candidates.length === 0) {
+    const fallback = await Material.find(teacherFilter)
+      .sort({ downloadCount: -1, createdAt: -1 })
+      .limit(limit)
+      .lean();
+    return fallback as IMaterial[];
+  }
+
+  const now = Date.now();
+  const scored = candidates.map((m) => {
+    let score = 0;
+    score += (subjectWeight[m.subject] || 0) * 4;
+    score += (typeWeight[m.type] || 0) * 3;
+    score += (levelWeight[m.schoolLevel] || 0) * 2;
+    score += (gradeWeight[String(m.gradeNumber || '')] || 0) * 1.2;
+    score += Math.min(8, ((m.downloadCount || 0) / 120));
+
+    if (m.createdAt) {
+      const ageDays = (now - new Date(m.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+      score += Math.max(0, 3 - ageDays / 30);
+    }
+
+    return { material: m, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // 특정 과목으로 과도하게 몰리지 않도록 분산
+  const subjectCount: Record<string, number> = {};
+  const result: IMaterial[] = [];
+
+  for (const { material } of scored) {
+    if (result.length >= limit) break;
+    const key = material.subject || '기타';
+    const cnt = subjectCount[key] || 0;
+    if (cnt < 3) {
+      result.push(material as IMaterial);
+      subjectCount[key] = cnt + 1;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * 교사용 협업 추천 — 비슷한 교사가 선택한 자료
+ * 현재 교사가 구매한 자료와 겹치는 교사들을 찾아 인기 자료를 집계
+ */
+export async function getSimilarTeacherRecs(
+  userId: string,
+  limit = 6,
+): Promise<IMaterial[]> {
+  await connectMongo();
+
+  const teacherFilter = {
+    isActive: true,
+    targetAudience: { $in: ['teacher', 'all'] },
+    fileType: { $in: ['hwp', 'both'] },
+  };
+
+  const myOrders = await Order.find({ userId, status: 'paid' }).lean();
+  const myMaterialIds = [...new Set(myOrders.map((o) => o.materialId))];
+
+  const teacherObjectIds = await User.find({ role: 'teacher' }).distinct('_id');
+  const teacherIds = teacherObjectIds.map((id) => id.toString()).filter((id) => id !== userId);
+
+  if (teacherIds.length === 0) {
+    const fallback = await Material.find(teacherFilter)
+      .sort({ downloadCount: -1, createdAt: -1 })
+      .limit(limit)
+      .lean();
+    return fallback as IMaterial[];
+  }
+
+  let seedTeacherIds = teacherIds;
+
+  // 겹치는 구매 이력이 있는 교사 그룹 우선
+  if (myMaterialIds.length > 0) {
+    const overlapTeachers = await Order.aggregate([
+      {
+        $match: {
+          userId: { $in: teacherIds },
+          status: 'paid',
+          materialId: { $in: myMaterialIds },
+        },
+      },
+      { $group: { _id: '$userId', overlap: { $sum: 1 } } },
+      { $sort: { overlap: -1 } },
+      { $limit: 80 },
+    ]);
+    if (overlapTeachers.length > 0) {
+      seedTeacherIds = overlapTeachers.map((row: { _id: string }) => row._id);
+    }
+  }
+
+  const popular = await Order.aggregate([
+    {
+      $match: {
+        userId: { $in: seedTeacherIds },
+        status: 'paid',
+        ...(myMaterialIds.length > 0 ? { materialId: { $nin: myMaterialIds } } : {}),
+      },
+    },
+    { $group: { _id: '$materialId', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: limit * 6 },
+  ]);
+
+  const orderedIds = popular.map((p: { _id: string }) => p._id);
+  if (orderedIds.length === 0) {
+    const fallback = await Material.find(teacherFilter)
+      .sort({ downloadCount: -1, createdAt: -1 })
+      .limit(limit)
+      .lean();
+    return fallback as IMaterial[];
+  }
+
+  const materialDocs = await Material.find({
+    materialId: { $in: orderedIds },
+    ...teacherFilter,
+  }).lean();
+
+  const mapById = new Map(materialDocs.map((m) => [m.materialId, m]));
+  const ordered = orderedIds
+    .map((id) => mapById.get(id))
+    .filter(Boolean) as IMaterial[];
+
+  if (ordered.length >= limit) return ordered.slice(0, limit);
+
+  const usedIds = new Set(ordered.map((m) => m.materialId));
+  const fill = await Material.find({
+    materialId: { $nin: [...usedIds, ...myMaterialIds] },
+    ...teacherFilter,
+  })
+    .sort({ downloadCount: -1, createdAt: -1 })
+    .limit(limit - ordered.length)
+    .lean();
+
+  return [...ordered, ...(fill as IMaterial[])];
 }

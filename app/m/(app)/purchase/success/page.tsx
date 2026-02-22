@@ -74,16 +74,16 @@ export default async function PaymentSuccessPage({
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-10 sm:p-12 text-center max-w-md w-full">
+      <div className="m-detail-page min-h-screen flex items-center justify-center px-4">
+        <div className="m-detail-card p-10 sm:p-12 text-center max-w-md w-full">
           <div className="w-20 h-20 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-red-100">
             <span className="text-[2rem]">⚠️</span>
           </div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-3">결제 승인 실패</h2>
-          <p className="text-[15px] text-red-500 font-bold mb-8 bg-red-50 py-3 rounded-2xl">{error}</p>
+          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-3">결제 승인 실패</h2>
+          <p className="text-[15px] text-red-600 font-semibold mb-8 bg-red-50 py-3 rounded-2xl">{error}</p>
           <Link
             href="/m/materials"
-            className="inline-flex items-center justify-center w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[16px] rounded-2xl transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:-translate-y-0.5"
+            className="m-detail-btn-primary inline-flex w-full py-4 text-[16px] rounded-2xl"
           >
             자료 목록으로
           </Link>
@@ -93,22 +93,22 @@ export default async function PaymentSuccessPage({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-10 sm:p-12 text-center max-w-md w-full">
-        <div className="w-20 h-20 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-emerald-100">
-          <CheckCircle2 size={36} className="text-emerald-500" />
+    <div className="m-detail-page min-h-screen flex items-center justify-center px-4">
+      <div className="m-detail-card p-10 sm:p-12 text-center max-w-md w-full">
+        <div className="w-20 h-20 bg-blue-50/70 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-blue-100">
+          <CheckCircle2 size={36} className="text-blue-400" />
         </div>
-        <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-4">결제가 완료되었습니다</h2>
+        <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-4">결제가 완료되었습니다</h2>
         <div className="bg-gray-50 rounded-2xl p-4 mb-8">
-          <p className="text-[13px] text-gray-500 mb-1.5 font-medium">주문 번호: <strong className="font-mono text-gray-800">{orderId}</strong></p>
-          <p className="text-2xl font-black text-blue-600 tracking-tight">{amount.toLocaleString()}<span className="text-base text-gray-500 ml-1">원</span></p>
+          <p className="text-[14px] text-gray-500 mb-1.5 font-medium">주문 번호: <strong className="font-mono text-gray-800">{orderId}</strong></p>
+          <p className="text-2xl font-extrabold text-blue-500 tracking-tight">{amount.toLocaleString()}<span className="text-base text-gray-500 ml-1">원</span></p>
         </div>
 
         <div className="flex flex-col gap-3">
           {materialId && (
             <Link
               href={`/m/materials/${materialId}`}
-              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[16px] rounded-2xl transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2.5"
+              className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl flex items-center justify-center gap-2.5"
             >
               <Download size={18} />
               자료 보기 및 다운로드
@@ -116,7 +116,7 @@ export default async function PaymentSuccessPage({
           )}
           <Link
             href="/m/my-orders"
-            className="w-full py-4 bg-white border-2 border-gray-200 text-gray-700 font-bold text-[16px] rounded-2xl transition-all hover:bg-gray-50 hover:border-gray-300"
+            className="m-detail-btn-secondary w-full py-4 text-[16px] rounded-2xl border-2 border-gray-200"
           >
             내 주문 내역 보기
           </Link>

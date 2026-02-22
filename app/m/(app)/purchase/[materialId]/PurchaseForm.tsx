@@ -27,10 +27,20 @@ export default function PurchaseForm({
   const showEtc = hasEtcFile || priceEtc > 0;
 
   const [fileTypes] = useState<string[]>(() => {
-    return [
+    const defaults = [
       ...(showProblem ? ['problem'] : []),
       ...(showEtc ? ['etc'] : []),
     ];
+
+    if (!initialFileTypes || initialFileTypes.length === 0) return defaults;
+
+    const filtered = initialFileTypes.filter((type) => {
+      if (type === 'problem') return showProblem;
+      if (type === 'etc') return showEtc;
+      return false;
+    });
+
+    return filtered.length > 0 ? filtered : defaults;
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -118,55 +128,55 @@ export default function PurchaseForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-lg mx-auto space-y-4">
+    <form onSubmit={handleSubmit} className="max-w-lg mx-auto space-y-4 pb-6">
 
       {/* 자료 요약 */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <p className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-3">구매할 자료</p>
-        <p className="text-[17px] font-black text-gray-900 leading-snug tracking-tight">{materialTitle}</p>
+      <div className="m-detail-card p-6">
+        <p className="m-detail-kicker mb-3">구매할 자료</p>
+        <p className="text-[17px] font-extrabold text-gray-900 leading-snug tracking-tight">{materialTitle}</p>
       </div>
 
       {/* 파일 선택 */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <p className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-5">파일 선택</p>
+      <div className="m-detail-card p-6">
+        <p className="m-detail-kicker mb-5">파일 선택</p>
         <div className="space-y-3">
           {showProblem && (
             <div
               className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${fileTypes.includes('problem')
-                  ? 'border-blue-600 bg-blue-50'
+                  ? 'border-blue-300 bg-blue-50/70'
                   : 'border-gray-100'
                 }`}
             >
               <div className="flex items-center gap-3.5">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${fileTypes.includes('problem') ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${fileTypes.includes('problem') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
                   }`}>
                   {fileTypes.includes('problem') && <div className="w-2 h-2 bg-white rounded-full" />}
                 </div>
                 <span className="text-[15px] font-bold text-gray-800">문제지</span>
               </div>
               {priceProblem > 0
-                ? <span className="font-black text-gray-900">{priceProblem.toLocaleString()}원</span>
-                : <span className="text-[13px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">포함됨</span>
+                ? <span className="font-extrabold text-gray-900">{priceProblem.toLocaleString()}원</span>
+                : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
               }
             </div>
           )}
           {showEtc && (
             <div
               className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${fileTypes.includes('etc')
-                  ? 'border-indigo-500 bg-indigo-50'
+                  ? 'border-blue-300 bg-blue-50/70'
                   : 'border-gray-100'
                 }`}
             >
               <div className="flex items-center gap-3.5">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${fileTypes.includes('etc') ? 'border-indigo-500 bg-indigo-500' : 'border-gray-300'
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${fileTypes.includes('etc') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
                   }`}>
                   {fileTypes.includes('etc') && <div className="w-2 h-2 bg-white rounded-full" />}
                 </div>
                 <span className="text-[15px] font-bold text-gray-800">답지 / 기타</span>
               </div>
               {priceEtc > 0
-                ? <span className="font-black text-gray-900">{priceEtc.toLocaleString()}원</span>
-                : <span className="text-[13px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">포함됨</span>
+                ? <span className="font-extrabold text-gray-900">{priceEtc.toLocaleString()}원</span>
+                : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
               }
             </div>
           )}
@@ -177,7 +187,7 @@ export default function PurchaseForm({
         {amount > 0 && (
           <div className="flex justify-between items-center mt-6 pt-5 border-t border-gray-100">
             <span className="text-[15px] font-extrabold text-gray-500">총 결제금액</span>
-            <span className="text-[1.75rem] font-black tracking-tight text-blue-600">
+            <span className="text-[1.75rem] font-extrabold tracking-tight text-blue-500">
               {amount.toLocaleString()}<span className="text-lg text-gray-600 ml-1">원</span>
             </span>
           </div>
@@ -185,14 +195,14 @@ export default function PurchaseForm({
       </div>
 
       {/* 결제위젯 */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <p className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-4">결제 수단</p>
+      <div className="m-detail-card p-6">
+        <p className="m-detail-kicker mb-4">결제 수단</p>
         <div id="toss-payment-widget" />
         <div id="toss-payment-agreement" className="mt-4" />
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-[14px] text-red-600 font-bold">
+        <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 text-[15px] text-red-600 font-semibold">
           {error}
         </div>
       )}
@@ -200,7 +210,7 @@ export default function PurchaseForm({
       <button
         type="submit"
         disabled={submitting || fileTypes.length === 0}
-        className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[16px] rounded-2xl transition-all shadow-lg shadow-blue-500/20 hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed"
+        className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed"
       >
         {submitting
           ? <><Loader2 size={20} className="animate-spin" /><span>결제 요청 중...</span></>

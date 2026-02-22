@@ -39,7 +39,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
+    <form onSubmit={handleSubmit} className="m-detail-card p-6 space-y-4">
       <h2 className="text-base font-bold text-gray-900 mb-1">새 계정 생성</h2>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -110,7 +110,7 @@ export default function RegisterForm() {
       <button
         type="submit"
         disabled={saving}
-        className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-dre-blue)] text-white text-sm font-bold rounded-xl hover:bg-[var(--color-dre-blue-dark)] transition-all shadow-md shadow-blue-200 disabled:opacity-50"
+        className="m-detail-btn-primary flex items-center gap-2 px-5 py-2.5 text-sm rounded-xl disabled:opacity-50"
       >
         {saving ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
         {saving ? '생성 중...' : '계정 생성'}
