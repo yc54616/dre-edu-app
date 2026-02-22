@@ -97,7 +97,7 @@ export default async function RecommendPage() {
   const heroTitle = isTeacherMode ? '선생님을 위한 추천 자료' : '나에게 딱 맞는 자료';
   const heroSubtitle = isTeacherMode
     ? '과목/학교급/최근 활용 패턴을 바탕으로 수업 준비에 맞는 자료를 추천합니다.'
-    : 'ELO 레이팅 기반으로 현재 실력에 맞는 최고 효율의 자료를 큐레이션합니다.';
+    : 'ELO 레이팅을 바탕으로 현재 실력에 맞는 자료를 가장 효율적으로 추천합니다.';
   const primarySectionTitle = isTeacherMode ? '수업 준비 맞춤 추천' : 'ELO 맞춤 추천';
   const primarySectionDesc = isTeacherMode ? '최근 활용 패턴 기반 교사용 추천' : '현재 실력에 최적화된 자료';
   const primaryBadgeLabel = isTeacherMode ? '교사 추천' : '강력 추천';

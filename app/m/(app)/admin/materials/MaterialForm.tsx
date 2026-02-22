@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MATERIAL_SUBJECTS, MATERIAL_TYPES, TOPIC_MAP, DIFFICULTY_LABEL, SCHOOL_LEVELS } from '@/lib/constants/material';
 import { FILE_TYPE_LABEL, TARGET_AUDIENCE_LABEL } from '@/lib/constants/material';
-import { Save, Loader2, Upload, X, FileText, Image as ImageIcon, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Save, Loader2, Upload, X, FileText, Image as ImageIcon, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface MaterialFormData {
   materialId?:     string;
@@ -74,13 +74,14 @@ export default function MaterialForm({
   const [uploadingEtc,     setUploadingEtc]     = useState(false);
   const [uploadingPreview, setUploadingPreview] = useState(false);
   const [previewNotice,    setPreviewNotice]    = useState<string>('');
+  const [previewNoticeTone, setPreviewNoticeTone] = useState<'success' | 'warning'>('success');
 
   const uploadFile = async (file: File, fileRole: 'problem' | 'etc' | 'preview') => {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('fileRole', fileRole);
     const res  = await fetch('/api/m/admin/upload', { method: 'POST', body: fd });
-    const data = await res.json() as { filename: string; previews?: string[] };
+    const data = await res.json() as { filename: string; previews?: string[]; previewWarning?: string };
     if (!res.ok) throw new Error((data as unknown as { error: string }).error || '업로드 실패');
     return data;
   };
@@ -114,8 +115,13 @@ export default function MaterialForm({
         // 자동 생성된 미리보기가 있고 현재 미리보기가 없을 때 자동 적용
         if (res.previews && res.previews.length > 0 && (form.previewImages || []).length === 0) {
           next = { ...next, previewImages: res.previews };
+          setPreviewNoticeTone('success');
           setPreviewNotice(`미리보기 ${res.previews.length}장 자동 생성됨`);
           setTimeout(() => setPreviewNotice(''), 5000);
+        } else if (res.previewWarning) {
+          setPreviewNoticeTone('warning');
+          setPreviewNotice(res.previewWarning);
+          setTimeout(() => setPreviewNotice(''), 6000);
         }
 
         setForm(next);
@@ -194,9 +200,9 @@ export default function MaterialForm({
 
       {/* 기본 정보 */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-        <h2 className="font-bold text-gray-900">기본 정보</h2>
+        <h2 className="text-lg font-extrabold tracking-[-0.01em] text-gray-900">기본 정보</h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
           <FormField label="유형 *">
             <select value={form.type} onChange={(e) => set('type', e.target.value)} className={selectClass} required>
               <option value="">선택</option>
@@ -247,8 +253,8 @@ export default function MaterialForm({
 
       {/* 파일 형식 & 대상 */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-        <h2 className="font-bold text-gray-900">파일 형식 & 대상</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <h2 className="text-lg font-extrabold tracking-[-0.01em] text-gray-900">파일 형식 & 대상</h2>
+        <div className="grid md:grid-cols-2 gap-4">
           <FormField label="파일 형식 *">
             <div className="flex gap-2">
               {(['pdf', 'hwp', 'both'] as const).map((ft) => (
@@ -310,8 +316,8 @@ export default function MaterialForm({
 
       {/* 학교 정보 */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-        <h2 className="font-bold text-gray-900">학교 정보</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <h2 className="text-lg font-extrabold tracking-[-0.01em] text-gray-900">학교 정보</h2>
+        <div className="grid md:grid-cols-2 gap-4">
           <FormField label="학교급">
             <select value={form.schoolLevel} onChange={(e) => set('schoolLevel', e.target.value)} className={selectClass}>
               {SCHOOL_LEVELS.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -347,7 +353,7 @@ export default function MaterialForm({
 
       {/* 가격 */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-        <h2 className="font-bold text-gray-900">가격 설정</h2>
+        <h2 className="text-lg font-extrabold tracking-[-0.01em] text-gray-900">가격 설정</h2>
         <label className="flex items-center gap-3 cursor-pointer">
           <div
             onClick={() => set('isFree', !form.isFree)}
@@ -359,7 +365,7 @@ export default function MaterialForm({
         </label>
 
         {!form.isFree && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
             <FormField label="문제지 가격 (원)">
               <input type="number" value={form.priceProblem} onChange={(e) => set('priceProblem', Number(e.target.value))} className={inputClass} min={0} />
             </FormField>
@@ -372,11 +378,11 @@ export default function MaterialForm({
 
       {/* 파일 업로드 */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-        <h2 className="font-bold text-gray-900">파일 업로드</h2>
+        <h2 className="text-lg font-extrabold tracking-[-0.01em] text-gray-900">파일 업로드</h2>
 
         {/* 문제 파일 */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-2">문제 파일 (PDF / HWP)</label>
+          <label className="block text-sm font-semibold text-gray-600 mb-2">문제 파일 (PDF / HWP)</label>
           {form.problemFile ? (
             <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
               <FileText size={16} className="text-[var(--color-dre-blue)] shrink-0" />
@@ -403,7 +409,7 @@ export default function MaterialForm({
 
         {/* 기타 파일 (답지 등) */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-2">기타 파일 (답지 / 해설 등, PDF / HWP)</label>
+          <label className="block text-sm font-semibold text-gray-600 mb-2">기타 파일 (답지 / 해설 등, PDF / HWP)</label>
           {form.etcFile ? (
             <div className="flex items-center gap-3 bg-violet-50 border border-violet-100 rounded-xl px-4 py-3">
               <FileText size={16} className="text-violet-500 shrink-0" />
@@ -431,7 +437,7 @@ export default function MaterialForm({
         {/* 미리보기 이미지 */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-semibold text-gray-500">미리보기 이미지 (JPG, PNG, WEBP · 복수 선택 가능)</label>
+            <label className="block text-sm font-semibold text-gray-600">미리보기 이미지 (JPG, PNG, WEBP · 복수 선택 가능)</label>
             <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
               <Sparkles size={10} className="text-blue-400" />
               PDF/HWP 업로드 시 자동 생성
@@ -440,9 +446,19 @@ export default function MaterialForm({
 
           {/* 자동 생성 알림 */}
           {previewNotice && (
-            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 mb-3">
-              <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-              <span className="text-xs font-semibold text-emerald-700">{previewNotice}</span>
+            <div className={`flex items-center gap-2 rounded-xl px-3 py-2.5 mb-3 ${
+              previewNoticeTone === 'success'
+                ? 'bg-emerald-50 border border-emerald-100'
+                : 'bg-amber-50 border border-amber-100'
+            }`}>
+              {previewNoticeTone === 'success' ? (
+                <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+              ) : (
+                <AlertCircle size={14} className="text-amber-500 shrink-0" />
+              )}
+              <span className={`text-xs font-semibold ${previewNoticeTone === 'success' ? 'text-emerald-700' : 'text-amber-700'}`}>
+                {previewNotice}
+              </span>
             </div>
           )}
           <div className="flex flex-wrap gap-2 mb-3">
@@ -506,11 +522,11 @@ export default function MaterialForm({
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-500 mb-1.5">{label}</label>
+      <label className="block text-sm font-semibold text-gray-600 mb-1.5">{label}</label>
       {children}
     </div>
   );
 }
 
-const inputClass  = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-[var(--color-dre-blue)] focus:ring-4 focus:ring-blue-500/10 outline-none transition-all bg-white';
+const inputClass  = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-[15px] text-gray-900 focus:border-[var(--color-dre-blue)] focus:ring-4 focus:ring-blue-500/15 outline-none transition-all bg-white';
 const selectClass = `${inputClass} cursor-pointer`;

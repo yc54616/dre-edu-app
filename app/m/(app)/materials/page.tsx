@@ -419,7 +419,7 @@ export default async function MaterialsPage({
                 {isTeacher ? '교사용 자료 라이브러리' : '학생용 자료 라이브러리'}
               </h1>
               <p className="m-detail-subtitle mt-3">
-                과목, 난이도, 최신 등록 기준으로 빠르게 탐색할 수 있도록 서가형으로 구성했습니다.
+                과목, 난이도, 최신 등록순으로 원하는 자료를 빠르게 찾을 수 있게 구성했습니다.
               </p>
             </div>
 

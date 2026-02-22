@@ -47,221 +47,227 @@ export default function LoginForm({ session }: LoginFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white flex w-full font-sans selection:bg-blue-100 selection:text-blue-900">
-      {/* ── 좌측: 로그인 패널 ── */}
-      <motion.div
-        initial={{ opacity: 0, x: -30 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full lg:w-[480px] xl:w-[540px] flex flex-col justify-center px-8 sm:px-12 xl:px-20 py-12 relative z-10 bg-white"
-      >
-        {/* 상단 로고 */}
-        <Link href="/" className="inline-flex items-center gap-3 mb-16 group w-max">
-          <div className="relative">
-            <Image src="/logo.png" alt="DRE" width={32} height={32} className="rounded-xl shadow-sm relative z-10 group-hover:scale-105 transition-transform duration-300" />
-            <div className="absolute inset-0 bg-[var(--color-dre-blue)] blur-sm opacity-20 rounded-xl group-hover:opacity-40 transition-opacity" />
-          </div>
-          <span className="font-extrabold text-xl text-gray-900 tracking-tight group-hover:text-[var(--color-dre-blue)] transition-colors duration-300">
-            DRE 수학
-          </span>
-        </Link>
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-white font-sans selection:bg-blue-100 selection:text-blue-900">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_8%_0%,rgba(59,130,246,0.05),transparent_44%),radial-gradient(ellipse_at_92%_86%,rgba(125,211,252,0.05),transparent_48%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#fbfdff_0%,#ffffff_42%,#ffffff_100%)]" />
 
-        {/* 헤더 섹션 */}
-        <div className="mb-12">
+      <div className="relative w-full">
+        <div className="grid min-h-screen items-stretch gap-0 lg:grid-cols-[minmax(500px,560px)_minmax(0,1fr)]">
+          {/* ── 좌측: 로그인 패널 ── */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="flex items-center gap-2 mb-5"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="flex min-h-screen w-full flex-col justify-center bg-white px-6 py-10 sm:px-10 lg:px-14 xl:px-16"
           >
-            <span className="px-2.5 py-1 rounded-md bg-blue-50 border border-blue-100 text-[var(--color-dre-blue)] text-xs font-bold tracking-widest uppercase">
-              Platform
-            </span>
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-[2.25rem] sm:text-[2.5rem] font-black text-gray-900 leading-[1.1] mb-4 tracking-[-0.02em]"
-          >
-            환영합니다.
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-dre-blue)] to-[var(--color-dre-blue-light)]">
-              DRE M
-            </span> 시작하기
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className="text-base text-gray-500 font-medium leading-relaxed"
-          >
-            ELO 레이팅 기반 맞춤형 학습 자료.
-            <br className="hidden sm:block" />
-            이메일로 간편하게 로그인하세요.
-          </motion.p>
-        </div>
-
-        {/* 폼 섹션 */}
-        <motion.form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 ml-1">이메일</label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[var(--color-dre-blue)] transition-colors">
-                <Mail size={18} strokeWidth={2.5} />
+            <Link href="/" className="group mb-10 inline-flex w-max items-center gap-3">
+              <div className="relative">
+                <Image
+                  src="/logo.png"
+                  alt="DRE"
+                  width={34}
+                  height={34}
+                  className="relative z-10 rounded-xl shadow-sm transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 rounded-xl bg-[var(--color-dre-blue)]/20 blur-sm transition-opacity group-hover:opacity-80" />
               </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-[var(--color-dre-blue)] focus:ring-[3px] focus:ring-blue-100 outline-none transition-all duration-300 text-[15px] text-gray-900 placeholder:text-gray-400 font-semibold shadow-sm"
-                placeholder="name@example.com"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 ml-1">비밀번호</label>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[var(--color-dre-blue)] transition-colors">
-                <Lock size={18} strokeWidth={2.5} />
-              </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 border border-gray-200 focus:bg-white focus:border-[var(--color-dre-blue)] focus:ring-[3px] focus:ring-blue-100 outline-none transition-all duration-300 text-[15px] text-gray-900 placeholder:text-gray-400 font-semibold shadow-sm"
-                placeholder="비밀번호를 입력하세요"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -5, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: 'auto' }}
-              className="p-4 bg-red-50/80 border border-red-100 rounded-2xl text-[14px] text-red-600 font-bold flex items-center gap-2.5 backdrop-blur-sm"
-            >
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0 animate-pulse" />
-              {error}
-            </motion.div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="group relative w-full py-4 bg-[var(--color-dre-blue)] text-white font-bold rounded-2xl hover:bg-[var(--color-dre-blue-dark)] transition-all duration-300 shadow-[0_8px_16px_-6px_rgba(37,99,235,0.4)] hover:shadow-[0_12px_20px_-6px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none text-[15px] mt-4"
-          >
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] skew-x-[-20deg] group-hover:animate-[shine_1s_ease-out]" />
-            <div className="flex items-center justify-center gap-2 relative z-10">
-              <span className="tracking-wide">{loading ? '확인 중...' : '로그인'}</span>
-              {!loading && (
-                <ChevronRight size={18} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
-              )}
-            </div>
-          </button>
-        </motion.form>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-          className="mt-10 flex flex-col gap-4 text-center"
-        >
-          <div className="flex items-center justify-center gap-4 text-sm text-gray-400 font-medium">
-            <span className="w-8 h-[1px] bg-gray-200"></span>
-            <span>도움이 필요하신가요?</span>
-            <span className="w-8 h-[1px] bg-gray-200"></span>
-          </div>
-          <p className="text-xs text-gray-400 font-medium">
-            계정 발급 및 문의는 다니고 있는 학원의 원장님께 문의해주세요.
-          </p>
-        </motion.div>
-      </motion.div>
-
-      {/* ── 우측: DRE 브랜드 공간 (아닐라이프/보드게임즈 스타일의 화려함) ── */}
-      <div className="hidden lg:flex flex-1 relative overflow-hidden bg-[var(--color-dre-navy)] items-center justify-center p-12 xl:p-20">
-        {/* 모던한 백그라운드 효과 */}
-        <div className="absolute inset-0 bg-[url('/pattern-grid.svg')] opacity-[0.03] mix-blend-overlay" />
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-bl from-[var(--color-dre-blue)]/20 via-blue-800/5 to-transparent rounded-full blur-[120px] pointer-events-none translate-x-1/4 -translate-y-1/4" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-600/15 via-purple-900/5 to-transparent rounded-full blur-[100px] pointer-events-none -translate-x-1/4 translate-y-1/4" />
-
-        {/* 인터랙티브 글로우 포인터용 (생략가능하나 화려함 추가) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--color-dre-navy)]/80 to-[var(--color-dre-navy)] pointer-events-none z-0" />
-
-        <div className="relative z-10 w-full max-w-2xl">
-          {/* 배지 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6, ease: 'easeOut' }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 shadow-2xl"
-          >
-            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-            <span className="text-xs font-bold text-blue-200 tracking-wider">PREMIUM EDTECH</span>
-          </motion.div>
-
-          {/* 메인 텍스트 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6, ease: 'easeOut' }}
-          >
-            <h2 className="text-[2.75rem] xl:text-[3.5rem] font-black text-white leading-[1.15] tracking-tight mb-6 drop-shadow-lg">
-              나에게 꼭 필요한 문제만,<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
-                꾸준하고 확실하게.
+              <span className="text-xl font-extrabold tracking-tight text-gray-900 transition-colors duration-300 group-hover:text-[var(--color-dre-blue)]">
+                DRE 수학
               </span>
-            </h2>
-            <p className="text-lg xl:text-xl text-blue-100/70 font-medium leading-relaxed mb-12 max-w-lg">
-              막연하게 많은 양을 푸는 것보다 나의 현재 취약점을 정확히 아는 것이 중요합니다. DRE M은 학생의 객관적인 수준을 파악하여 가장 효율적인 학습 방향을 제시합니다.
-            </p>
+            </Link>
+
+            <div className="mb-8">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.45 }}
+                className="mb-5 flex items-center gap-2"
+              >
+                <span className="rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold uppercase tracking-widest text-[var(--color-dre-blue)]">
+                  Platform
+                </span>
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.45 }}
+                className="mb-4 text-[2.1rem] font-black leading-[1.1] tracking-[-0.02em] text-gray-900 sm:text-[2.45rem]"
+              >
+                환영합니다.
+                <br />
+                <span className="bg-gradient-to-r from-[var(--color-dre-blue)] to-[var(--color-dre-blue-light)] bg-clip-text text-transparent">
+                  DRE M
+                </span>{' '}
+                시작하기
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.45 }}
+                className="text-base font-medium leading-relaxed text-gray-500"
+              >
+                ELO 레이팅 기반 맞춤형 학습 자료.
+                <br className="hidden sm:block" />
+                이메일로 간편하게 로그인하세요.
+              </motion.p>
+            </div>
+
+            <motion.form
+              onSubmit={handleSubmit}
+              className="space-y-4.5"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45, duration: 0.45 }}
+            >
+              <div className="space-y-2">
+                <label className="ml-1 text-sm font-bold text-gray-700">이메일</label>
+                <div className="group relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 transition-colors group-focus-within:text-[var(--color-dre-blue)]">
+                    <Mail size={18} strokeWidth={2.5} />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full rounded-2xl border border-transparent bg-[#f3f7ff] py-3.5 pl-11 pr-4 text-[15px] font-semibold text-gray-900 shadow-sm outline-none transition-all duration-300 placeholder:text-gray-400 focus:border-blue-100 focus:bg-white focus:ring-[3px] focus:ring-blue-100"
+                    placeholder="name@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="ml-1 text-sm font-bold text-gray-700">비밀번호</label>
+                <div className="group relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 transition-colors group-focus-within:text-[var(--color-dre-blue)]">
+                    <Lock size={18} strokeWidth={2.5} />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full rounded-2xl border border-transparent bg-[#f3f7ff] py-3.5 pl-11 pr-4 text-[15px] font-semibold text-gray-900 shadow-sm outline-none transition-all duration-300 placeholder:text-gray-400 focus:border-blue-100 focus:bg-white focus:ring-[3px] focus:ring-blue-100"
+                    placeholder="비밀번호를 입력하세요"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  className="flex items-center gap-2.5 rounded-2xl border border-red-100 bg-red-50/85 p-4 text-[14px] font-bold text-red-600"
+                >
+                  <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500 animate-pulse" />
+                  {error}
+                </motion.div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-dre-blue)] py-3.5 text-[15px] font-bold tracking-wide text-white shadow-[0_12px_24px_-12px_rgba(37,99,235,0.52)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--color-dre-blue-dark)] hover:shadow-[0_16px_28px_-12px_rgba(37,99,235,0.58)] disabled:cursor-not-allowed disabled:opacity-70 disabled:transform-none"
+              >
+                <span>{loading ? '확인 중...' : '로그인'}</span>
+                {!loading && <ChevronRight size={18} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />}
+              </button>
+            </motion.form>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.65, duration: 0.45 }}
+              className="mt-8 flex flex-col gap-4 text-center"
+            >
+              <div className="flex items-center justify-center gap-4 text-sm font-medium text-gray-400">
+                <span className="h-px w-8 bg-gray-200" />
+                <span>도움이 필요하신가요?</span>
+                <span className="h-px w-8 bg-gray-200" />
+              </div>
+              <p className="text-xs font-medium text-gray-400">
+                계정 발급 및 문의는 다니고 있는 학원의 원장님께 문의해주세요.
+              </p>
+            </motion.div>
           </motion.div>
 
-          {/* 특장점 (Glassmorphism 카드 UI) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xl:gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
-              className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-colors duration-300 group"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(59,130,246,0.3)] group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-white font-bold text-lg mb-2">정확한 실력 진단</h3>
-              <p className="text-sm text-blue-100/60 font-medium leading-relaxed">
-                막연한 감이 아닌 누적된 풀이 데이터를 바탕으로, 내가 어느 부분에 강하고 약한지 객관적으로 판단합니다.
-              </p>
-            </motion.div>
+          {/* ── 우측: DRE 브랜드 소개 ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.08, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="relative hidden min-h-screen overflow-hidden bg-[linear-gradient(135deg,#f9fcff_0%,#f4f8ff_52%,#fbfdff_100%)] lg:flex"
+          >
+            <div className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-blue-100/50 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-14 h-64 w-64 rounded-full bg-sky-100/60 blur-3xl" />
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.5 }}
-              className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-colors duration-300 group"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(99,102,241,0.3)] group-hover:scale-110 transition-transform duration-300">
-                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+            <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col justify-center px-10 py-14 xl:px-16">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.45 }}
+                className="mb-6 inline-flex w-max items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5"
+              >
+                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className="text-xs font-bold tracking-wider text-blue-700">PREMIUM EDTECH</span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.33, duration: 0.45 }}
+              >
+                <h2 className="mb-5 text-[2.35rem] font-black leading-[1.17] tracking-tight text-gray-900 xl:text-[3.05rem]">
+                  나에게 꼭 필요한 문제만,
+                  <br />
+                  <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                    꾸준하고 확실하게.
+                  </span>
+                </h2>
+                <p className="mb-8 max-w-2xl text-lg font-medium leading-relaxed text-gray-600">
+                  막연하게 많은 양을 푸는 것보다 나의 현재 취약점을 정확히 아는 것이 중요합니다. DRE M은 학생의 객관적인 수준을 파악하여 가장 효율적인 학습 방향을 제시합니다.
+                </p>
+              </motion.div>
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.45 }}
+                  className="rounded-2xl bg-white/88 p-5 shadow-[0_16px_34px_-28px_rgba(37,99,235,0.35)] backdrop-blur-sm"
+                >
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white shadow-[0_10px_22px_-12px_rgba(37,99,235,0.6)]">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="mb-2 text-lg font-bold text-gray-900">정확한 실력 진단</h3>
+                  <p className="text-sm font-medium leading-relaxed text-gray-600">
+                    막연한 감이 아닌 누적된 풀이 데이터를 바탕으로, 내가 어느 부분에 강하고 약한지 객관적으로 판단합니다.
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.48, duration: 0.45 }}
+                  className="rounded-2xl bg-white/88 p-5 shadow-[0_16px_34px_-28px_rgba(37,99,235,0.35)] backdrop-blur-sm"
+                >
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white shadow-[0_10px_22px_-12px_rgba(59,130,246,0.6)]">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h3 className="mb-2 text-lg font-bold text-gray-900">내 수준에 맞는 자료</h3>
+                  <p className="text-sm font-medium leading-relaxed text-gray-600">
+                    시간 낭비 없이, 지금 나에게 가장 시급하고 도움이 되는 난이도의 문제들만 골라서 훈련합니다.
+                  </p>
+                </motion.div>
               </div>
-              <h3 className="text-white font-bold text-lg mb-2">내 수준에 맞는 자료</h3>
-              <p className="text-sm text-blue-100/60 font-medium leading-relaxed">
-                시간 낭비 없이, 지금 나에게 가장 시급하고 도움이 되는 난이도의 문제들만 골라서 훈련합니다.
-              </p>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

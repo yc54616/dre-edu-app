@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
     const buffer   = Buffer.from(bytes);
 
     let previews: string[] = [];
+    let previewWarning = '';
 
     if (fileRole === 'preview') {
       const dir = join(process.cwd(), 'public', 'uploads', 'previews');
@@ -76,10 +77,13 @@ export async function POST(req: NextRequest) {
       // 문제 파일만 미리보기 자동 생성 (답지·해설은 제외)
       if (fileRole === 'problem') {
         previews = await generatePreview(savedPath, ext);
+        if (ext === 'hwp' && previews.length === 0) {
+          previewWarning = 'HWP 미리보기를 자동 생성하지 못했습니다. 미리보기 이미지를 직접 업로드해 주세요.';
+        }
       }
     }
 
-    return NextResponse.json({ filename, previews });
+    return NextResponse.json({ filename, previews, previewWarning });
 
   } catch (e) {
     console.error('[upload] 서버 오류:', e);

@@ -60,7 +60,7 @@ export default function MaterialFormWithPreview({
   const [preview, setPreview] = useState<MaterialFormData>(initialData || defaultForm);
 
   return (
-    <div className="grid xl:grid-cols-2 gap-8 items-start">
+    <div className="grid xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)] gap-6 2xl:gap-8 items-start">
       {/* 좌측: 등록 폼 */}
       <div>
         <MaterialForm
@@ -71,8 +71,10 @@ export default function MaterialFormWithPreview({
       </div>
 
       {/* 우측: 실시간 미리보기 */}
-      <div className="sticky top-6">
-        <MaterialPreview data={preview} />
+      <div className="sticky top-24">
+        <div className="rounded-2xl border border-blue-100/80 bg-white/90 shadow-sm p-4 sm:p-5">
+          <MaterialPreview data={preview} />
+        </div>
       </div>
     </div>
   );

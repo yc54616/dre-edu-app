@@ -2,18 +2,256 @@
  * PDF / HWP → 미리보기 이미지 자동 생성
  *
  * PDF : pdftoppm (poppler-utils) → JPEG
- * HWP : LibreOffice headless → PDF → pdftoppm → JPEG
+ * HWP : PrvImage 추출 우선 → 실패 시 hwp5odt + soffice + pdftoppm
  */
-import { exec }      from 'child_process';
-import { promisify } from 'util';
-import { join }      from 'path';
-import { mkdir, readdir, copyFile, unlink } from 'fs/promises';
+import { spawn } from 'child_process';
+import { basename, join } from 'path';
+import { access, copyFile, mkdir, mkdtemp, readdir, rm, writeFile } from 'fs/promises';
 import { nanoid } from 'nanoid';
 
-const execAsync = promisify(exec);
-
 const PREVIEW_DIR = () => join(process.cwd(), 'public', 'uploads', 'previews');
-const TMP_DIR     = () => join(process.cwd(), 'tmp', 'preview_gen');
+const TMP_BASE_DIR = () => join(process.cwd(), 'tmp', 'preview_gen');
+
+type RunCommandOptions = {
+  timeoutMs?: number;
+  maxStdoutBytes?: number;
+};
+
+type RunCommandResult = {
+  stdout: Buffer;
+  stderr: string;
+};
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function detectImageExtension(buffer: Buffer): 'png' | 'jpg' | 'webp' | null {
+  // PNG
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return 'png';
+  }
+
+  // JPEG
+  if (
+    buffer.length >= 3 &&
+    buffer[0] === 0xff &&
+    buffer[1] === 0xd8 &&
+    buffer[2] === 0xff
+  ) {
+    return 'jpg';
+  }
+
+  // WEBP
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+    buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+  ) {
+    return 'webp';
+  }
+
+  return null;
+}
+
+async function runCommand(
+  command: string,
+  args: string[],
+  options: RunCommandOptions = {},
+): Promise<RunCommandResult> {
+  const timeoutMs = options.timeoutMs ?? 60_000;
+  const maxStdoutBytes = options.maxStdoutBytes ?? 50 * 1024 * 1024;
+
+  return await new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+    let stdoutBytes = 0;
+    let killedByTimeout = false;
+    let killedByLimit = false;
+
+    const timer = setTimeout(() => {
+      killedByTimeout = true;
+      child.kill('SIGKILL');
+    }, timeoutMs);
+
+    child.stdout.on('data', (chunk: Buffer | string) => {
+      const bufferChunk = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      stdoutBytes += bufferChunk.length;
+      if (stdoutBytes > maxStdoutBytes) {
+        killedByLimit = true;
+        child.kill('SIGKILL');
+        return;
+      }
+      stdoutChunks.push(bufferChunk);
+    });
+
+    child.stderr.on('data', (chunk: Buffer | string) => {
+      const bufferChunk = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      stderrChunks.push(bufferChunk);
+    });
+
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      reject(new Error(`[${command}] 실행 실패: ${error.message}`));
+    });
+
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      const stdout = Buffer.concat(stdoutChunks);
+      const stderr = Buffer.concat(stderrChunks).toString('utf8').trim();
+
+      if (killedByTimeout) {
+        reject(new Error(`[${command}] 타임아웃 (${timeoutMs}ms)`));
+        return;
+      }
+      if (killedByLimit) {
+        reject(new Error(`[${command}] stdout 용량 초과 (${maxStdoutBytes} bytes)`));
+        return;
+      }
+      if (code !== 0) {
+        const detail = stderr ? ` - ${stderr.slice(0, 400)}` : '';
+        reject(new Error(`[${command}] 종료 코드 ${code}${detail}`));
+        return;
+      }
+      resolve({ stdout, stderr });
+    });
+  });
+}
+
+async function tryExtractHwpEmbeddedPreview(
+  filePath: string,
+  previewDir: string,
+): Promise<string | null> {
+  try {
+    const { stdout } = await runCommand('hwp5proc', ['cat', filePath, 'PrvImage'], {
+      timeoutMs: 30_000,
+      maxStdoutBytes: 20 * 1024 * 1024,
+    });
+
+    if (!stdout || stdout.length < 32) return null;
+
+    const ext = detectImageExtension(stdout);
+    if (!ext) {
+      console.warn('[generatePreview] HWP PrvImage 포맷 인식 실패');
+      return null;
+    }
+
+    const filename = `${nanoid(12)}.${ext}`;
+    await writeFile(join(previewDir, filename), stdout);
+    return filename;
+  } catch (error) {
+    console.warn('[generatePreview] HWP PrvImage 추출 실패:', error);
+    return null;
+  }
+}
+
+async function convertHwpToOdt(filePath: string, odtPath: string): Promise<boolean> {
+  try {
+    await runCommand('hwp5odt', ['--output', odtPath, filePath], { timeoutMs: 90_000 });
+    if (await pathExists(odtPath)) return true;
+  } catch (error) {
+    console.warn('[generatePreview] hwp5odt 기본 변환 실패:', error);
+  }
+
+  // hwp5odt의 RelaxNG 검증 실패 시 우회 변환
+  const pythonScript = [
+    'from contextlib import closing',
+    'from hwp5.hwp5odt import ODTTransform, open_odtpkg',
+    'from hwp5.xmlmodel import Hwp5File',
+    'import sys',
+    'src, dst = sys.argv[1], sys.argv[2]',
+    'transformer = ODTTransform(relaxng_compile=False)',
+    'with closing(Hwp5File(src)) as hwp:',
+    '    with open_odtpkg(dst) as pkg:',
+    '        transformer.transform_hwp5_to_package(hwp, pkg)',
+  ].join('\n');
+
+  try {
+    await runCommand('python3', ['-c', pythonScript, filePath, odtPath], { timeoutMs: 120_000 });
+    return await pathExists(odtPath);
+  } catch (error) {
+    console.warn('[generatePreview] hwp5odt 검증 우회 변환 실패:', error);
+    return false;
+  }
+}
+
+async function convertOdtToPdf(odtPath: string, workDir: string): Promise<string | null> {
+  const pdfPath = join(workDir, `${basename(odtPath, '.odt')}.pdf`);
+
+  try {
+    await runCommand(
+      'soffice',
+      [
+        '--headless',
+        '--nologo',
+        '--nolockcheck',
+        '--norestore',
+        '--convert-to',
+        'pdf',
+        odtPath,
+        '--outdir',
+        workDir,
+      ],
+      { timeoutMs: 120_000 },
+    );
+  } catch (error) {
+    console.warn('[generatePreview] soffice 변환 명령 실패:', error);
+  }
+
+  if (await pathExists(pdfPath)) return pdfPath;
+  return null;
+}
+
+async function convertPdfToJpegs(
+  pdfPath: string,
+  workDir: string,
+  previewDir: string,
+  maxPages: number,
+): Promise<string[]> {
+  const prefix = join(workDir, `prev_${nanoid(8)}`);
+  await runCommand(
+    'pdftoppm',
+    ['-jpeg', '-r', '150', '-l', String(maxPages), pdfPath, prefix],
+    { timeoutMs: 60_000 },
+  );
+
+  const prefixBase = basename(prefix);
+  const allFiles = await readdir(workDir);
+  const jpegs = allFiles
+    .filter((f) => f.startsWith(prefixBase) && /\.(jpg|jpeg)$/i.test(f))
+    .sort((a, b) => {
+      const pageA = Number(a.match(/-(\d+)\.(?:jpe?g)$/i)?.[1] ?? '0');
+      const pageB = Number(b.match(/-(\d+)\.(?:jpe?g)$/i)?.[1] ?? '0');
+      return pageA - pageB;
+    });
+
+  const previews: string[] = [];
+  for (const jpg of jpegs) {
+    const src = join(workDir, jpg);
+    const destName = `${nanoid(12)}.jpg`;
+    await copyFile(src, join(previewDir, destName));
+    previews.push(destName);
+  }
+
+  return previews;
+}
 
 /**
  * @param filePath  저장된 원본 파일의 절대 경로
@@ -27,72 +265,34 @@ export async function generatePreview(
   maxPages = 3,
 ): Promise<string[]> {
   const previewDir = PREVIEW_DIR();
-  const tmpDir     = TMP_DIR();
-  await mkdir(previewDir, { recursive: true });
-  await mkdir(tmpDir,     { recursive: true });
+  const tmpBaseDir = TMP_BASE_DIR();
 
-  let pdfPath    = filePath;
-  let hwpTmpPdf  = '';
+  await mkdir(previewDir, { recursive: true });
+  await mkdir(tmpBaseDir, { recursive: true });
+
+  const workDir = await mkdtemp(join(tmpBaseDir, 'job_'));
 
   try {
-    // ── HWP → ODT (pyhwp) → PDF (LibreOffice headless) ─────────────────
     if (ext === 'hwp') {
-      const odtPath = join(tmpDir, `hwp_${nanoid(8)}.odt`);
-      try {
-        // 1) HWP → ODT (pyhwp)
-        await execAsync(
-          `hwp5odt --output "${odtPath}" "${filePath}"`,
-          { timeout: 60_000 },
-        );
-        // 2) ODT → PDF (LibreOffice headless — ODT는 정식 지원)
-        await execAsync(
-          `soffice --headless --convert-to pdf "${odtPath}" --outdir "${tmpDir}"`,
-          { timeout: 60_000 },
-        );
-        hwpTmpPdf = odtPath.replace(/\.odt$/, '.pdf');
-        pdfPath   = hwpTmpPdf;
-      } catch (err) {
-        console.error('[generatePreview] HWP→PDF 변환 실패:', err);
-        await unlink(odtPath).catch(() => {});
-        return [];
-      } finally {
-        await unlink(odtPath).catch(() => {});
-      }
+      // HWP 내부의 미리보기 이미지가 있으면 가장 빠르고 안정적이다.
+      const embeddedPreview = await tryExtractHwpEmbeddedPreview(filePath, previewDir);
+      if (embeddedPreview) return [embeddedPreview];
+
+      const odtPath = join(workDir, `hwp_${nanoid(8)}.odt`);
+      const odtReady = await convertHwpToOdt(filePath, odtPath);
+      if (!odtReady) return [];
+
+      const pdfPath = await convertOdtToPdf(odtPath, workDir);
+      if (!pdfPath) return [];
+
+      return await convertPdfToJpegs(pdfPath, workDir, previewDir, maxPages);
     }
 
-    // ── PDF → JPEG (pdftoppm) ───────────────────────────────────────────
-    const prefix = join(tmpDir, `prev_${nanoid(8)}`);
-    try {
-      await execAsync(
-        `pdftoppm -jpeg -r 150 -l ${maxPages} "${pdfPath}" "${prefix}"`,
-        { timeout: 30_000 },
-      );
-    } catch (err) {
-      console.error('[generatePreview] PDF→JPEG 변환 실패:', err);
-      return [];
-    }
-
-    // ── 생성 파일 수집 ──────────────────────────────────────────────────
-    const prefixBase = prefix.split('/').pop()!;
-    const all        = await readdir(tmpDir);
-    const jpegs      = all
-      .filter((f) => f.startsWith(prefixBase) && /\.(jpg|jpeg)$/i.test(f))
-      .sort();
-
-    // ── previewDir 로 복사 (nanoid 이름) ────────────────────────────────
-    const previews: string[] = [];
-    for (const f of jpegs) {
-      const src      = join(tmpDir, f);
-      const destName = `${nanoid(12)}.jpg`;
-      await copyFile(src, join(previewDir, destName));
-      await unlink(src).catch(() => {});
-      previews.push(destName);
-    }
-
-    return previews;
-
+    return await convertPdfToJpegs(filePath, workDir, previewDir, maxPages);
+  } catch (error) {
+    console.error('[generatePreview] 미리보기 생성 실패:', error);
+    return [];
   } finally {
-    // HWP 중간 PDF 정리
-    if (hwpTmpPdf) await unlink(hwpTmpPdf).catch(() => {});
+    await rm(workDir, { recursive: true, force: true }).catch(() => {});
   }
 }
