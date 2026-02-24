@@ -4,7 +4,7 @@ import SignupForm from '../SignupForm';
 
 export default async function SignupPage() {
   const session = await auth();
-  if (session) redirect('/api/m/set-mode');
+  if (session) redirect('/m/materials');
 
   return <SignupForm />;
 }

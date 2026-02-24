@@ -153,18 +153,7 @@ export default function MaterialDetail({
   };
 
   const dc = material.difficultyColor;
-  const handleBackToList = () => {
-    const from = searchParams.get('from');
-    if (from) {
-      router.push(from);
-      return;
-    }
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-      return;
-    }
-    router.push('/m/materials');
-  };
+  const backToListHref = searchParams.get('from') || '/m/materials';
 
   const sendFeedback = async (difficulty: 'easy' | 'normal' | 'hard') => {
     if (feedbackLoading) return;
@@ -356,14 +345,13 @@ export default function MaterialDetail({
       {/* ── 페이지 헤더 ── */}
       <div className="m-detail-header">
         <div className="m-detail-container max-w-7xl py-5 sm:py-7">
-          <button
-            type="button"
-            onClick={handleBackToList}
+          <Link
+            href={backToListHref}
             className="group mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 transition-colors hover:text-blue-500 sm:mb-5 sm:text-base"
           >
             <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
             자료 목록으로
-          </button>
+          </Link>
 
           <div className="m-detail-card p-5 sm:p-6">
             <div className="min-w-0">

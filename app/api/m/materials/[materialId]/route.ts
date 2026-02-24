@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { unlink } from 'fs/promises';
+import { join } from 'path';
 import connectMongo from '@/lib/mongoose';
 import Material from '@/lib/models/Material';
 import {
@@ -244,6 +246,27 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
   await connectMongo();
   const { materialId } = await params;
+
+  const material = await Material.findOne({ materialId })
+    .select('problemFile etcFile previewImages')
+    .lean() as { problemFile?: string | null; etcFile?: string | null; previewImages?: string[] } | null;
+
   await Material.deleteOne({ materialId });
+
+  // 연결된 파일 삭제
+  if (material) {
+    const tryRemove = (path: string) => unlink(path).catch(() => {});
+
+    if (material.problemFile) {
+      await tryRemove(join(process.cwd(), 'uploads', 'files', material.problemFile));
+    }
+    if (material.etcFile) {
+      await tryRemove(join(process.cwd(), 'uploads', 'files', material.etcFile));
+    }
+    for (const preview of material.previewImages ?? []) {
+      await tryRemove(join(process.cwd(), 'public', 'uploads', 'previews', preview));
+    }
+  }
+
   return NextResponse.json({ success: true });
 }

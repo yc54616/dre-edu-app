@@ -18,7 +18,18 @@ export default function LoginForm({ session }: LoginFormProps) {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (session) router.push('/api/m/set-mode');
+    if (session) {
+      fetch('/api/m/set-mode')
+        .then((res) => res.json())
+        .then((data: { redirect?: string }) => {
+          router.push(data.redirect || '/m/materials');
+          router.refresh();
+        })
+        .catch(() => {
+          router.push('/m/materials');
+          router.refresh();
+        });
+    }
   }, [session, router]);
 
   const [email, setEmail] = useState('');
@@ -87,8 +98,16 @@ export default function LoginForm({ session }: LoginFormProps) {
       setErrorKind(kind);
       setError(message);
     } else {
-      router.push('/api/m/set-mode');
-      router.refresh();
+      fetch('/api/m/set-mode')
+        .then((res) => res.json())
+        .then((data: { redirect?: string }) => {
+          router.push(data.redirect || '/m/materials');
+          router.refresh();
+        })
+        .catch(() => {
+          router.push('/m/materials');
+          router.refresh();
+        });
     }
   };
 
