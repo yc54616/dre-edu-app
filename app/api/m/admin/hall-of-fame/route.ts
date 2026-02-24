@@ -1,31 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
 import HallOfFameEntry from '@/lib/models/HallOfFameEntry';
 import { clampReviewStars, type HallOfFameKind } from '@/lib/hall-of-fame';
+import { normalizeText, parseSortOrder } from '@/lib/api-helpers';
+import { ensureAdmin } from '@/lib/ensure-admin';
 
 export const dynamic = 'force-dynamic';
-
-const normalizeText = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
 
 const normalizeKind = (value: unknown): HallOfFameKind | null => {
   if (value === 'admission' || value === 'review') return value;
   return null;
-};
-
-const ensureAdmin = async () => {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session || role !== 'admin') {
-    return null;
-  }
-  return session;
-};
-
-const parseSortOrder = (value: unknown): number => {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 0;
-  return Math.trunc(parsed);
 };
 
 export async function GET(req: NextRequest) {
@@ -98,7 +82,7 @@ export async function POST(req: NextRequest) {
   }
 
   const isPublished = body.isPublished !== false;
-  const sortOrder = parseSortOrder(body.sortOrder);
+  const sortOrder = parseSortOrder(body.sortOrder) ?? 0;
   const createdBy = normalizeText((session.user as { name?: string; id?: string } | undefined)?.name)
     || normalizeText((session.user as { id?: string } | undefined)?.id)
     || 'admin';

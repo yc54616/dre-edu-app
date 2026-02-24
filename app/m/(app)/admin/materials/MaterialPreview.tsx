@@ -10,14 +10,7 @@ import {
   type MaterialSourceCategory,
 } from '@/lib/constants/material';
 import { buildMaterialTitle, resolveSourceCategory } from '@/lib/material-display';
-
-const diffStyle: Record<string, string> = {
-  emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  blue:    'bg-blue-100 text-blue-700 border-blue-200',
-  violet:  'bg-violet-100 text-violet-700 border-violet-200',
-  orange:  'bg-orange-100 text-orange-700 border-orange-200',
-  red:     'bg-red-100 text-red-700 border-red-200',
-};
+import { getDifficultyBadgeClass } from '@/lib/material-difficulty-style';
 
 interface FormData {
   sourceCategory:  MaterialSourceCategory;
@@ -127,7 +120,7 @@ export default function MaterialPreview({ data }: { data: FormData }) {
           {/* 자료 정보 카드 */}
           <div className="bg-white rounded-2xl border border-blue-100/70 shadow-sm p-4">
             <div className="flex items-center gap-2 flex-wrap mb-3">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${diffStyle[dc] || diffStyle.blue}`}>
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${getDifficultyBadgeClass(dc, 'strongOutline')}`}>
                 {DIFFICULTY_LABEL[data.difficulty] || '표준'}
               </span>
               {data.type && (

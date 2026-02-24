@@ -95,7 +95,7 @@ export default async function HallOfFamePage() {
         title="명예의 전당"
         subtitle="HALL OF FAME"
         description="DRE와 함께 놀라운 성장을 이뤄낸 학생들의 이야기"
-        bgImage="/images/facility_students.png"
+        bgImage="/images/facility_study2.jpg"
       />
       <HallOfFameDetail admissions={admissions} reviews={reviews} />
     </main>

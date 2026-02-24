@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 const heroImages = [
     '/images/facility_lobby.jpg',
     '/images/facility_classroom.jpg',
-    '/images/facility_coaching.png',
+    '/images/facility_classroom2.jpg',
     '/images/facility_study.jpg'
 ];
 

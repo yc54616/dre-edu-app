@@ -14,6 +14,7 @@ import {
   type MaterialSourceCategory,
 } from '@/lib/constants/material';
 import { getMaterialFilePageCount } from '@/lib/material-page-count';
+import { normalizeText } from '@/lib/api-helpers';
 import type { SortOrder } from 'mongoose';
 
 export const dynamic = 'force-dynamic';
@@ -35,8 +36,6 @@ const normalizeCurriculum = (
   }
   return resolveMaterialCurriculumFromSubject(subject);
 };
-
-const normalizeText = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
 
 const isEbookHint = (value: unknown) => {
   const normalized = normalizeText(value).toLowerCase();

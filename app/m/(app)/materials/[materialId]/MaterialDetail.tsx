@@ -15,14 +15,7 @@ import {
   type MaterialSourceCategory,
 } from '@/lib/constants/material';
 import { buildMaterialTitle, buildMaterialSubline, resolveSourceCategory } from '@/lib/material-display';
-
-const diffStyle: Record<string, string> = {
-  emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-  blue: 'bg-blue-50 text-blue-600 border-blue-100',
-  violet: 'bg-violet-50 text-violet-700 border-violet-200',
-  orange: 'bg-orange-50 text-orange-700 border-orange-200',
-  red: 'bg-red-50 text-red-700 border-red-200',
-};
+import { getDifficultyBadgeClass } from '@/lib/material-difficulty-style';
 
 interface MaterialData {
   materialId: string;
@@ -383,7 +376,7 @@ export default function MaterialDetail({
               </p>
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className={`rounded-full border px-2.5 py-1 text-[11px] font-extrabold ${diffStyle[dc] || diffStyle.blue}`}>
+                <span className={`rounded-full border px-2.5 py-1 text-[11px] font-extrabold ${getDifficultyBadgeClass(dc, 'softOutline')}`}>
                   {material.difficultyLabel}
                 </span>
                 <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-500">{material.type}</span>
@@ -969,7 +962,7 @@ export default function MaterialDetail({
                         )}
                       </div>
                       <div className="p-4">
-                        <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full inline-block mb-2.5 border ${diffStyle[rdc] || diffStyle.blue}`}>
+                        <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full inline-block mb-2.5 border ${getDifficultyBadgeClass(rdc, 'softOutline')}`}>
                           {r.difficultyLabel}
                         </span>
                         <p className="truncate text-[15px] font-bold leading-snug text-slate-800 transition-colors group-hover:text-blue-500">{rTitle || r.subject}</p>
@@ -1028,7 +1021,7 @@ export default function MaterialDetail({
 
                         <div className="min-w-0 flex-1">
                           <div className="mb-2 flex items-center gap-1.5 flex-wrap">
-                            <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border ${diffStyle[rdc] || diffStyle.blue}`}>
+                            <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border ${getDifficultyBadgeClass(rdc, 'softOutline')}`}>
                               {r.difficultyLabel}
                             </span>
                             <span className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full font-bold">

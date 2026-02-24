@@ -22,14 +22,7 @@ import { PlusCircle, Edit2, Eye, Download, ToggleLeft, ToggleRight, BookOpen } f
 import DeleteButton from './DeleteButton';
 import PreviewModal from './PreviewModal';
 import { buildMaterialTitle, buildMaterialSubline, resolveSourceCategory } from '@/lib/material-display';
-
-const diffStyle: Record<string, string> = {
-  emerald: 'bg-emerald-100 text-emerald-700',
-  blue: 'bg-blue-50 text-blue-600',
-  violet: 'bg-violet-100 text-violet-700',
-  orange: 'bg-orange-100 text-orange-700',
-  red: 'bg-red-100 text-red-700',
-};
+import { getDifficultyBadgeClass } from '@/lib/material-difficulty-style';
 
 const SORT_MAP: Record<string, Record<string, 1 | -1>> = {
   newest: { updatedAt: -1, createdAt: -1 },
@@ -387,7 +380,7 @@ export default async function TeacherMaterialsPage({
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-bold ${diffStyle[dc]}`}>
+                      <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-bold ${getDifficultyBadgeClass(dc, 'mixedTint')}`}>
                         {DIFFICULTY_LABEL[m.difficulty]}
                       </span>
                       <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600">{curriculumLabel}</span>
@@ -500,7 +493,7 @@ export default async function TeacherMaterialsPage({
                               <span className="text-xs font-bold px-2.5 py-1 rounded-full w-fit bg-blue-50 text-blue-600">
                                 {curriculumLabel}
                               </span>
-                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${diffStyle[dc]}`}>
+                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${getDifficultyBadgeClass(dc, 'mixedTint')}`}>
                                 {DIFFICULTY_LABEL[m.difficulty]}
                               </span>
                             </div>

@@ -34,6 +34,7 @@ export const authConfig: NextAuthConfig = {
           email: user.email ?? '',
           name:  user.username ?? '',
           role:  user.role ?? 'student',
+          teacherApprovalStatus: user.teacherApprovalStatus ?? 'pending',
         };
       },
     }),
@@ -43,6 +44,7 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.id   = user.id ?? '';
         token.role = ((user as { role?: string }).role) ?? 'student';
+        token.teacherApprovalStatus = ((user as { teacherApprovalStatus?: string }).teacherApprovalStatus) ?? 'pending';
       }
       return token;
     },
@@ -50,6 +52,7 @@ export const authConfig: NextAuthConfig = {
       if (session.user) {
         (session.user as { id?: string }).id   = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
+        (session.user as { teacherApprovalStatus?: string }).teacherApprovalStatus = token.teacherApprovalStatus as string;
       }
       return session;
     },

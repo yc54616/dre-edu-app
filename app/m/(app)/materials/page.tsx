@@ -21,6 +21,7 @@ import SearchInput from './SearchInput';
 import ModeToggleButton from './ModeToggleButton';
 import type { SortOrder } from 'mongoose';
 import { buildMaterialTitle, buildMaterialSubline } from '@/lib/material-display';
+import { getDifficultyBadgeClass } from '@/lib/material-difficulty-style';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,14 +53,6 @@ interface MaterialListItem {
   downloadCount?: number;
   createdAt?: Date | string;
 }
-
-const diffStyle: Record<string, string> = {
-  emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-  blue: 'bg-blue-50 text-blue-600 border-blue-100',
-  violet: 'bg-violet-50 text-violet-700 border-violet-200',
-  orange: 'bg-orange-50 text-orange-700 border-orange-200',
-  red: 'bg-red-50 text-red-700 border-red-200',
-};
 
 const SORT_OPTIONS = [
   { value: 'newest', label: '최신순' },
@@ -157,7 +150,7 @@ function MaterialCard({
 }) {
   const title = buildMaterialTitle(item);
   const subtitle = buildMaterialSubline(item) || item.bookTitle || item.subject || item.type;
-  const difficultyTone = diffStyle[DIFFICULTY_COLOR[item.difficulty] || 'blue'];
+  const difficultyTone = getDifficultyBadgeClass(DIFFICULTY_COLOR[item.difficulty], 'softOutline');
   const price = getPriceLabel(item);
   const preview = item.previewImages?.[0] || null;
   const fileFormatLabel = getMaterialFileFormatLabel(item);
@@ -309,8 +302,12 @@ export default async function MaterialsPage({
   const session = await auth();
   if (!session) redirect('/m');
 
-  const user = session.user as { role?: string };
+  const user = session.user as { role?: string; teacherApprovalStatus?: string };
   const role = user.role || 'student';
+
+  if (role === 'teacher' && user.teacherApprovalStatus !== 'approved') {
+    redirect('/m?approval=pending');
+  }
 
   const cookieStore = await cookies();
   const modeCookie = cookieStore.get('dre-mode')?.value;

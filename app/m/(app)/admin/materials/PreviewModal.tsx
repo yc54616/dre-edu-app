@@ -15,14 +15,7 @@ import {
   type MaterialSourceCategory,
 } from '@/lib/constants/material';
 import { buildMaterialTitle, resolveSourceCategory } from '@/lib/material-display';
-
-const diffStyle: Record<string, string> = {
-  emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  blue:    'bg-blue-100 text-blue-700 border-blue-200',
-  violet:  'bg-violet-100 text-violet-700 border-violet-200',
-  orange:  'bg-orange-100 text-orange-700 border-orange-200',
-  red:     'bg-red-100 text-red-700 border-red-200',
-};
+import { getDifficultyBadgeClass } from '@/lib/material-difficulty-style';
 
 interface MaterialPreview {
   materialId:     string;
@@ -188,7 +181,7 @@ export default function PreviewModal({ material }: Props) {
                 <div className="lg:col-span-2 space-y-4">
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <div className="flex items-center gap-2 flex-wrap mb-3">
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${diffStyle[dc] || diffStyle.blue}`}>
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${getDifficultyBadgeClass(dc, 'strongOutline')}`}>
                         {DIFFICULTY_LABEL[material.difficulty] || '표준'}
                       </span>
                       <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">{material.type}</span>

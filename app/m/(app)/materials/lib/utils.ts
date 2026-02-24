@@ -1,4 +1,5 @@
 import { buildMaterialTitle } from '@/lib/material-display';
+import { MATERIAL_LIST_DIFF_STYLE } from '@/lib/material-difficulty-style';
 
 export type MaterialCardData = {
   materialId: string;
@@ -23,13 +24,7 @@ export type MaterialCardData = {
   createdAt?: Date | string | null;
 };
 
-export const diffStyle: Record<string, string> = {
-  emerald: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
-  blue: 'bg-blue-100 text-blue-700 border border-blue-200',
-  violet: 'bg-violet-100 text-violet-700 border border-violet-200',
-  orange: 'bg-orange-100 text-orange-700 border border-orange-200',
-  red: 'bg-red-100 text-red-700 border border-red-200',
-};
+export const diffStyle: Record<string, string> = MATERIAL_LIST_DIFF_STYLE;
 
 export function rankStyle(rank: number) {
   if (rank === 1) return { box: 'bg-amber-50 border border-amber-200', text: 'text-amber-500' };
@@ -38,20 +33,7 @@ export function rankStyle(rank: number) {
   return { box: 'bg-slate-50 border border-slate-200', text: 'text-slate-400' };
 }
 
-export function buildTitle(m: {
-  sourceCategory?: string;
-  publisher?: string | null;
-  bookTitle?: string | null;
-  schoolName?: string | null;
-  schoolLevel?: string | null;
-  year?: number | null;
-  gradeNumber?: number | null;
-  semester?: number | null;
-  subject: string;
-  topic?: string | null;
-}) {
-  return buildMaterialTitle(m);
-}
+export const buildTitle = buildMaterialTitle;
 
 export function isNewMaterial(createdAt?: Date | string | null) {
   if (!createdAt) return false;

@@ -49,10 +49,6 @@ export interface IProblem extends Document {
   createdAt: Date;
 }
 
-const DIFFICULTY_RATING: Record<number, number> = {
-  1: 600, 2: 800, 3: 1000, 4: 1300, 5: 1600,
-};
-
 const problemSchema = new Schema<IProblem>({
   problemId: {
     type: String,
@@ -79,8 +75,6 @@ const problemSchema = new Schema<IProblem>({
 
 problemSchema.index({ subject: 1, topic: 1, category: 1, difficulty: 1 });
 problemSchema.index({ difficultyRating: 1 });
-
-// DIFFICULTY_RATING exposed as a plain export (not statics to avoid type conflict)
 
 const Problem: Model<IProblem> =
   mongoose.models.Problem || mongoose.model<IProblem>('Problem', problemSchema);

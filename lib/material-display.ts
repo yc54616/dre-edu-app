@@ -3,6 +3,7 @@ import {
   MATERIAL_TYPES_BY_SOURCE,
   type MaterialSourceCategory,
 } from '@/lib/constants/material';
+import { normalizeText } from '@/lib/api-helpers';
 
 export interface MaterialDisplayData {
   sourceCategory?: string | null;
@@ -25,10 +26,6 @@ export function normalizeSourceCategory(value: unknown): MaterialSourceCategory 
     return value as MaterialSourceCategory;
   }
   return 'school_exam';
-}
-
-function normalizeText(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
 }
 
 function hasNonEmptyEbookToc(value: unknown): boolean {

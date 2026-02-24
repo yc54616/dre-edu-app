@@ -1,54 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
 import CommunityUpgradeProduct from '@/lib/models/CommunityUpgradeProduct';
+import type { CommunityUpgradeProductLean } from '@/lib/community-upgrade';
+import {
+  normalizeText,
+  normalizeKey,
+  isDuplicateKeyError,
+  parseAmount,
+  parseSortOrder,
+} from '@/lib/api-helpers';
+import { ensureAdmin } from '@/lib/ensure-admin';
 
 export const dynamic = 'force-dynamic';
-
-type CommunityUpgradeProductLean = {
-  productId?: string;
-  key?: string;
-  name?: string;
-  shortLabel?: string;
-  amount?: number;
-  sortOrder?: number;
-  isActive?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
-
-const normalizeText = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
-const normalizeKey = (value: unknown) => normalizeText(value).toLowerCase();
-
-const parseAmount = (value: unknown) => {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return null;
-  if (!Number.isInteger(parsed)) return null;
-  if (parsed < 0 || parsed > 1000000000) return null;
-  return parsed;
-};
-
-const parseSortOrder = (value: unknown) => {
-  if (typeof value === 'undefined') return 0;
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return null;
-  return Math.trunc(parsed);
-};
-
-const isDuplicateKeyError = (error: unknown) => {
-  if (!error || typeof error !== 'object') return false;
-  const maybeCode = (error as { code?: unknown }).code;
-  if (maybeCode === 11000) return true;
-  const message = (error as { message?: unknown }).message;
-  return typeof message === 'string' && message.includes('E11000');
-};
-
-const ensureAdmin = async () => {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session || role !== 'admin') return null;
-  return session;
-};
 
 const toProductDTO = (doc: CommunityUpgradeProductLean) => ({
   productId: normalizeText(doc.productId),

@@ -1,5 +1,6 @@
 import connectMongo from '@/lib/mongoose';
 import CommunityUpgradeProduct from '@/lib/models/CommunityUpgradeProduct';
+import { normalizeText, normalizeKey, isDuplicateKeyError } from '@/lib/api-helpers';
 
 export type CommunityUpgradeProductInfo = {
   productId: string;
@@ -13,7 +14,7 @@ export type CommunityUpgradeProductInfo = {
   updatedAt: Date;
 };
 
-type CommunityUpgradeProductLean = {
+export type CommunityUpgradeProductLean = {
   productId?: string;
   key?: string;
   name?: string;
@@ -44,9 +45,6 @@ const DEFAULT_COMMUNITY_UPGRADE_PRODUCTS = [
   },
 ] as const;
 
-const normalizeText = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
-const normalizeKey = (value: unknown) => normalizeText(value).toLowerCase();
-
 const toProductInfo = (doc: CommunityUpgradeProductLean): CommunityUpgradeProductInfo => ({
   productId: normalizeText(doc.productId),
   key: normalizeKey(doc.key),
@@ -58,14 +56,6 @@ const toProductInfo = (doc: CommunityUpgradeProductLean): CommunityUpgradeProduc
   createdAt: doc.createdAt ? new Date(doc.createdAt) : new Date(0),
   updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : new Date(0),
 });
-
-const isDuplicateKeyError = (error: unknown) => {
-  if (!error || typeof error !== 'object') return false;
-  const maybeCode = (error as { code?: unknown }).code;
-  if (maybeCode === 11000) return true;
-  const message = (error as { message?: unknown }).message;
-  return typeof message === 'string' && message.includes('E11000');
-};
 
 export async function seedDefaultCommunityUpgradeProductsIfEmpty() {
   await connectMongo();

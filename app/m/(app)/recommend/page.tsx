@@ -10,21 +10,14 @@ import {
   getSimilarTeacherRecs,
   ratingToLevel,
 } from '@/lib/recommendation';
-import { DIFFICULTY_LABEL, DIFFICULTY_COLOR } from '@/lib/models/Material';
+import { DIFFICULTY_LABEL, DIFFICULTY_COLOR } from '@/lib/constants/material';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Sparkles, BookOpen, ShoppingBag, TrendingUp, Star, Users, LayoutGrid, Rows3 } from 'lucide-react';
 import { buildMaterialTitle, buildMaterialSubline } from '@/lib/material-display';
+import { getDifficultyBadgeClass } from '@/lib/material-difficulty-style';
 
 export const dynamic = 'force-dynamic';
-
-const diffStyle: Record<string, string> = {
-  emerald: 'bg-emerald-50 text-emerald-600',
-  blue: 'bg-blue-50 text-blue-600',
-  violet: 'bg-violet-50 text-violet-700',
-  orange: 'bg-orange-50 text-orange-700',
-  red: 'bg-red-50 text-red-700',
-};
 
 type RecommendMaterial = {
   materialId: string;
@@ -118,7 +111,7 @@ function RecommendMaterialCard({
 
       <div className={view === 'list' ? 'min-w-0 flex-1 flex flex-col' : 'p-5'}>
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full ${diffStyle[dc]}`}>
+          <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full ${getDifficultyBadgeClass(dc, 'softTint')}`}>
             {DIFFICULTY_LABEL[m.difficulty]}
           </span>
           <span className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full font-bold truncate max-w-[120px]">

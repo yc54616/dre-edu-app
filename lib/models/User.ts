@@ -57,7 +57,7 @@ const userSchema = new Schema<IUser>({
   username: { type: String, required: true, trim: true },
   password: { type: String, required: true },
   role:     { type: String, enum: ['admin', 'teacher', 'student'], default: 'student' },
-  teacherApprovalStatus: { type: String, enum: ['approved', 'pending'], default: 'approved' },
+  teacherApprovalStatus: { type: String, enum: ['approved', 'pending'], default: 'pending' },
   emailVerified: { type: Boolean, default: true },
   verifyTokenHash: { type: String, default: null },
   verifyTokenExpires: { type: Date, default: null },

@@ -15,7 +15,7 @@ const photos = [
         title: '카페형 자습 & 코칭 존'
     },
     {
-        src: '/images/facility_coaching.png',
+        src: '/images/facility_classroom2.jpg',
         alt: '1:1 코칭',
         title: '1:1 맞춤 코칭'
     }

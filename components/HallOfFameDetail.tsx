@@ -5,24 +5,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Quote, Award, Trophy, Medal, GraduationCap } from 'lucide-react';
 import {
     clampReviewStars,
-    DEFAULT_HALL_OF_FAME_ADMISSIONS,
-    DEFAULT_HALL_OF_FAME_REVIEWS,
     type HallOfFameAdmission,
     type HallOfFameReview,
 } from '@/lib/hall-of-fame';
 
 interface Props {
-    admissions?: HallOfFameAdmission[];
-    reviews?: HallOfFameReview[];
+    admissions: HallOfFameAdmission[];
+    reviews: HallOfFameReview[];
 }
 
 export default function HallOfFameDetail({
-    admissions = DEFAULT_HALL_OF_FAME_ADMISSIONS,
-    reviews = DEFAULT_HALL_OF_FAME_REVIEWS,
+    admissions,
+    reviews,
 }: Props) {
     const [activeTab, setActiveTab] = useState<'admission' | 'review'>('admission');
-    const admissionItems = admissions.length > 0 ? admissions : DEFAULT_HALL_OF_FAME_ADMISSIONS;
-    const reviewItems = reviews.length > 0 ? reviews : DEFAULT_HALL_OF_FAME_REVIEWS;
+    const admissionItems = admissions;
+    const reviewItems = reviews;
 
     return (
         <section className="hof-no-inner-scroll relative min-h-screen overflow-x-hidden bg-white py-14 md:py-24">

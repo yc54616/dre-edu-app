@@ -55,13 +55,13 @@ export default function DirectorIntro() {
                         transition={{ duration: 0.6, delay: 0.2 }}
                     >
                         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 font-display leading-tight">
-                            "성적을 바꾸는<br />
-                            <span className="text-[var(--color-dre-blue)]">결정적 차이</span>를 만듭니다."
+                            &ldquo;성적을 바꾸는<br />
+                            <span className="text-[var(--color-dre-blue)]">결정적 차이</span>를 만듭니다.&rdquo;
                         </h2>
 
                         <div className="space-y-6 text-lg text-gray-600 mb-10 leading-relaxed">
                             <p>
-                                <strong>"꼴찌반을 1등반으로, 6등급을 2등급으로."</strong><br />
+                                <strong>&ldquo;꼴찌반을 1등반으로, 6등급을 2등급으로.&rdquo;</strong><br />
                                 단순히 공부만 시키는 것이 아닙니다. 학생의 가능성을 믿고,
                                 올바른 방향을 제시할 때 기적 같은 성장이 일어납니다.
                             </p>
@@ -71,7 +71,7 @@ export default function DirectorIntro() {
                             </p>
                             <p>
                                 서울대, 의대, 카이스트 입시부터 기초가 부족한 학생의 성적 향상까지.
-                                DRE는 <strong>'되는 방법'</strong>을 정확히 알고 있습니다.
+                                DRE는 <strong>&apos;되는 방법&apos;</strong>을 정확히 알고 있습니다.
                             </p>
                         </div>
 

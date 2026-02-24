@@ -2,7 +2,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import SectionDivider from './SectionDivider';
 
 const steps = [
     { id: 1, title: '입실', desc: '학습 준비' },

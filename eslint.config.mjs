@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Legacy submodule (separate runtime / lint rules)
+    "dre-edu/**",
   ]),
 ]);
 
