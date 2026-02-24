@@ -3,89 +3,29 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Quote, Award, Trophy, Medal, GraduationCap } from 'lucide-react';
+import {
+    clampReviewStars,
+    DEFAULT_HALL_OF_FAME_ADMISSIONS,
+    DEFAULT_HALL_OF_FAME_REVIEWS,
+    type HallOfFameAdmission,
+    type HallOfFameReview,
+} from '@/lib/hall-of-fame';
 
-// Mock Data for Admissions
-const admissions = [
-    {
-        id: 1,
-        univ: "서울대학교",
-        major: "의예과",
-        student: "김O준",
-        school: "OO고 3",
-        badge: "수시 합격",
-        desc: "DRE와 함께한 3년, 내신 1.0의 기적"
-    },
-    {
-        id: 2,
-        univ: "연세대학교",
-        major: "경영학과",
-        student: "이O아",
-        school: "OO고 3",
-        badge: "정시 합격",
-        desc: "수학 4등급에서 1등급으로, 수능 만점 달성"
-    },
-    {
-        id: 3,
-        univ: "고려대학교",
-        major: "컴퓨터공학과",
-        student: "박O진",
-        school: "OO고 3",
-        badge: "수시 합격",
-        desc: "체계적인 로드맵으로 꿈을 이루었습니다."
-    },
-];
+interface Props {
+    admissions?: HallOfFameAdmission[];
+    reviews?: HallOfFameReview[];
+}
 
-// Existing Reviews Data
-const reviews = [
-    {
-        id: 1,
-        name: "해바라기nn",
-        content: "여름방학 특강이 유명하더라구요! 나에게 딱 맞는 수업이라는 취지로 수준별 맞춤으로 진행되고 스케줄 조정도 된다고 하니 좋은것 같아요. 주3회 하루 180분 빠짝 해서 방학동안 수학 완벽 정리 하기 좋은 커리큘럼인것 같아요!",
-        tag: "학부모",
-        stars: 5
-    },
-    {
-        id: 2,
-        name: "ghj****",
-        content: "선생님께서 시험 대비 수준별 그리고 맞춤별 코칭 수업으로 엄청 꼼꼼하게 지도해 주십니다. 그리고 원장님이 학생 개개인의 파악하여 학습 방향을 제시 해 주시고 그 학생별 맞게 적정한 난이도와 적정한 양의 숙제를 내 주셔서 우리 아이도 잘 다니고 있어요.",
-        tag: "학부모",
-        stars: 5
-    },
-    {
-        id: 3,
-        name: "els****",
-        content: "엄마들 사이에서 유명한것 같아서 저도 보내봤는데 중간고사 대비도 잘해주시고 수준별, 개인별 맞춤 코칭수업으로 아이에게 꼭 맞는 적절한 난이도와 문제량을 주셔서 아이가 드디어 공부에 재미를 붙였어요 ㅎㅎ 감사합니다!!!",
-        tag: "학부모",
-        stars: 5
-    },
-    {
-        id: 4,
-        name: "김OO",
-        content: "수학을 포기할까 고민하던 중에 DRE를 만나고 희망을 찾았습니다. 모르는 부분을 끝까지 이해시켜 주시는 선생님 덕분에 성적이 30점이나 올랐어요!",
-        tag: "중3 재원생",
-        stars: 5
-    },
-    {
-        id: 5,
-        name: "carry031833",
-        content: "너무 잘가르쳐 줍니다.^^",
-        tag: "재원생",
-        stars: 5
-    },
-    {
-        id: 6,
-        name: "고3 학생",
-        content: "원장님이 2년 동안 잘 지도해주셔서 이번 수시 원서 쓸 때 정말 큰 도움이 됐어요. 감사합니다.",
-        tag: "고3 재원생",
-        stars: 5
-    }
-];
-
-export default function HallOfFameDetail() {
+export default function HallOfFameDetail({
+    admissions = DEFAULT_HALL_OF_FAME_ADMISSIONS,
+    reviews = DEFAULT_HALL_OF_FAME_REVIEWS,
+}: Props) {
     const [activeTab, setActiveTab] = useState<'admission' | 'review'>('admission');
+    const admissionItems = admissions.length > 0 ? admissions : DEFAULT_HALL_OF_FAME_ADMISSIONS;
+    const reviewItems = reviews.length > 0 ? reviews : DEFAULT_HALL_OF_FAME_REVIEWS;
 
     return (
-        <section className="py-16 md:py-24 bg-white min-h-screen relative overflow-hidden">
+        <section className="hof-no-inner-scroll relative min-h-screen overflow-x-hidden bg-white py-14 md:py-24">
             {/* Background Pattern */}
             <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-gray-50 to-white -z-10" />
 
@@ -96,49 +36,55 @@ export default function HallOfFameDetail() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
-                    className="rounded-3xl bg-white p-8 md:p-12 mb-20 relative overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-gray-100 hover:shadow-[0_25px_60px_-12px_rgba(0,0,0,0.2)] transition-shadow duration-500"
+                    className="relative mb-14 overflow-hidden rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] transition-shadow duration-500 hover:shadow-[0_25px_60px_-12px_rgba(0,0,0,0.2)] sm:p-8 md:mb-20 md:p-12"
                 >
                     <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none" />
                     <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--color-dre-blue)] via-[var(--color-dre-blue-light)] to-blue-300" />
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 relative z-10 divide-x divide-transparent md:divide-gray-100">
+                    <div className="relative z-10 grid grid-cols-2 gap-5 divide-x divide-transparent sm:gap-6 md:grid-cols-4 md:gap-8 md:divide-gray-100">
                         <div className="text-center group flex flex-col items-center">
-                            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 group-hover:bg-[var(--color-dre-blue)] group-hover:text-white group-hover:shadow-lg">
+                            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 transition-transform duration-300 group-hover:scale-110 group-hover:bg-[var(--color-dre-blue)] group-hover:text-white group-hover:shadow-lg sm:mb-4 sm:h-16 sm:w-16">
                                 <Trophy className="w-8 h-8 text-[var(--color-dre-blue)] group-hover:text-white transition-colors" />
                             </div>
-                            <div className="text-3xl font-bold text-gray-900 mb-1 font-display tracking-tight">Goal</div>
-                            <div className="text-sm text-gray-500 font-medium">목표 대학 합격</div>
+                            <div className="mb-1 font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Goal</div>
+                            <div className="text-xs font-medium text-gray-500 sm:text-sm">목표 대학 합격</div>
                         </div>
                         <div className="text-center group flex flex-col items-center md:border-l border-gray-100">
-                            <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 group-hover:bg-indigo-500 group-hover:text-white group-hover:shadow-lg">
+                            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 transition-transform duration-300 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white group-hover:shadow-lg sm:mb-4 sm:h-16 sm:w-16">
                                 <Medal className="w-8 h-8 text-indigo-500 group-hover:text-white transition-colors" />
                             </div>
-                            <div className="text-3xl font-bold text-gray-900 mb-1 font-display tracking-tight">Growth</div>
-                            <div className="text-sm text-gray-500 font-medium">놀라운 성적 향상</div>
+                            <div className="mb-1 font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Growth</div>
+                            <div className="text-xs font-medium text-gray-500 sm:text-sm">놀라운 성적 향상</div>
                         </div>
                         <div className="text-center group flex flex-col items-center md:border-l border-gray-100">
-                            <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 group-hover:bg-purple-500 group-hover:text-white group-hover:shadow-lg">
+                            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 transition-transform duration-300 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white group-hover:shadow-lg sm:mb-4 sm:h-16 sm:w-16">
                                 <Award className="w-8 h-8 text-purple-500 group-hover:text-white transition-colors" />
                             </div>
-                            <div className="text-3xl font-bold text-gray-900 mb-1 font-display tracking-tight">Custom</div>
-                            <div className="text-sm text-gray-500 font-medium">1:1 맞춤 로드맵</div>
+                            <div className="mb-1 font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Custom</div>
+                            <div className="text-xs font-medium text-gray-500 sm:text-sm">1:1 맞춤 로드맵</div>
                         </div>
                         <div className="text-center group flex flex-col items-center md:border-l border-gray-100">
-                            <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 group-hover:bg-teal-500 group-hover:text-white group-hover:shadow-lg">
+                            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 transition-transform duration-300 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-white group-hover:shadow-lg sm:mb-4 sm:h-16 sm:w-16">
                                 <GraduationCap className="w-8 h-8 text-teal-500 group-hover:text-white transition-colors" />
                             </div>
-                            <div className="text-3xl font-bold text-gray-900 mb-1 font-display tracking-tight">Expert</div>
-                            <div className="text-sm text-gray-500 font-medium">입시 전문 코치진</div>
+                            <div className="mb-1 font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Expert</div>
+                            <div className="text-xs font-medium text-gray-500 sm:text-sm">입시 전문 코치진</div>
                         </div>
                     </div>
                 </motion.div>
 
                 {/* Tabs */}
-                <div className="flex justify-center mb-16 relative z-20">
-                    <div className="bg-gray-100/80 backdrop-blur-md p-1.5 rounded-full flex relative shadow-inner">
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.35 }}
+                    transition={{ duration: 0.45, ease: 'easeOut' }}
+                    className="relative z-20 mb-10 flex justify-center md:mb-16"
+                >
+                    <div className="flex max-w-full items-center gap-1 overflow-x-auto overflow-y-hidden rounded-full bg-gray-100/80 p-1.5 shadow-inner backdrop-blur-md [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                         <button
                             onClick={() => setActiveTab('admission')}
-                            className={`relative z-10 px-8 py-3.5 rounded-full text-base font-bold transition-colors duration-300 ${activeTab === 'admission' ? 'text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`relative z-10 shrink-0 rounded-full px-5 py-2.5 text-sm font-bold transition-colors duration-300 sm:px-7 sm:py-3 sm:text-base ${activeTab === 'admission' ? 'text-white' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             {activeTab === 'admission' && (
                                 <motion.div
@@ -148,12 +94,12 @@ export default function HallOfFameDetail() {
                                 />
                             )}
                             <span className="relative z-10 flex items-center gap-2">
-                                🏆 합격 명예의 전당
+                                합격 명예의 전당
                             </span>
                         </button>
                         <button
                             onClick={() => setActiveTab('review')}
-                            className={`relative z-10 px-8 py-3.5 rounded-full text-base font-bold transition-colors duration-300 ${activeTab === 'review' ? 'text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`relative z-10 shrink-0 rounded-full px-5 py-2.5 text-sm font-bold transition-colors duration-300 sm:px-7 sm:py-3 sm:text-base ${activeTab === 'review' ? 'text-white' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             {activeTab === 'review' && (
                                 <motion.div
@@ -163,14 +109,14 @@ export default function HallOfFameDetail() {
                                 />
                             )}
                             <span className="relative z-10 flex items-center gap-2">
-                                💬 생생 수강 후기
+                                생생 수강 후기
                             </span>
                         </button>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Content Area */}
-                <div className="relative min-h-[400px]">
+                <div className="relative min-h-[400px] overflow-x-hidden">
                     <AnimatePresence mode="wait">
                         {activeTab === 'admission' ? (
                             <motion.div
@@ -179,16 +125,16 @@ export default function HallOfFameDetail() {
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: -20, scale: 0.98 }}
                                 transition={{ duration: 0.4 }}
-                                className="grid md:grid-cols-3 gap-8"
+                                className="grid gap-6 md:grid-cols-3 md:gap-8"
                             >
                                 {/* Admission Cards */}
-                                {admissions.map((item, index) => (
+                                {admissionItems.map((item, index) => (
                                     <motion.div
                                         key={item.id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.1 }}
-                                        className="bg-white rounded-3xl p-8 border border-gray-100 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-2 relative overflow-hidden group"
+                                        className="group relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)] transition-shadow duration-300 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] sm:p-8"
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50/50 z-0" />
                                         <div className="absolute -right-6 -top-6 w-32 h-32 bg-[var(--color-dre-blue)]/[0.03] rounded-full blur-2xl group-hover:bg-[var(--color-dre-blue)]/[0.08] transition-colors duration-500" />
@@ -201,12 +147,12 @@ export default function HallOfFameDetail() {
                                             <div className="inline-flex items-center px-4 py-1.5 bg-blue-50/80 text-[var(--color-dre-blue)] text-sm font-bold rounded-full mb-6 backdrop-blur-sm border border-blue-100/50">
                                                 {item.badge}
                                             </div>
-                                            <h3 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">{item.univ}</h3>
+                                            <h3 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{item.univ}</h3>
                                             <p className="text-[var(--color-dre-blue)] mb-8 text-base font-semibold">{item.major}</p>
 
                                             <div className="border-t border-gray-100/80 pt-6">
-                                                <p className="text-gray-800 font-bold text-lg mb-3 leading-snug">"{item.desc}"</p>
-                                                <p className="text-gray-500 text-sm font-medium">{item.student} ({item.school})</p>
+                                                <p className="mb-4 text-[14px] font-medium leading-relaxed text-gray-700 sm:text-[15px]">&ldquo;{item.desc}&rdquo;</p>
+                                                <p className="text-xs font-semibold tracking-wide text-gray-400 uppercase sm:text-sm">{item.student} · {item.school}</p>
                                             </div>
                                         </div>
                                     </motion.div>
@@ -216,8 +162,8 @@ export default function HallOfFameDetail() {
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: admissions.length * 0.1 }}
-                                    className="bg-gray-50/50 rounded-3xl p-8 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-center opacity-70 min-h-[300px] hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                                    transition={{ delay: admissionItems.length * 0.1 }}
+                                    className="flex min-h-[240px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-6 text-center opacity-70 transition-colors hover:border-gray-300 hover:bg-gray-50 sm:min-h-[300px] sm:p-8"
                                 >
                                     <Trophy size={48} className="text-gray-300 mb-4" />
                                     <h3 className="text-xl font-bold text-gray-400 mb-2">Next Hero</h3>
@@ -234,15 +180,15 @@ export default function HallOfFameDetail() {
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: -20, scale: 0.98 }}
                                 transition={{ duration: 0.4 }}
-                                className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6"
                             >
-                                {reviews.map((review, index) => (
+                                {reviewItems.map((review, index) => (
                                     <motion.div
                                         key={review.id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.05 }}
-                                        className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 relative group overflow-hidden"
+                                        className="group relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-shadow duration-300 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] sm:p-8"
                                     >
                                         <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                                             <Quote size={80} className="text-gray-50 transform -translate-y-4 translate-x-4 rotate-12" />
@@ -251,14 +197,14 @@ export default function HallOfFameDetail() {
                                         <div className="relative z-10">
                                             <div className="flex items-center justify-between mb-6">
                                                 <div className="flex bg-yellow-50 px-3 py-1.5 rounded-full items-center gap-1">
-                                                    {[...Array(review.stars)].map((_, i) => (
+                                                    {[...Array(clampReviewStars(review.stars))].map((_, i) => (
                                                         <Star key={i} size={14} className="text-yellow-400 fill-yellow-400" />
                                                     ))}
                                                 </div>
                                                 <Quote size={24} className="text-gray-200 group-hover:text-[var(--color-dre-blue)]/20 transition-colors" />
                                             </div>
-                                            <p className="text-gray-700 leading-relaxed mb-8 font-medium text-[15px] line-clamp-4 group-hover:line-clamp-none transition-all">
-                                                "{review.content}"
+                                            <p className="mb-7 text-[14px] font-medium leading-relaxed text-gray-700 sm:mb-8 sm:text-[15px]">
+                                                &ldquo;{review.content}&rdquo;
                                             </p>
                                             <div className="flex items-center mt-auto border-t border-gray-50 pt-6">
                                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 font-bold mr-4 shadow-inner text-lg">
@@ -280,4 +226,3 @@ export default function HallOfFameDetail() {
         </section>
     );
 }
-

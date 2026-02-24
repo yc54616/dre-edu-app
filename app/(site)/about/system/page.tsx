@@ -9,8 +9,8 @@ export default function SystemPage() {
             <PageHero
                 title="DRE 학습 시스템"
                 subtitle="DRE SYSTEM"
-                description="꿈을 현실로 만드는 DRE만의 체계적인 10단계 학습 프로세스"
-                bgImage="/images/classroom_1.png"
+                description="매일 반복하는 DRE 10단계 학습 과정"
+                bgImage="/images/facility_lobby.jpg"
             />
             <SystemDetail />
 

@@ -110,7 +110,7 @@ export default function RegisterForm() {
       <button
         type="submit"
         disabled={saving}
-        className="m-detail-btn-primary flex items-center gap-2 px-5 py-2.5 text-sm rounded-xl disabled:opacity-50"
+        className="m-detail-btn-primary flex w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm disabled:opacity-50 sm:w-auto"
       >
         {saving ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
         {saving ? '생성 중...' : '계정 생성'}

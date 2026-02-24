@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
 import Material from '@/lib/models/Material';
 import MaterialFormWithPreview from '../../MaterialFormWithPreview';
+import { resolveSourceCategory } from '@/lib/material-display';
+import { resolveMaterialCurriculumFromSubject } from '@/lib/constants/material';
 
 export default async function EditMaterialPage({ params }: { params: Promise<{ materialId: string }> }) {
   const session = await auth();
@@ -14,10 +16,19 @@ export default async function EditMaterialPage({ params }: { params: Promise<{ m
 
   const material = await Material.findOne({ materialId }).lean();
   if (!material) notFound();
-
+  const resolvedCurriculum =
+    material.curriculum === 'legacy' || material.curriculum === 'revised_2022'
+      ? material.curriculum
+      : resolveMaterialCurriculumFromSubject(material.subject);
   const data = {
     materialId:     material.materialId,
+    curriculum:     resolvedCurriculum,
+    sourceCategory: resolveSourceCategory(material),
     type:           material.type,
+    publisher:      material.publisher || '',
+    bookTitle:      material.bookTitle || '',
+    ebookDescription: material.ebookDescription || '',
+    ebookToc:       Array.isArray(material.ebookToc) ? material.ebookToc.join('\n') : '',
     subject:        material.subject,
     topic:          material.topic,
     schoolLevel:    material.schoolLevel,
@@ -32,6 +43,8 @@ export default async function EditMaterialPage({ params }: { params: Promise<{ m
     difficultyRating:material.difficultyRating ?? 1000,
     fileType:        material.fileType       || 'pdf',
     targetAudience: material.targetAudience || 'student',
+    teacherProductType: '',
+    teacherClassPrepType: '',
     isFree:         material.isFree,
     priceProblem:   material.priceProblem,
     priceEtc:       material.priceEtc,

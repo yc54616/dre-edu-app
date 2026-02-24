@@ -5,19 +5,19 @@ import Image from 'next/image';
 
 const photos = [
     {
-        src: '/images/classroom_1.png',
+        src: '/images/facility_classroom.jpg',
         alt: '강의실 전경',
         title: '집중이 잘 되는 강의실'
     },
     {
-        src: '/images/study_area.png',
+        src: '/images/facility_study.jpg',
         alt: '자습 공간',
         title: '카페형 자습 & 코칭 존'
     },
     {
-        src: '/images/classroom_2.png',
-        alt: '강의실 내부',
-        title: '쾌적한 학습 환경'
+        src: '/images/facility_coaching.png',
+        alt: '1:1 코칭',
+        title: '1:1 맞춤 코칭'
     }
 ];
 

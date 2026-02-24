@@ -12,7 +12,12 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = (session.user as { id?: string }).id;
-  const body   = await req.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: '잘못된 요청 형식입니다.' }, { status: 400 });
+  }
   const { paymentKey, orderId, amount } = body;
 
   if (!paymentKey || !orderId || !amount) {

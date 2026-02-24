@@ -1,7 +1,8 @@
 'use client';
 
 import PageHero from '@/components/PageHero';
-import { MapPin, Phone, Clock, Mail } from 'lucide-react';
+import { MapPin, Phone, Clock } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function LocationPage() {
     return (
@@ -9,14 +10,20 @@ export default function LocationPage() {
             <PageHero
                 title="오시는 길"
                 subtitle="LOCATION"
-                description="DRE 수학학원으로 오시는 길을 안내해 드립니다."
-                bgImage="/images/classroom_1.png"
+                description="DRE 수학학원 위치와 연락처 안내"
+                bgImage="/images/facility_lobby.jpg"
             />
 
-            <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid md:grid-cols-2 gap-16">
+            <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16 lg:px-8 lg:py-24">
+                <div className="grid gap-8 md:grid-cols-2 md:gap-12 lg:gap-16">
                     {/* Map Area */}
-                    <div className="bg-gray-100 rounded-2xl overflow-hidden h-[400px] shadow-lg relative">
+                    <motion.div
+                        initial={{ opacity: 0, y: 28 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                        transition={{ duration: 0.45, ease: 'easeOut' }}
+                        className="relative h-[300px] overflow-hidden rounded-2xl bg-gray-100 shadow-lg sm:h-[360px] md:h-[400px]"
+                    >
                         {/* Naver Map Embed Placeholder */}
                         <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
                             <span className="text-gray-500 font-medium">네이버 지도 영역</span>
@@ -30,64 +37,88 @@ export default function LocationPage() {
                             loading="lazy"
                             referrerPolicy="no-referrer-when-downgrade"
                         ></iframe>
-                    </div>
+                    </motion.div>
 
                     {/* Info Area */}
-                    <div className="glass-card p-10 rounded-2xl relative overflow-hidden border border-white/20 shadow-lg">
+                    <motion.div
+                        initial={{ opacity: 0, y: 28 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                        transition={{ duration: 0.45, ease: 'easeOut', delay: 0.08 }}
+                        className="glass-card relative overflow-hidden rounded-2xl border border-white/20 p-6 shadow-lg sm:p-8 md:p-10"
+                    >
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-100/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 
-                        <h2 className="text-3xl font-bold text-gray-900 mb-8 relative z-10">DRE 수학학원</h2>
+                        <h2 className="relative z-10 mb-6 text-2xl font-bold text-gray-900 sm:mb-8 sm:text-3xl">DRE 수학학원</h2>
 
-                        <div className="space-y-8 relative z-10">
-                            <div className="flex items-start group">
-                                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-[var(--color-dre-blue)] mr-6 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                        <div className="relative z-10 space-y-6 sm:space-y-8">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, amount: 0.2 }}
+                                transition={{ duration: 0.4, ease: 'easeOut', delay: 0.12 }}
+                                className="flex items-start group"
+                            >
+                                <div className="mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[var(--color-dre-blue)] transition-transform duration-300 group-hover:scale-110 sm:mr-6 sm:h-12 sm:w-12">
                                     <MapPin size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">주소</h3>
-                                    <p className="text-gray-600 leading-relaxed">
+                                    <h3 className="mb-1 text-base font-bold text-gray-900 sm:mb-2 sm:text-lg">주소</h3>
+                                    <p className="text-sm leading-relaxed text-gray-600 sm:text-base">
                                         서울 중구 퇴계로 452-1 스타빌딩 B동 7층<br />
                                         (신당역 2번 출구 도보 3분)
                                     </p>
                                 </div>
-                            </div>
+                            </motion.div>
 
-                            <div className="flex items-start group">
-                                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-[var(--color-dre-blue)] mr-6 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, amount: 0.2 }}
+                                transition={{ duration: 0.4, ease: 'easeOut', delay: 0.18 }}
+                                className="flex items-start group"
+                            >
+                                <div className="mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[var(--color-dre-blue)] transition-transform duration-300 group-hover:scale-110 sm:mr-6 sm:h-12 sm:w-12">
                                     <Phone size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">전화번호</h3>
-                                    <p className="text-gray-600 text-lg font-medium">
+                                    <h3 className="mb-1 text-base font-bold text-gray-900 sm:mb-2 sm:text-lg">전화번호</h3>
+                                    <p className="text-base font-medium text-gray-600 sm:text-lg">
                                         0507-1346-1125
                                     </p>
                                 </div>
-                            </div>
+                            </motion.div>
 
-                            <div className="flex items-start group">
-                                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-[var(--color-dre-blue)] mr-6 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, amount: 0.2 }}
+                                transition={{ duration: 0.4, ease: 'easeOut', delay: 0.24 }}
+                                className="flex items-start group"
+                            >
+                                <div className="mr-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[var(--color-dre-blue)] transition-transform duration-300 group-hover:scale-110 sm:mr-6 sm:h-12 sm:w-12">
                                     <Clock size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">상담 시간</h3>
-                                    <ul className="text-gray-600 space-y-1">
+                                    <h3 className="mb-1 text-base font-bold text-gray-900 sm:mb-2 sm:text-lg">상담 시간</h3>
+                                    <ul className="space-y-1 text-sm text-gray-600 sm:text-base">
                                         <li>평일: 12:00 - 22:00</li>
                                         <li>토요일: 09:00 - 13:00</li>
                                         <li className="text-gray-400 text-sm pt-2">* 일요일 및 공휴일 휴무</li>
                                     </ul>
                                 </div>
-                            </div>
+                            </motion.div>
                         </div>
 
-                        <div className="mt-12 relative z-10">
+                        <div className="relative z-10 mt-8 sm:mt-12">
                             <a
                                 href="tel:050713461125"
-                                className="inline-block px-8 py-4 bg-[var(--color-dre-blue)] text-white font-bold rounded-xl hover:bg-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                                className="inline-block rounded-xl bg-[var(--color-dre-blue)] px-6 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-800 hover:shadow-xl sm:px-8 sm:py-4 sm:text-base"
                             >
                                 전화 상담 연결하기
                             </a>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </section>
         </main>

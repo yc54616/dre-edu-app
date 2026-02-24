@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { BookOpen, Clock3, Flame, ShoppingBag } from 'lucide-react';
 import { DIFFICULTY_COLOR, DIFFICULTY_LABEL } from '@/lib/models/Material';
 import { buildTitle, diffStyle, isNewMaterial, rankStyle, type MaterialCardData } from '../lib/utils';
@@ -12,10 +13,12 @@ interface Props {
 function MaterialThumb({ item, title }: { item: MaterialCardData; title: string }) {
   if (item.previewImages?.[0]) {
     return (
-      <img
+      <Image
         src={`/uploads/previews/${item.previewImages[0]}`}
-        alt={title}
-        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        alt={title || item.subject || item.type}
+        fill
+        sizes="(max-width: 640px) 56px, (max-width: 1280px) 33vw, 50vw"
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
       />
     );
   }
@@ -64,7 +67,7 @@ export default function TopMaterials({ isSearching, top10, newMaterials }: Props
                   <span className={`text-sm font-black ${style.text}`}>{rank}</span>
                 </div>
 
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-blue-50">
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-blue-50">
                   <MaterialThumb item={item} title={title} />
                 </div>
 
@@ -80,7 +83,7 @@ export default function TopMaterials({ isSearching, top10, newMaterials }: Props
 
                 <div className="text-right">
                   <p className="text-[12px] font-black text-slate-700">
-                    {item.isFree ? 'FREE' : `${(item.priceProblem ?? 0).toLocaleString()}원~`}
+                    {item.isFree ? '무료' : `${((item.priceProblem ?? 0) + (item.priceEtc ?? 0)).toLocaleString()}원~`}
                   </p>
                   <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">
                     <ShoppingBag size={11} /> {(item.downloadCount ?? 0).toLocaleString()}

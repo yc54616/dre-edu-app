@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Phone, Instagram, BookOpen, ClipboardCheck } from 'lucide-react';
+import { Plus, Phone, Instagram, BookOpen, ClipboardCheck, Users } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SocialConnect() {
     const [isOpen, setIsOpen] = useState(false);
 
     const toggleOpen = () => setIsOpen(!isOpen);
+    const cafeUrl = process.env.NEXT_PUBLIC_DRE_NAVER_CAFE_URL || 'https://cafe.naver.com/dremath';
 
     const menuItems = [
         {
@@ -19,25 +20,32 @@ export default function SocialConnect() {
             delay: 0.1
         },
         {
+            icon: <Users size={20} />,
+            label: '카페 바로가기',
+            href: cafeUrl,
+            color: 'bg-[#03C75A]',
+            delay: 0.18
+        },
+        {
             icon: <BookOpen size={20} />,
             label: '블로그',
             href: 'https://blog.naver.com/dre_institute', // Replace with actual URL
             color: 'bg-green-600', // Naver Green
-            delay: 0.2
+            delay: 0.26
         },
         {
             icon: <Instagram size={20} />,
             label: '인스타그램',
             href: 'https://www.instagram.com/dre_math2023/',
             color: 'bg-pink-500',
-            delay: 0.3
+            delay: 0.34
         },
         {
             icon: <ClipboardCheck size={20} />, // Use ClipboardCheck for Diagnosis
             label: '1:1 정밀 진단 신청',
             href: '/admission',
             color: 'bg-[var(--color-dre-blue)]',
-            delay: 0.4
+            delay: 0.42
         }
     ];
 

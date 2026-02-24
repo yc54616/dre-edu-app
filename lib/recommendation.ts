@@ -16,6 +16,13 @@ async function userSkillsCol() {
 }
 
 const K = 32;
+const MIN_RATING = 100;
+const MAX_RATING = 2000;
+const MATERIAL_K = 8;
+
+function clampRating(value: number): number {
+  return Math.round(Math.min(MAX_RATING, Math.max(MIN_RATING, value)));
+}
 
 export function expectedProbability(userRating: number, materialRating: number): number {
   return 1 / (1 + Math.pow(10, (materialRating - userRating) / 400));
@@ -28,7 +35,7 @@ export function updateRating(currentRating: number, difficulty: 'easy' | 'normal
   const isCorrect = difficulty === 'easy' || difficulty === 'normal';
   const p = expectedProbability(currentRating, materialRating);
   const delta = isCorrect ? K * (1 - p) : -K * p;
-  return Math.round(Math.min(2000, Math.max(100, currentRating + delta)));
+  return clampRating(currentRating + delta);
 }
 
 export interface RatingLevel {
@@ -97,11 +104,8 @@ export async function processFeedback(opts: {
   const totalCorrect  = ((doc?.totalCorrect  as number) ?? 0) + (isCorrect ? 1 : 0);
 
   const materialRatingBefore = material.difficultyRating;
-  const materialK     = 8;
-  const materialDelta = isCorrect ? -(materialK * (1 - p)) : materialK * p;
-  const newMaterialRating = Math.round(
-    Math.min(2000, Math.max(100, material.difficultyRating + materialDelta))
-  );
+  const materialDelta = isCorrect ? -(MATERIAL_K * (1 - p)) : MATERIAL_K * p;
+  const newMaterialRating = clampRating(material.difficultyRating + materialDelta);
 
   // native driver로 직접 저장 (Mongoose Map 우회)
   await col.updateOne(
@@ -114,6 +118,7 @@ export async function processFeedback(opts: {
           topic:                topicKey,
           ratingBefore:         oldRating,
           materialRatingBefore,
+          materialDelta,
           ratingChange,
           newRating:            newTopicRating,
           createdAt:            new Date(),
@@ -148,7 +153,15 @@ export async function undoFeedback(opts: {
   const doc = await col.findOne({ userId: userOid });
   if (!doc) throw new Error('사용자 정보 없음');
 
-  const feedbackHistory = (doc.feedbackHistory ?? {}) as Record<string, { difficulty: string; topic: string; ratingBefore: number; materialRatingBefore: number; ratingChange: number; newRating: number }>;
+  const feedbackHistory = (doc.feedbackHistory ?? {}) as Record<string, {
+    difficulty: string;
+    topic: string;
+    ratingBefore: number;
+    materialRatingBefore: number;
+    materialDelta?: number;
+    ratingChange: number;
+    newRating: number;
+  }>;
   const record = feedbackHistory[materialId];
   if (!record) throw new Error('되돌릴 피드백이 없습니다.');
 
@@ -186,7 +199,23 @@ export async function undoFeedback(opts: {
     },
   );
 
-  await Material.updateOne({ materialId }, { $set: { difficultyRating: materialRatingBefore } });
+  const expected = expectedProbability(ratingBefore, materialRatingBefore);
+  const deltaFromRecord =
+    typeof record.materialDelta === 'number'
+      ? record.materialDelta
+      : (isCorrect ? -(MATERIAL_K * (1 - expected)) : MATERIAL_K * expected);
+
+  const currentMaterial = await Material.findOne({ materialId })
+    .select('difficultyRating')
+    .lean();
+
+  if (currentMaterial) {
+    const revertedMaterialRating = clampRating(currentMaterial.difficultyRating - deltaFromRecord);
+    await Material.updateOne(
+      { materialId },
+      { $set: { difficultyRating: revertedMaterialRating } },
+    );
+  }
 }
 
 /**
@@ -215,8 +244,14 @@ export async function getRecommendations(
       ? Math.round(ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length)
       : 1000;
 
-  const materials = await Material.find({
+  const studentFilter = {
     isActive: true,
+    targetAudience: { $in: ['student', 'all'] },
+    fileType: { $in: ['pdf', 'both'] },
+  };
+
+  const materials = await Material.find({
+    ...studentFilter,
     difficultyRating: {
       $gte: overallRating - 350,
       $lte: overallRating + 350,
@@ -224,7 +259,7 @@ export async function getRecommendations(
   }).limit(100).lean();
 
   if (materials.length === 0) {
-    return Material.find({ isActive: true })
+    return Material.find(studentFilter)
       .sort({ difficultyRating: 1 })
       .limit(limit)
       .lean();
@@ -252,6 +287,16 @@ export async function getRecommendations(
     if (cnt < 2) {
       result.push(material as IMaterial);
       topicCount[key] = cnt + 1;
+    }
+  }
+
+  if (result.length < limit) {
+    const used = new Set(result.map((m) => m.materialId));
+    for (const { material } of scored) {
+      if (result.length >= limit) break;
+      if (used.has(material.materialId)) continue;
+      result.push(material as IMaterial);
+      used.add(material.materialId);
     }
   }
 
@@ -310,6 +355,12 @@ export async function getSimilarUserRecs(
 ): Promise<IMaterial[]> {
   await connectMongo();
 
+  const studentFilter = {
+    isActive: true,
+    targetAudience: { $in: ['student', 'all'] },
+    fileType: { $in: ['pdf', 'both'] },
+  };
+
   const col     = await userSkillsCol();
   const userOid = new mongoose.Types.ObjectId(userId);
 
@@ -321,11 +372,17 @@ export async function getSimilarUserRecs(
   const similarDocs = await col.find({
     userId:        { $ne: userOid },
     overallRating: { $gte: overallRating - 200, $lte: overallRating + 200 },
-  }).limit(50).toArray();
+  }).limit(50).toArray() as unknown as Array<{ userId: mongoose.Types.ObjectId }>;
 
   if (similarDocs.length === 0) return [];
 
   const similarUserIds = similarDocs.map((u) => u.userId.toString());
+  const studentObjectIds = await User.find({
+    _id: { $in: similarUserIds },
+    role: 'student',
+  }).distinct('_id');
+  const studentUserIds = studentObjectIds.map((id) => id.toString());
+  if (studentUserIds.length === 0) return [];
 
   // 3. 현재 유저가 이미 구매한 자료 제외
   const myOrders      = await Order.find({ userId, status: 'paid' }).lean();
@@ -335,7 +392,7 @@ export async function getSimilarUserRecs(
   const popular = await Order.aggregate([
     {
       $match: {
-        userId:     { $in: similarUserIds },
+        userId:     { $in: studentUserIds },
         materialId: { $nin: myMaterialIds },
         status:     'paid',
       },
@@ -348,11 +405,29 @@ export async function getSimilarUserRecs(
   const materialIds = popular.map((p: { _id: string }) => p._id);
   if (materialIds.length === 0) return [];
 
-  const materials = await Material.find({ materialId: { $in: materialIds }, isActive: true })
-    .limit(limit)
+  const materialDocs = await Material.find({
+    materialId: { $in: materialIds },
+    ...studentFilter,
+  })
     .lean();
 
-  return materials as IMaterial[];
+  const mapById = new Map(materialDocs.map((m) => [m.materialId, m]));
+  const ordered = materialIds
+    .map((id) => mapById.get(id))
+    .filter(Boolean) as IMaterial[];
+
+  if (ordered.length >= limit) return ordered.slice(0, limit);
+
+  const usedIds = new Set(ordered.map((m) => m.materialId));
+  const fill = await Material.find({
+    materialId: { $nin: [...usedIds, ...myMaterialIds] },
+    ...studentFilter,
+  })
+    .sort({ downloadCount: -1, createdAt: -1 })
+    .limit(limit - ordered.length)
+    .lean();
+
+  return [...ordered, ...(fill as IMaterial[])];
 }
 
 /**
@@ -368,7 +443,6 @@ export async function getTeacherRecommendations(
   const teacherFilter = {
     isActive: true,
     targetAudience: { $in: ['teacher', 'all'] },
-    fileType: { $in: ['hwp', 'both'] },
   };
 
   const myPaidOrders = await Order.find({ userId, status: 'paid' })
@@ -462,6 +536,16 @@ export async function getTeacherRecommendations(
     }
   }
 
+  if (result.length < limit) {
+    const used = new Set(result.map((m) => m.materialId));
+    for (const { material } of scored) {
+      if (result.length >= limit) break;
+      if (used.has(material.materialId)) continue;
+      result.push(material as IMaterial);
+      used.add(material.materialId);
+    }
+  }
+
   return result;
 }
 
@@ -478,7 +562,6 @@ export async function getSimilarTeacherRecs(
   const teacherFilter = {
     isActive: true,
     targetAudience: { $in: ['teacher', 'all'] },
-    fileType: { $in: ['hwp', 'both'] },
   };
 
   const myOrders = await Order.find({ userId, status: 'paid' }).lean();

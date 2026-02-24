@@ -1,26 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronLeft, BookOpen, ShoppingBag, Download, CheckCircle2,
   TrendingUp, TrendingDown, Minus, Lock, ShoppingCart,
-  FileText, School, Calendar, Users, RotateCcw,
+  FileText, School, Calendar, Users, RotateCcw, Check, LayoutGrid, List, ZoomIn, ZoomOut, X,
 } from 'lucide-react';
+import {
+  MATERIAL_SOURCE_CATEGORY_LABEL,
+  type MaterialSourceCategory,
+} from '@/lib/constants/material';
+import { buildMaterialTitle, buildMaterialSubline, resolveSourceCategory } from '@/lib/material-display';
 
 const diffStyle: Record<string, string> = {
-  emerald: 'bg-blue-50 text-blue-600 border-blue-100',
+  emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200',
   blue: 'bg-blue-50 text-blue-600 border-blue-100',
-  violet: 'bg-sky-50 text-sky-700 border-sky-200',
-  orange: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  red: 'bg-slate-100 text-slate-700 border-slate-200',
+  violet: 'bg-violet-50 text-violet-700 border-violet-200',
+  orange: 'bg-orange-50 text-orange-700 border-orange-200',
+  red: 'bg-red-50 text-red-700 border-red-200',
 };
 
 interface MaterialData {
   materialId: string;
+  sourceCategory?: MaterialSourceCategory;
   type: string;
+  publisher?: string;
+  bookTitle?: string;
+  ebookDescription?: string;
+  ebookToc?: string[];
   subject: string;
   topic: string;
   schoolLevel: string;
@@ -32,10 +43,13 @@ interface MaterialData {
   difficulty: number;
   difficultyLabel: string;
   difficultyColor: string;
+  fileType?: string;
+  targetAudience?: string;
   isFree: boolean;
   priceProblem: number;
   priceEtc: number;
   previewImages: string[];
+  pageCount?: number;
   viewCount: number;
   downloadCount: number;
   problemFile?: string | null;
@@ -44,9 +58,12 @@ interface MaterialData {
 
 interface RelatedMaterial {
   materialId: string;
+  sourceCategory?: MaterialSourceCategory;
   subject: string;
   topic: string;
   type: string;
+  publisher?: string;
+  bookTitle?: string;
   schoolName: string;
   year: number;
   gradeNumber: number;
@@ -56,9 +73,14 @@ interface RelatedMaterial {
   difficultyColor: string;
   isFree: boolean;
   priceProblem: number;
+  priceEtc?: number;
+  targetAudience?: string;
   previewImages: string[];
   downloadCount: number;
 }
+
+type SelectableFile = 'problem' | 'etc';
+type RelatedViewMode = 'grid' | 'list';
 
 export default function MaterialDetail({
   material,
@@ -66,27 +88,40 @@ export default function MaterialDetail({
   purchasedFileTypes = [],
   existingFeedback = null,
   relatedMaterials = [],
+  defaultRelatedViewMode = 'grid',
 }: {
   material: MaterialData;
   isLoggedIn: boolean;
   purchasedFileTypes?: string[];
   existingFeedback?: { difficulty: string; ratingChange: number; newRating: number } | null;
   relatedMaterials?: RelatedMaterial[];
+  defaultRelatedViewMode?: RelatedViewMode;
 }) {
+  const isTeacherMaterial = material.targetAudience === 'teacher';
   const showProblemOption = material.priceProblem > 0 || !!material.problemFile;
   const showEtcOption = material.priceEtc > 0 || !!material.etcFile;
+  const teacherPackageAmount = (material.priceProblem || 0) + (material.priceEtc || 0);
+  const purchasedSet = new Set(
+    purchasedFileTypes.filter((type): type is SelectableFile => type === 'problem' || type === 'etc')
+  );
+  const hasAnyPurchased = isTeacherMaterial ? purchasedSet.size > 0 : (purchasedSet.has('problem') || purchasedSet.has('etc'));
+  const hasPurchasedProblem = isTeacherMaterial ? hasAnyPurchased : purchasedSet.has('problem');
+  const hasPurchasedEtc = isTeacherMaterial ? hasAnyPurchased : purchasedSet.has('etc');
+  const canBuyProblem = !isTeacherMaterial && showProblemOption && !hasPurchasedProblem;
+  const canBuyEtc = !isTeacherMaterial && showEtcOption && !hasPurchasedEtc;
+  const hasBuyableOption = isTeacherMaterial ? !hasAnyPurchased : (canBuyProblem || canBuyEtc);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedFiles] = useState<string[]>([
-    ...(showProblemOption ? ['problem'] : []),
-    ...(showEtcOption ? ['etc'] : []),
+  const [selectedFiles, setSelectedFiles] = useState<SelectableFile[]>(() => [
+    ...(isTeacherMaterial ? [] : (canBuyProblem ? (['problem'] as SelectableFile[]) : [])),
+    ...(isTeacherMaterial ? [] : (canBuyEtc ? (['etc'] as SelectableFile[]) : [])),
   ]);
-  const selectedAmount =
-    (selectedFiles.includes('problem') ? material.priceProblem : 0) +
-    (selectedFiles.includes('etc') ? material.priceEtc : 0);
-  const purchaseUrl = selectedFiles.length > 0
-    ? `/m/purchase/${material.materialId}?files=${selectedFiles.join(',')}`
-    : `/m/purchase/${material.materialId}`;
+  const selectedAmount = isTeacherMaterial
+    ? teacherPackageAmount
+    : (
+      (selectedFiles.includes('problem') ? material.priceProblem : 0) +
+      (selectedFiles.includes('etc') ? material.priceEtc : 0)
+    );
 
   const [feedbackSent, setFeedbackSent] = useState(!!existingFeedback);
   const [feedbackResult, setFeedbackResult] = useState<{ ratingChange: number; newRating: number } | null>(
@@ -97,6 +132,9 @@ export default function MaterialDetail({
   const [feedbackError, setFeedbackError] = useState('');
   const [activePreview, setActivePreview] = useState(0);
   const [downloading, setDownloading] = useState<'problem' | 'etc' | null>(null);
+  const [relatedViewMode, setRelatedViewMode] = useState<RelatedViewMode>(defaultRelatedViewMode);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewZoom, setPreviewZoom] = useState(1);
 
   const handleDownload = async (type: 'problem' | 'etc') => {
     setDownloading(type);
@@ -178,283 +216,536 @@ export default function MaterialDetail({
     }
   };
 
-  const title = [
-    material.schoolName,
-    material.year ? `${material.year}년` : '',
-    material.gradeNumber ? `${material.gradeNumber}학년` : '',
-    material.semester ? `${material.semester}학기` : '',
-    material.subject,
-    material.topic,
-  ].filter(Boolean).join(' ');
+  const toggleFileSelection = (type: SelectableFile) => {
+    if (isTeacherMaterial) return;
+    if ((type === 'problem' && !canBuyProblem) || (type === 'etc' && !canBuyEtc)) return;
+    setSelectedFiles((prev) => (
+      prev.includes(type)
+        ? prev.filter((item) => item !== type)
+        : [...prev, type]
+    ));
+  };
+
+  const handlePurchaseClick = () => {
+    if (isTeacherMaterial) {
+      router.push(`/m/purchase/${material.materialId}`);
+      return;
+    }
+    if (selectedFiles.length === 0) return;
+    router.push(`/m/purchase/${material.materialId}?files=${selectedFiles.join(',')}`);
+  };
+
+  const title = buildMaterialTitle(material);
+  const subline = buildMaterialSubline(material);
+  const resolvedSourceCategory = resolveSourceCategory(material);
+  const sourceLabel = MATERIAL_SOURCE_CATEGORY_LABEL[resolvedSourceCategory] || '내신기출';
+  const isSchoolExam = resolvedSourceCategory === 'school_exam';
+  const isEbook = resolvedSourceCategory === 'ebook';
+  const toFileExtLabel = (fileName?: string | null): string | null => {
+    if (!fileName) return null;
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    if (!ext) return null;
+    if (ext === 'pdf') return 'PDF';
+    if (ext === 'hwp') return 'HWP';
+    if (ext === 'hwpx') return 'HWPX';
+    return ext.toUpperCase();
+  };
+  const fileFormatParts: string[] = [];
+  const problemFileExt = toFileExtLabel(material.problemFile);
+  const etcFileExt = toFileExtLabel(material.etcFile);
+  if (problemFileExt) fileFormatParts.push(`문제 ${problemFileExt}`);
+  if (etcFileExt) fileFormatParts.push(`${isTeacherMaterial ? '부가' : '기타'} ${etcFileExt}`);
+  const fallbackFileFormat = material.fileType === 'hwp'
+    ? 'HWP'
+    : material.fileType === 'both'
+      ? 'PDF · HWP'
+      : 'PDF';
+  const fileFormatValue = fileFormatParts.length > 0 ? fileFormatParts.join(' · ') : fallbackFileFormat;
+  const ebookTocItems = Array.isArray(material.ebookToc)
+    ? material.ebookToc.map((item) => item.trim()).filter(Boolean)
+    : [];
+  const detailRows = [
+    { key: 'sourceCategory', icon: <FileText size={15} />, label: '분류', value: sourceLabel },
+    { key: 'fileFormat', icon: <FileText size={15} />, label: '파일 형식', value: fileFormatValue },
+    ...(!isEbook
+      ? [
+          { key: 'subject', icon: <FileText size={15} />, label: '과목', value: material.subject || '-' },
+          { key: 'type', icon: <BookOpen size={15} />, label: '유형', value: material.type || '-' },
+        ]
+      : []),
+    ...(isSchoolExam
+      ? [
+          {
+            key: 'school',
+            icon: <School size={15} />,
+            label: '학교',
+            value: [material.schoolName, material.schoolLevel, material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-',
+          },
+          {
+            key: 'exam',
+            icon: <Calendar size={15} />,
+            label: '시험',
+            value: [material.year ? `${material.year}년` : '', material.semester ? `${material.semester}학기` : ''].filter(Boolean).join(' ') || '-',
+          },
+        ]
+      : isEbook
+        ? [
+            { key: 'publisher', icon: <School size={15} />, label: '출판사', value: material.publisher || '-' },
+            { key: 'bookTitle', icon: <BookOpen size={15} />, label: '도서명', value: material.bookTitle || '-' },
+            { key: 'year', icon: <Calendar size={15} />, label: '연도', value: material.year ? `${material.year}년` : '-' },
+          ]
+        : [
+            { key: 'publisher', icon: <School size={15} />, label: '출판사', value: material.publisher || '-' },
+            { key: 'bookTitle', icon: <BookOpen size={15} />, label: '교재명', value: material.bookTitle || '-' },
+            {
+              key: 'target',
+              icon: <Calendar size={15} />,
+              label: '대상',
+              value: [material.schoolLevel, material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-',
+            },
+            { key: 'year', icon: <Calendar size={15} />, label: '연도', value: material.year ? `${material.year}년` : '-' },
+          ]),
+    { key: 'topic', icon: <BookOpen size={15} />, label: isEbook ? '주제/키워드' : '단원/주제', value: material.topic || '-' },
+  ];
+
+  useEffect(() => {
+    if (!previewModalOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setPreviewModalOpen(false);
+        return;
+      }
+
+      if (event.key === 'ArrowRight' && material.previewImages.length > 1) {
+        setActivePreview((prev) => (prev + 1) % material.previewImages.length);
+        return;
+      }
+
+      if (event.key === 'ArrowLeft' && material.previewImages.length > 1) {
+        setActivePreview((prev) => (prev - 1 + material.previewImages.length) % material.previewImages.length);
+        return;
+      }
+
+      if (event.key === '+' || event.key === '=') {
+        setPreviewZoom((prev) => Math.min(3, Math.round((prev + 0.25) * 100) / 100));
+        return;
+      }
+
+      if (event.key === '-' || event.key === '_') {
+        setPreviewZoom((prev) => Math.max(1, Math.round((prev - 0.25) * 100) / 100));
+      }
+    };
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [previewModalOpen, material.previewImages.length]);
+
+  const openPreviewModal = () => {
+    if (material.previewImages.length === 0) return;
+    setPreviewZoom(1);
+    setPreviewModalOpen(true);
+  };
+
+  const closePreviewModal = () => {
+    setPreviewModalOpen(false);
+  };
 
   return (
     <div className="m-detail-page min-h-screen">
 
       {/* ── 페이지 헤더 ── */}
       <div className="m-detail-header">
-        <div className="m-detail-container max-w-5xl py-6 sm:py-8">
+        <div className="m-detail-container max-w-7xl py-5 sm:py-7">
           <button
             type="button"
             onClick={handleBackToList}
-            className="inline-flex items-center gap-1.5 text-base font-semibold text-gray-500 hover:text-blue-500 transition-colors mb-5 group"
+            className="group mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 transition-colors hover:text-blue-500 sm:mb-5 sm:text-base"
           >
             <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
             자료 목록으로
           </button>
 
-          <div className="flex items-start gap-3 flex-wrap mb-4">
-            <span className={`text-[12px] font-extrabold px-3.5 py-1.5 rounded-full border ${diffStyle[dc] || diffStyle.blue}`}>
-              {material.difficultyLabel}
-            </span>
-            <span className="text-[12px] text-gray-500 bg-gray-50 border border-gray-200 px-3.5 py-1.5 rounded-full font-bold">{material.type}</span>
-            {material.isFree && (
-              <span className="text-[12px] font-extrabold text-blue-600 bg-blue-100 border border-blue-200 px-3.5 py-1.5 rounded-full">FREE</span>
-            )}
-          </div>
+          <div className="m-detail-card p-5 sm:p-6">
+            <div className="min-w-0">
+              <p className="m-detail-kicker mb-2">자료 모음 상세</p>
+              <h1 className="m-detail-title break-words">
+                {title || material.bookTitle || material.subject}
+              </h1>
+              <p className="m-detail-subtitle mt-2">
+                {subline || material.bookTitle || material.subject}
+              </p>
 
-          <h1 className="m-detail-title mb-4">
-            {title || material.subject}
-          </h1>
-
-          <div className="flex items-center gap-4 text-sm text-gray-500 font-medium">
-            <span className="flex items-center gap-1.5"><ShoppingBag size={14} /> {material.downloadCount ?? 0}명 구매</span>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className={`rounded-full border px-2.5 py-1 text-[11px] font-extrabold ${diffStyle[dc] || diffStyle.blue}`}>
+                  {material.difficultyLabel}
+                </span>
+                <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-500">{material.type}</span>
+                <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-500">{sourceLabel}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── 콘텐츠 ── */}
-      <div className="m-detail-container max-w-5xl py-8">
-        <div className="grid lg:grid-cols-5 gap-6 lg:gap-8">
+      <div className="m-detail-container max-w-7xl py-6 sm:py-7">
+        <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
 
           {/* ── 좌측: 미리보기 ── */}
-          <div className="lg:col-span-3 space-y-5">
-            <div className="m-detail-card overflow-hidden p-2">
-              <div className="relative aspect-[3/4] bg-gray-50 rounded-xl overflow-hidden">
-                {material.previewImages.length > 0 ? (
-                  <>
-                    <img
-                      src={`/uploads/previews/${material.previewImages[activePreview]}`}
-                      alt="미리보기"
-                      className="w-full h-full object-cover"
-                    />
-                    {!material.isFree && (
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent from-50% to-white" />
-                    )}
-                  </>
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center">
-                    <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                      <BookOpen size={32} className="text-gray-300" />
-                    </div>
-                    <p className="text-base text-gray-300 font-medium">미리보기 없음</p>
-                  </div>
-                )}
-                {!material.isFree && material.previewImages.length > 0 && (
-                  <div className="absolute bottom-6 left-0 right-0 flex justify-center z-20 pointer-events-none">
-                    <div className="bg-white/90 backdrop-blur-md rounded-full px-5 py-3 flex items-center gap-2.5 shadow-lg border border-gray-100">
-                      <Lock size={14} className="text-gray-500" />
-                      <span className="text-[13px] text-gray-700 font-bold">구매 후 전체 열람 가능</span>
-                    </div>
-                  </div>
-                )}
+          <div className="space-y-5 lg:col-span-7">
+            <div className="m-detail-card overflow-hidden">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3.5 sm:px-5">
+                <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                  <BookOpen size={15} className="text-gray-400" />
+                  {material.pageCount && material.pageCount > 0
+                    ? `총 ${material.pageCount.toLocaleString()}페이지`
+                    : '총 페이지 정보 없음'}
+                </p>
+                <p className="text-xs font-semibold text-slate-400">
+                  {material.previewImages.length > 0 ? `미리보기 ${activePreview + 1} / ${material.previewImages.length}` : '미리보기 없음'}
+                </p>
               </div>
-              {material.previewImages.length > 1 && (
-                <div className="flex gap-2.5 p-3 overflow-x-auto">
-                  {material.previewImages.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActivePreview(i)}
-                      className={`w-[4.5rem] h-[6rem] rounded-xl overflow-hidden border-[3px] shrink-0 transition-all duration-200 ${i === activePreview
-                          ? 'border-blue-300 shadow-sm shadow-blue-100'
-                          : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'
-                        }`}
-                    >
-                      <img src={`/uploads/previews/${img}`} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
+              <div className="p-3 sm:p-4">
+                <div
+                  className={`relative aspect-[3/4] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 ${
+                    material.previewImages.length > 0 ? 'cursor-zoom-in' : ''
+                  }`}
+                  onClick={openPreviewModal}
+                >
+                  {material.previewImages.length > 0 ? (
+                    <>
+                      <Image
+                        src={`/uploads/previews/${material.previewImages[activePreview]}`}
+                        alt="미리보기"
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 60vw"
+                        className="object-contain bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openPreviewModal();
+                        }}
+                        className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm transition-colors hover:text-blue-500"
+                      >
+                        <ZoomIn size={13} />
+                        확대
+                      </button>
+                      {!material.isFree && (
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent from-50% to-white" />
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                      <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-100">
+                        <BookOpen size={32} className="text-gray-300" />
+                      </div>
+                      <p className="text-base text-gray-300 font-medium">미리보기 없음</p>
+                    </div>
+                  )}
+                  {!material.isFree && material.previewImages.length > 0 && (
+                    <div className="absolute bottom-6 left-0 right-0 z-20 flex justify-center pointer-events-none">
+                      <div className="flex items-center gap-2.5 rounded-full border border-gray-100 bg-white/90 px-5 py-3 shadow-md backdrop-blur-md">
+                        <Lock size={14} className="text-gray-500" />
+                        <span className="text-[13px] text-gray-700 font-semibold">구매 후 전체 열람 가능</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+                {material.previewImages.length > 1 && (
+                  <div className="m-scrollbar flex gap-2.5 overflow-x-auto p-3">
+                    {material.previewImages.map((img, i) => (
+                      <button
+                        type="button"
+                        key={i}
+                        onClick={() => setActivePreview(i)}
+                        className={`relative w-[4.5rem] h-[6rem] rounded-xl overflow-hidden border-[3px] shrink-0 transition-all duration-200 ${i === activePreview
+                            ? 'border-blue-300 shadow-sm shadow-blue-100'
+                            : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'
+                          }`}
+                      >
+                        <Image
+                          src={`/uploads/previews/${img}`}
+                          alt={`미리보기 ${i + 1}`}
+                          fill
+                          sizes="72px"
+                          className="object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="m-detail-soft flex items-center justify-between px-4 py-3 sm:px-4">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+                    <ShoppingBag size={12} className="text-gray-400" />
+                    {(material.downloadCount ?? 0).toLocaleString()}명 구매
+                  </div>
+                  <p className="text-xs font-semibold text-gray-500">
+                    조회 {material.viewCount.toLocaleString()}회
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* ── 우측: 정보 & 구매 ── */}
-          <div className="lg:col-span-2 space-y-4">
-
-            {/* 자료 정보 */}
-            <div className="m-detail-card p-6">
-              <p className="text-[11px] font-extrabold text-blue-500 uppercase tracking-widest mb-5 flex items-center gap-2">
-                <FileText size={14} /> 자료 상세 정보
-              </p>
-              <div className="space-y-0">
-                {[
-                  { icon: <FileText size={15} />, label: '과목', value: material.subject },
-                  { icon: <BookOpen size={15} />, label: '단원', value: material.topic || '전체' },
-                  {
-                    icon: <School size={15} />, label: '학교',
-                    value: [material.schoolName, material.schoolLevel, material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-'
-                  },
-                  {
-                    icon: <Calendar size={15} />, label: '시험',
-                    value: [material.year ? `${material.year}년` : '', material.semester ? `${material.semester}학기` : ''].filter(Boolean).join(' ') || '-'
-                  },
-                ].map(({ icon, label, value }) => (
-                  <div key={label} className="flex items-center gap-3 py-3.5 border-b border-gray-50 last:border-0">
-                    <span className="text-gray-400 shrink-0 bg-gray-50 p-2 rounded-xl">{icon}</span>
-                    <span className="text-[13px] text-gray-500 w-12 shrink-0 font-extrabold">{label}</span>
-                    <span className="text-[14px] font-bold text-gray-900 truncate">{value}</span>
+          <div className="space-y-4 lg:col-span-5">
+            <div className="space-y-4">
+              {/* 자료 정보 */}
+              <div className="m-detail-card overflow-hidden">
+                <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
+                  <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <FileText size={15} className="text-gray-400" />
+                    자료 상세 정보
+                  </p>
+                </div>
+                <div className="p-5 sm:p-6">
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    {detailRows.map(({ key, icon, label, value }) => (
+                      <div key={key} className="m-detail-soft px-3.5 py-3.5 sm:px-4">
+                        <p className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500">
+                          <span className="text-gray-400">{icon}</span>
+                          {label}
+                        </p>
+                        <p className="mt-1.5 text-[15px] font-semibold leading-6 text-slate-700 break-words">
+                          {value}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                  {isEbook && (
+                    <div className="mt-5 space-y-3 border-t border-gray-100 pt-5">
+                      <div className="m-detail-soft rounded-2xl p-4">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">책 소개</p>
+                        <p className="mt-2 text-[15px] leading-7 font-medium text-slate-700 whitespace-pre-line">
+                          {material.ebookDescription || '설명이 아직 등록되지 않았습니다.'}
+                        </p>
+                      </div>
+                      <div className="m-detail-soft rounded-2xl p-4">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">목차</p>
+                        {ebookTocItems.length > 0 ? (
+                          <ol className="mt-2 space-y-2">
+                            {ebookTocItems.map((item, idx) => (
+                              <li key={`${item}-${idx}`} className="flex items-start gap-2.5 text-[15px] font-medium text-slate-700">
+                                <span className="mt-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-100 px-1.5 text-[11px] font-bold text-blue-600">
+                                  {idx + 1}
+                                </span>
+                                <span className="leading-6">{item}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className="mt-2 text-[15px] text-slate-400">목차가 아직 등록되지 않았습니다.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 구매 카드 */}
+              <div className="m-detail-card overflow-hidden">
+                <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
+                  <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                    <ShoppingCart size={15} className="text-gray-400" />
+                    구매 / 다운로드
+                  </p>
+                </div>
+                <div className="relative p-5 sm:p-6">
+
+                  {/* 소셜 프루프 */}
+                  {(material.downloadCount ?? 0) > 0 && (
+                    <div className="flex items-center gap-2 mb-4 px-3 py-2.5 bg-blue-50/60 rounded-xl border border-blue-100">
+                      <ShoppingBag size={14} className="text-blue-500 shrink-0" />
+                      <p className="text-sm font-semibold text-blue-600">
+                        {material.downloadCount.toLocaleString()}명이 구매했습니다
+                      </p>
+                    </div>
+                  )}
+
+                {material.isFree ? (
+                  /* ── 무료 자료 ── */
+                  <div className="space-y-3">
+                    <p className="text-base text-gray-400 text-center font-medium">무료로 제공되는 자료입니다</p>
+                    {material.problemFile && (
+                      <button
+                        onClick={() => handleDownload('problem')}
+                        disabled={downloading === 'problem'}
+                        className="m-detail-btn-primary w-full py-4 text-base rounded-2xl disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
+                      >
+                        {downloading === 'problem'
+                          ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />다운로드 중...</>
+                          : <><Download size={18} />{isTeacherMaterial ? '자료 다운로드' : '문제지 다운로드'}</>
+                        }
+                      </button>
+                    )}
+                    {material.etcFile && (
+                      <button
+                        onClick={() => handleDownload('etc')}
+                        disabled={downloading === 'etc'}
+                        className="m-detail-btn-secondary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {downloading === 'etc'
+                          ? <><span className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />다운로드 중...</>
+                          : <><Download size={16} />{isTeacherMaterial ? '부가 자료 다운로드' : '답지 / 기타 다운로드'}</>
+                        }
+                      </button>
+                    )}
+                    {!material.problemFile && !material.etcFile && (
+                      <p className="text-center text-sm text-gray-400 py-2">파일 준비 중입니다</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {hasAnyPurchased && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 size={18} className="text-blue-400" />
+                          <p className="text-base font-semibold text-blue-600">
+                            {isTeacherMaterial ? '구매 완료' : (hasBuyableOption ? '일부 파일 구매 완료' : '구매 완료')}
+                          </p>
+                        </div>
+                        {hasPurchasedProblem && material.problemFile && (
+                          <button
+                            onClick={() => handleDownload('problem')}
+                            disabled={downloading === 'problem'}
+                            className="m-detail-btn-primary w-full py-4 text-base rounded-2xl disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
+                          >
+                            {downloading === 'problem'
+                              ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />다운로드 중...</>
+                              : <><Download size={18} />{isTeacherMaterial ? '자료 다운로드' : '문제지 다운로드'}</>
+                            }
+                          </button>
+                        )}
+                        {hasPurchasedEtc && material.etcFile && (
+                          <button
+                            onClick={() => handleDownload('etc')}
+                            disabled={downloading === 'etc'}
+                            className="m-detail-btn-secondary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {downloading === 'etc'
+                              ? <><span className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />다운로드 중...</>
+                              : <><Download size={16} />{isTeacherMaterial ? '부가 자료 다운로드' : '답지 / 기타 다운로드'}</>
+                            }
+                          </button>
+                        )}
+                        {((hasPurchasedProblem && !material.problemFile) || (hasPurchasedEtc && !material.etcFile)) && (
+                          <p className="text-center text-sm text-gray-400 py-2">일부 파일은 준비 중입니다</p>
+                        )}
+                      </div>
+                    )}
+
+                    {hasBuyableOption ? (
+                      isTeacherMaterial ? (
+                        <>
+                          <div className="m-detail-soft p-4 sm:p-5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-gray-700">교사용 자료 패키지</span>
+                              <span className="font-extrabold text-gray-900">{selectedAmount.toLocaleString()}원</span>
+                            </div>
+                            <p className="mt-2 text-xs text-gray-500">
+                              현재 자료의 본문/부가 파일을 묶음으로 구매합니다.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handlePurchaseClick}
+                            className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl relative z-10"
+                          >
+                            <ShoppingCart size={20} />
+                            <span>결제하고 다운로드</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="space-y-3 mb-1 relative z-10">
+                            {canBuyProblem && (
+                              <button
+                                type="button"
+                                onClick={() => toggleFileSelection('problem')}
+                                className={`w-full flex items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${selectedFiles.includes('problem')
+                                  ? 'border-blue-300 bg-blue-50/70'
+                                  : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50/40'
+                                }`}>
+                                <div className="flex items-center gap-3.5">
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('problem') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
+                                    }`}>
+                                    {selectedFiles.includes('problem') && <Check size={12} className="text-white" />}
+                                  </div>
+                                  <span className="text-sm font-bold text-gray-800 sm:text-[15px]">문제지</span>
+                                </div>
+                                {material.priceProblem > 0
+                                  ? <span className="font-extrabold text-gray-900">{material.priceProblem.toLocaleString()}원</span>
+                                  : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
+                                }
+                              </button>
+                            )}
+                            {canBuyEtc && (
+                              <button
+                                type="button"
+                                onClick={() => toggleFileSelection('etc')}
+                                className={`w-full flex items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${selectedFiles.includes('etc')
+                                  ? 'border-blue-300 bg-blue-50/70'
+                                  : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50/40'
+                                }`}>
+                                <div className="flex items-center gap-3.5">
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('etc') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
+                                    }`}>
+                                    {selectedFiles.includes('etc') && <Check size={12} className="text-white" />}
+                                  </div>
+                                  <span className="text-sm font-bold text-gray-800 sm:text-[15px]">답지 / 기타</span>
+                                </div>
+                                {material.priceEtc > 0
+                                  ? <span className="font-extrabold text-gray-900">{material.priceEtc.toLocaleString()}원</span>
+                                  : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
+                                }
+                              </button>
+                            )}
+                            {selectedFiles.length === 0 && (
+                              <p className="text-[13px] font-semibold text-red-500">구매할 파일을 1개 이상 선택해 주세요.</p>
+                            )}
+                            {selectedAmount > 0 && (
+                              <div className="flex justify-between items-center pt-5 pb-2 border-t border-gray-100 mt-2">
+                                <span className="text-[15px] font-extrabold text-gray-500">총 결제금액</span>
+                                <span className="font-extrabold text-blue-500 text-[1.45rem] tracking-tight sm:text-[1.75rem]">
+                                  {selectedAmount.toLocaleString()}<span className="ml-1 text-base text-gray-600 sm:text-lg">원</span>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handlePurchaseClick}
+                            disabled={selectedFiles.length === 0}
+                            className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl relative z-10 disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed"
+                          >
+                            <ShoppingCart size={20} />
+                            <span>{hasAnyPurchased ? '남은 파일 결제하기' : '결제하고 다운로드'}</span>
+                          </button>
+                        </>
+                      )
+                    ) : (
+                      !hasAnyPurchased && <p className="text-center text-sm text-gray-400 py-2">파일 준비 중입니다</p>
+                    )}
+                  </div>
+                )}
+                </div>
               </div>
             </div>
 
-            {/* 구매 카드 */}
-            <div className="m-detail-card p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-60" />
-
-              {/* 소셜 프루프 */}
-              {(material.downloadCount ?? 0) > 0 && (
-                <div className="flex items-center gap-2 mb-4 px-3 py-2.5 bg-blue-50/70 rounded-xl border border-blue-100">
-                  <ShoppingBag size={14} className="text-blue-500 shrink-0" />
-                  <p className="text-sm font-semibold text-blue-600">
-                    {material.downloadCount.toLocaleString()}명이 구매했습니다
-                  </p>
-                </div>
-              )}
-
-              {material.isFree ? (
-                /* ── 무료 자료 ── */
-                <div className="space-y-3">
-                  <p className="text-base text-gray-400 text-center font-medium">무료로 제공되는 자료입니다</p>
-                  {material.problemFile && (
-                    <button
-                      onClick={() => handleDownload('problem')}
-                      disabled={downloading === 'problem'}
-                      className="m-detail-btn-primary w-full py-4 text-base rounded-2xl disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
-                    >
-                      {downloading === 'problem'
-                        ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />다운로드 중...</>
-                        : <><Download size={18} />문제지 다운로드</>
-                      }
-                    </button>
-                  )}
-                  {material.etcFile && (
-                    <button
-                      onClick={() => handleDownload('etc')}
-                      disabled={downloading === 'etc'}
-                      className="m-detail-btn-secondary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {downloading === 'etc'
-                        ? <><span className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />다운로드 중...</>
-                        : <><Download size={16} />답지 / 기타 다운로드</>
-                      }
-                    </button>
-                  )}
-                  {!material.problemFile && !material.etcFile && (
-                    <p className="text-center text-sm text-gray-400 py-2">파일 준비 중입니다</p>
-                  )}
-                </div>
-              ) : purchasedFileTypes.length > 0 ? (
-                /* ── 구매 완료 ── */
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 mb-4">
-                    <CheckCircle2 size={18} className="text-blue-400" />
-                    <p className="text-base font-semibold text-blue-600">구매 완료</p>
-                  </div>
-                  {purchasedFileTypes.includes('problem') && material.problemFile && (
-                    <button
-                      onClick={() => handleDownload('problem')}
-                      disabled={downloading === 'problem'}
-                      className="m-detail-btn-primary w-full py-4 text-base rounded-2xl disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
-                    >
-                      {downloading === 'problem'
-                        ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />다운로드 중...</>
-                        : <><Download size={18} />문제지 다운로드</>
-                      }
-                    </button>
-                  )}
-                  {purchasedFileTypes.includes('etc') && material.etcFile && (
-                    <button
-                      onClick={() => handleDownload('etc')}
-                      disabled={downloading === 'etc'}
-                      className="m-detail-btn-secondary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {downloading === 'etc'
-                        ? <><span className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />다운로드 중...</>
-                        : <><Download size={16} />답지 / 기타 다운로드</>
-                      }
-                    </button>
-                  )}
-                  {purchasedFileTypes.includes('problem') && !material.problemFile && (
-                    <p className="text-center text-sm text-gray-400 py-2">파일 준비 중입니다</p>
-                  )}
-                </div>
-              ) : (
-                /* ── 미구매 ── */
-                <>
-                  {(showProblemOption || showEtcOption) && (
-                    <div className="space-y-3 mb-5 relative z-10">
-                      {showProblemOption && (
-                        <div className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${selectedFiles.includes('problem')
-                            ? 'border-blue-300 bg-blue-50/70'
-                            : 'border-gray-100'
-                          }`}>
-                          <div className="flex items-center gap-3.5">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('problem') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
-                              }`}>
-                              {selectedFiles.includes('problem') && <div className="w-2 h-2 bg-white rounded-full" />}
-                            </div>
-                            <span className="text-[15px] font-bold text-gray-800">문제지</span>
-                          </div>
-                          {material.priceProblem > 0
-                            ? <span className="font-extrabold text-gray-900">{material.priceProblem.toLocaleString()}원</span>
-                            : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
-                          }
-                        </div>
-                      )}
-                      {showEtcOption && (
-                        <div className={`flex items-center justify-between px-5 py-4 rounded-2xl border-2 transition-all duration-200 ${selectedFiles.includes('etc')
-                            ? 'border-blue-300 bg-blue-50/70'
-                            : 'border-gray-100'
-                          }`}>
-                          <div className="flex items-center gap-3.5">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('etc') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
-                              }`}>
-                              {selectedFiles.includes('etc') && <div className="w-2 h-2 bg-white rounded-full" />}
-                            </div>
-                            <span className="text-[15px] font-bold text-gray-800">답지 / 기타</span>
-                          </div>
-                          {material.priceEtc > 0
-                            ? <span className="font-extrabold text-gray-900">{material.priceEtc.toLocaleString()}원</span>
-                            : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
-                          }
-                        </div>
-                      )}
-                      {selectedAmount > 0 && (
-                        <div className="flex justify-between items-center pt-5 pb-2 border-t border-gray-100 mt-2">
-                          <span className="text-[15px] font-extrabold text-gray-500">총 결제금액</span>
-                          <span className="font-extrabold text-blue-500 text-[1.75rem] tracking-tight">
-                            {selectedAmount.toLocaleString()}<span className="text-lg text-gray-600 ml-1">원</span>
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <Link
-                    href={purchaseUrl}
-                    className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl relative z-10"
-                  >
-                    <ShoppingCart size={20} />
-                    <span>결제하고 다운로드</span>
-                  </Link>
-                </>
-              )}
-            </div>
-
             {/* 난이도 피드백 */}
-            {isLoggedIn && (material.isFree || purchasedFileTypes.length > 0) && (
-              <div className="m-detail-card p-6">
-                <p className="text-[17px] font-extrabold text-gray-900 mb-1">학습 후 난이도 평가</p>
-                <p className="text-[13px] text-gray-400 mb-6 font-medium">참여해주신 데이터는 ELO 맞춤 큐레이션에 반영됩니다.</p>
+            {isLoggedIn && (material.isFree || hasAnyPurchased) && (
+              <div className="m-detail-card p-5 sm:p-6">
+                <p className="mb-1 text-base font-bold text-slate-700 sm:text-lg">학습 후 난이도 평가</p>
+                <p className="mb-5 text-sm text-slate-500">참여해주신 데이터는 ELO 맞춤 큐레이션에 반영됩니다.</p>
                 <AnimatePresence mode="wait">
                   {!feedbackSent ? (
                     <motion.div key="buttons" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
@@ -468,7 +759,7 @@ export default function MaterialDetail({
                             key={val}
                             onClick={() => sendFeedback(val)}
                             disabled={feedbackLoading}
-                            className={`flex flex-col items-center gap-2.5 py-4 px-2 rounded-2xl border-[2px] transition-all hover:-translate-y-1 hover:shadow-md disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed ${color}`}
+                            className={`flex flex-col items-center gap-2.5 py-4 px-2 rounded-2xl border-[2px] transition-all hover:border-blue-200 disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed ${color}`}
                           >
                             {feedbackLoading ? <span className="w-6 h-6 border-[3px] border-current border-t-transparent rounded-full animate-spin" /> : icon}
                             <span className="text-[13px] font-extrabold leading-tight text-center">{label}</span>
@@ -511,78 +802,259 @@ export default function MaterialDetail({
           </div>
         </div>
 
+        <AnimatePresence>
+          {previewModalOpen && material.previewImages.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[90] bg-slate-900/85 backdrop-blur-sm p-3 sm:p-6"
+              onClick={closePreviewModal}
+            >
+              <motion.div
+                initial={{ scale: 0.98, opacity: 0.9 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.98, opacity: 0.9 }}
+                transition={{ duration: 0.16 }}
+                className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/75"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5 text-white sm:px-4 sm:py-3">
+                  <p className="text-sm font-semibold">
+                    미리보기 {activePreview + 1} / {material.previewImages.length}
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewZoom((prev) => Math.max(1, Math.round((prev - 0.25) * 100) / 100))}
+                      disabled={previewZoom <= 1}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 text-white/90 transition-colors hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
+                    >
+                      <ZoomOut size={14} />
+                    </button>
+                    <span className="min-w-[3rem] text-center text-xs font-semibold text-white/80">
+                      {Math.round(previewZoom * 100)}%
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewZoom((prev) => Math.min(3, Math.round((prev + 0.25) * 100) / 100))}
+                      disabled={previewZoom >= 3}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 text-white/90 transition-colors hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
+                    >
+                      <ZoomIn size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closePreviewModal}
+                      className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 text-white/90 transition-colors hover:bg-white/10"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-auto p-3 sm:p-5">
+                  <div className="flex min-h-full min-w-full items-center justify-center">
+                    <Image
+                      src={`/uploads/previews/${material.previewImages[activePreview]}`}
+                      alt={`미리보기 확대 ${activePreview + 1}`}
+                      width={1400}
+                      height={2000}
+                      sizes="90vw"
+                      className="max-w-none rounded-xl border border-white/20 shadow-2xl transition-transform duration-200"
+                      style={{
+                        transform: `scale(${previewZoom})`,
+                        transformOrigin: 'center center',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {material.previewImages.length > 1 && (
+                  <div className="m-scrollbar flex gap-2 overflow-x-auto border-t border-white/10 px-3 py-3 sm:px-4">
+                    {material.previewImages.map((img, index) => (
+                      <button
+                        key={`${img}-${index}`}
+                        type="button"
+                        onClick={() => setActivePreview(index)}
+                        className={`relative h-16 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                          index === activePreview
+                            ? 'border-blue-300 shadow-sm shadow-blue-200/40'
+                            : 'border-white/20 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <Image
+                          src={`/uploads/previews/${img}`}
+                          alt={`확대 썸네일 ${index + 1}`}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── 관련 자료 섹션 ── */}
         {relatedMaterials.length > 0 && (
           <div className="mt-12">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-100 to-sky-100 flex items-center justify-center border border-blue-100 shadow-sm shadow-blue-100/60">
-                <Users size={18} className="text-blue-500" />
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-100 to-sky-100 flex items-center justify-center border border-blue-100 shadow-sm shadow-blue-100/60">
+                  <Users size={18} className="text-blue-500" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-800">함께 많이 찾는 자료</h2>
+                  <p className="text-sm text-slate-500">관련 추천 자료</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-extrabold text-gray-900">함께 많이 찾는 자료</h2>
-                <p className="text-xs text-gray-400 font-medium">관련 추천 자료</p>
+              <div className="inline-flex items-center rounded-xl border border-blue-100 bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() => setRelatedViewMode('grid')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${
+                    relatedViewMode === 'grid'
+                      ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                      : 'text-gray-500 hover:text-blue-500'
+                  }`}
+                >
+                  <LayoutGrid size={14} />
+                  카드
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRelatedViewMode('list')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${
+                    relatedViewMode === 'list'
+                      ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                      : 'text-gray-500 hover:text-blue-500'
+                  }`}
+                >
+                  <List size={14} />
+                  리스트
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-              {relatedMaterials.map((r) => {
-                const rTitle = [
-                  r.schoolName,
-                  r.year ? `${r.year}년` : '',
-                  r.gradeNumber ? `${r.gradeNumber}학년` : '',
-                  r.semester ? `${r.semester}학기` : '',
-                  r.subject,
-                  r.topic,
-                ].filter(Boolean).join(' ');
-                const rdc = r.difficultyColor;
+            {relatedViewMode === 'grid' ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+                {relatedMaterials.map((r) => {
+                  const rTitle = buildMaterialTitle(r);
+                  const rSubline = buildMaterialSubline(r);
+                  const rdc = r.difficultyColor;
 
-                return (
-                  <Link
-                    key={r.materialId}
-                    href={`/m/materials/${r.materialId}`}
-                    className="group m-detail-card hover:border-blue-200 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-200 overflow-hidden"
-                  >
-                    <div className="aspect-[4/3] overflow-hidden relative">
-                      {r.previewImages?.[0] ? (
-                        <img
-                          src={`/uploads/previews/${r.previewImages[0]}`}
-                          alt={rTitle}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                          <BookOpen size={24} className="text-gray-300" />
-                        </div>
-                      )}
-                      {r.isFree && (
-                        <span className="absolute top-3 left-3 text-[10px] font-extrabold text-blue-600 bg-blue-100 border border-blue-200 px-2 py-1 rounded-full">FREE</span>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full inline-block mb-2.5 border ${diffStyle[rdc] || diffStyle.blue}`}>
-                        {r.difficultyLabel}
-                      </span>
-                      <p className="text-[14px] font-bold text-gray-900 truncate leading-snug group-hover:text-blue-500 transition-colors">{rTitle || r.subject}</p>
-                      <p className="text-[13px] text-gray-400 mt-1 truncate font-medium">{r.subject}{r.topic ? ` · ${r.topic}` : ''}</p>
+                  return (
+                    <Link
+                      key={r.materialId}
+                      href={`/m/materials/${r.materialId}`}
+                      className="group m-detail-card hover:border-blue-200 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-200 overflow-hidden"
+                    >
+                      <div className="aspect-[4/3] overflow-hidden relative">
+                        {r.previewImages?.[0] ? (
+                          <Image
+                            src={`/uploads/previews/${r.previewImages[0]}`}
+                            alt={rTitle}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                            <BookOpen size={24} className="text-gray-300" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full inline-block mb-2.5 border ${diffStyle[rdc] || diffStyle.blue}`}>
+                          {r.difficultyLabel}
+                        </span>
+                        <p className="truncate text-[15px] font-bold leading-snug text-slate-800 transition-colors group-hover:text-blue-500">{rTitle || r.subject}</p>
+                        <p className="mt-1 truncate text-sm text-gray-500">{rSubline || r.subject}</p>
 
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                        <p className="text-[13px] font-extrabold text-gray-800">
-                          {r.isFree ? (
-                            <span className="text-blue-500">무료</span>
-                          ) : r.priceProblem > 0 ? (
-                            `${r.priceProblem.toLocaleString()}원~`
-                          ) : '가격 문의'}
-                        </p>
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
-                          <ShoppingBag size={11} />
-                          <span>{(r.downloadCount ?? 0).toLocaleString()}</span>
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+                          <p className="text-sm font-bold text-slate-700">
+                            {r.isFree ? (
+                              <span className="text-blue-500">무료</span>
+                            ) : (r.priceProblem + (r.priceEtc || 0)) > 0 ? (
+                              `${(r.priceProblem + (r.priceEtc || 0)).toLocaleString()}원~`
+                            ) : '가격 문의'}
+                          </p>
+                          <div className="flex items-center gap-1 text-xs text-gray-400">
+                            <ShoppingBag size={11} />
+                            <span>{(r.downloadCount ?? 0).toLocaleString()}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {relatedMaterials.map((r) => {
+                  const rTitle = buildMaterialTitle(r);
+                  const rSubline = buildMaterialSubline(r);
+                  const rdc = r.difficultyColor;
+                  const priceAmount = r.priceProblem + (r.priceEtc || 0);
+                  const priceText = r.isFree ? '무료' : priceAmount > 0 ? `${priceAmount.toLocaleString()}원~` : '가격 문의';
+                  const priceColor = r.isFree ? 'text-blue-500' : priceAmount > 0 ? 'text-slate-700' : 'text-slate-400';
+
+                  return (
+                    <Link
+                      key={r.materialId}
+                      href={`/m/materials/${r.materialId}`}
+                      className="group m-detail-card block p-4 sm:p-5 hover:border-blue-200 hover:shadow-lg transition-all"
+                    >
+                      <div className="flex gap-4">
+                        <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl border border-blue-100 bg-blue-50 sm:h-28 sm:w-24">
+                          {r.previewImages?.[0] ? (
+                            <Image
+                              src={`/uploads/previews/${r.previewImages[0]}`}
+                              alt={rTitle}
+                              fill
+                              sizes="(max-width: 640px) 80px, 96px"
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-blue-400">
+                              <BookOpen size={20} />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-2 flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border ${diffStyle[rdc] || diffStyle.blue}`}>
+                              {r.difficultyLabel}
+                            </span>
+                            <span className="text-[11px] text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-full font-bold">
+                              {r.type}
+                            </span>
+                          </div>
+
+                          <p className="truncate text-[15px] font-bold leading-snug text-slate-800 transition-colors group-hover:text-blue-500">
+                            {rTitle || r.subject}
+                          </p>
+                          <p className="mt-1 truncate text-sm text-gray-500">{rSubline || r.subject}</p>
+
+                          <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+                            <div className="flex items-center gap-1.5 text-xs text-gray-400 font-semibold">
+                              <ShoppingBag size={12} />
+                              <span>{(r.downloadCount ?? 0).toLocaleString()}명 구매</span>
+                            </div>
+                            <span className={`text-sm font-bold ${priceColor}`}>{priceText}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

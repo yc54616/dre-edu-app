@@ -39,7 +39,7 @@ export default function SearchInput({ defaultValue }: { defaultValue: string }) 
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="과목, 단원, 학교명으로 검색..."
+          placeholder="과목, 단원, 학교명, 도서명으로 검색..."
           className="w-full pl-12 pr-12 py-4 bg-white border border-gray-200 rounded-2xl text-[15px] text-gray-900 placeholder:text-gray-400 font-medium focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-sm hover:shadow-md"
         />
         {value && (

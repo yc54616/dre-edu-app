@@ -4,14 +4,15 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { nanoid } from 'nanoid';
 import { generatePreview } from '@/lib/generatePreview';
+import { MAX_PREVIEW_IMAGES } from '@/lib/constants/material';
 
 export const dynamic = 'force-dynamic';
 
 // HWP 확장자로 허용
 const ALLOWED_EXTENSIONS = {
   preview: ['jpg', 'jpeg', 'png', 'webp'],
-  problem: ['pdf', 'hwp'],
-  etc:     ['pdf', 'hwp'],
+  problem: ['pdf', 'hwp', 'hwpx'],
+  etc:     ['pdf', 'hwp', 'hwpx'],
 };
 
 export async function POST(req: NextRequest) {
@@ -76,9 +77,10 @@ export async function POST(req: NextRequest) {
 
       // 문제 파일만 미리보기 자동 생성 (답지·해설은 제외)
       if (fileRole === 'problem') {
-        previews = await generatePreview(savedPath, ext);
-        if (ext === 'hwp' && previews.length === 0) {
-          previewWarning = 'HWP 미리보기를 자동 생성하지 못했습니다. 미리보기 이미지를 직접 업로드해 주세요.';
+        previews = await generatePreview(savedPath, ext, MAX_PREVIEW_IMAGES);
+        previews = previews.slice(0, MAX_PREVIEW_IMAGES);
+        if ((ext === 'hwp' || ext === 'hwpx') && previews.length === 0) {
+          previewWarning = 'HWP/HWPX 미리보기를 자동 생성하지 못했습니다. 미리보기 이미지를 직접 업로드해 주세요.';
         }
       }
     }

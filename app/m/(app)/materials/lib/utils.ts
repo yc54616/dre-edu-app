@@ -1,5 +1,10 @@
+import { buildMaterialTitle } from '@/lib/material-display';
+
 export type MaterialCardData = {
   materialId: string;
+  sourceCategory?: string;
+  publisher?: string | null;
+  bookTitle?: string | null;
   subject: string;
   type: string;
   topic?: string | null;
@@ -12,6 +17,7 @@ export type MaterialCardData = {
   difficulty: number;
   isFree?: boolean;
   priceProblem?: number;
+  priceEtc?: number;
   downloadCount?: number;
   previewImages?: string[];
   createdAt?: Date | string | null;
@@ -33,21 +39,18 @@ export function rankStyle(rank: number) {
 }
 
 export function buildTitle(m: {
+  sourceCategory?: string;
+  publisher?: string | null;
+  bookTitle?: string | null;
   schoolName?: string | null;
+  schoolLevel?: string | null;
   year?: number | null;
   gradeNumber?: number | null;
   semester?: number | null;
   subject: string;
   topic?: string | null;
 }) {
-  return [
-    m.schoolName,
-    m.year ? `${m.year}년` : '',
-    m.gradeNumber ? `${m.gradeNumber}학년` : '',
-    m.semester ? `${m.semester}학기` : '',
-    m.subject,
-    m.topic,
-  ].filter(Boolean).join(' ');
+  return buildMaterialTitle(m);
 }
 
 export function isNewMaterial(createdAt?: Date | string | null) {

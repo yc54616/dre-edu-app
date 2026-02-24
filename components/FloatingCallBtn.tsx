@@ -11,9 +11,10 @@ export default function FloatingCallBtn() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1 }}
-            className="md:hidden fixed bottom-8 left-0 right-0 z-40 flex justify-center pointer-events-none"
+            className="pointer-events-none fixed left-0 right-0 z-40 flex justify-center px-4 md:hidden"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
         >
-            <Link href="/admission" className="bg-[var(--color-dre-blue)] text-white font-bold py-3 px-8 rounded-full shadow-xl flex items-center space-x-2 hover:bg-[var(--color-dre-blue-dark)] transition-colors pointer-events-auto transform hover:scale-105 active:scale-95">
+            <Link href="/admission" className="pointer-events-auto flex w-full max-w-sm items-center justify-center space-x-2 rounded-full bg-[var(--color-dre-blue)] px-6 py-3 text-sm font-bold text-white shadow-xl transition-colors hover:bg-[var(--color-dre-blue-dark)] active:scale-95 sm:w-auto sm:px-8 sm:text-base">
                 <ClipboardCheck size={20} />
                 <span>1:1 정밀 진단 신청</span>
             </Link>

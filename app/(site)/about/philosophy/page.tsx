@@ -9,8 +9,8 @@ export default function PhilosophyPage() {
             <PageHero
                 title="교육 철학"
                 subtitle="PHILOSOPHY"
-                description="DRE가 생각하는 올바른 교육의 가치입니다."
-                bgImage="/images/classroom_2.png"
+                description="DRE가 중요하게 생각하는 교육의 방향입니다."
+                bgImage="/images/facility_classroom3.jpg"
             />
             <PhilosophyDetail />
         </main>

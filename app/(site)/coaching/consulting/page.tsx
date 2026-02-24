@@ -7,10 +7,10 @@ export default function ConsultingPage() {
     return (
         <main className="bg-white min-h-screen">
             <PageHero
-                title="입시 코칭"
+                title="입시컨설팅"
                 subtitle="CONSULTING"
-                description="성공적인 입시를 위한 개인별 맞춤 로드맵 설계"
-                bgImage="/images/classroom_1.png"
+                description="현재 성적과 목표를 바탕으로, 실제 지원 전략까지 함께 설계합니다."
+                bgImage="/images/facility_coaching.png"
             />
             <ConsultingDetail />
         </main>

@@ -28,7 +28,7 @@ export default function DirectorIntro() {
                         <div className="absolute top-0 left-0 w-full h-full bg-[var(--color-dre-blue)]/5 rounded-[3rem] transform -rotate-3 scale-105 z-0" />
                         <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl z-10 aspect-[4/5]">
                             <Image
-                                src="/images/director_final.png"
+                                src="/director.png"
                                 alt="DRE 대표 원장"
                                 fill
                                 className="object-cover"

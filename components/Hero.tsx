@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 
 const heroImages = [
-    '/images/reception.png',
-    '/images/classroom_1.png',
-    '/images/study_area.png',
-    '/images/classroom_2.png'
+    '/images/facility_lobby.jpg',
+    '/images/facility_classroom.jpg',
+    '/images/facility_coaching.png',
+    '/images/facility_study.jpg'
 ];
 
 export default function Hero() {

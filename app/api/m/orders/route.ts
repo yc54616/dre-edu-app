@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
 import Order from '@/lib/models/Order';
 import Material from '@/lib/models/Material';
+import { buildMaterialTitle } from '@/lib/material-display';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,45 +42,80 @@ export async function POST(req: NextRequest) {
 
   const user = session.user as { id?: string; email?: string; name?: string; role?: string };
 
-  const body = await req.json();
-  const { materialId, fileTypes, paymentMethod, paymentNote } = body;
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: '잘못된 요청 형식입니다.' }, { status: 400 });
+  }
+  const materialId    = body.materialId as string | undefined;
+  const fileTypes     = body.fileTypes as unknown;
+  const paymentMethod = body.paymentMethod as string | undefined;
+  const paymentNote   = body.paymentNote as string | undefined;
 
-  if (!materialId || !Array.isArray(fileTypes) || fileTypes.length === 0) {
+  if (!materialId) {
     return NextResponse.json({ error: '필수 항목 누락' }, { status: 400 });
   }
 
   await connectMongo();
   const material = await Material.findOne({ materialId, isActive: true }).lean();
   if (!material) return NextResponse.json({ error: '자료를 찾을 수 없습니다.' }, { status: 404 });
+  const isTeacherMaterial = material.targetAudience === 'teacher';
 
   if (material.isFree) {
     return NextResponse.json({ error: '무료 자료는 주문이 필요 없습니다.' }, { status: 400 });
   }
 
-  // 이미 승인된 주문이 있는지 확인
-  const existing = await Order.findOne({ userId: user.id, materialId, status: 'paid' }).lean();
-  if (existing) {
-    return NextResponse.json({ error: '이미 구매한 자료입니다.', orderId: existing.orderId }, { status: 400 });
+  const requestedFileTypes = isTeacherMaterial
+    ? ['problem', 'etc']
+    : [...new Set(
+      (Array.isArray(fileTypes) ? fileTypes : []).filter((type: unknown): type is 'problem' | 'etc' =>
+        type === 'problem' || type === 'etc')
+    )];
+  if (!isTeacherMaterial && requestedFileTypes.length === 0) {
+    return NextResponse.json({ error: '구매할 파일 유형이 올바르지 않습니다.' }, { status: 400 });
+  }
+
+  const paidOrders = await Order.find(
+    { userId: user.id, materialId, status: 'paid' },
+    { fileTypes: 1, orderId: 1 }
+  ).lean();
+  const purchased = new Set<string>();
+  for (const order of paidOrders) {
+    for (const type of order.fileTypes || []) purchased.add(type);
+  }
+  if (isTeacherMaterial && paidOrders.length > 0) {
+    return NextResponse.json(
+      { error: '이미 구매한 교사용 자료입니다.', purchasedFileTypes: ['problem', 'etc'] },
+      { status: 400 }
+    );
+  }
+  const fileTypesToBuy = isTeacherMaterial
+    ? ['problem', 'etc']
+    : requestedFileTypes.filter((type) => !purchased.has(type));
+
+  if (!isTeacherMaterial && fileTypesToBuy.length === 0) {
+    return NextResponse.json(
+      { error: '선택한 파일은 이미 모두 구매했습니다.', purchasedFileTypes: [...purchased] },
+      { status: 400 }
+    );
   }
 
   // 기존 pending 주문 삭제 (결제 재시도 시 중복 방지)
   await Order.deleteMany({ userId: user.id, materialId, status: 'pending' });
 
-  const amount =
-    (fileTypes.includes('problem') ? (material.priceProblem || 0) : 0) +
-    (fileTypes.includes('etc')     ? (material.priceEtc     || 0) : 0);
+  const amount = isTeacherMaterial
+    ? (material.priceProblem || 0) + (material.priceEtc || 0)
+    : (
+      (fileTypesToBuy.includes('problem') ? (material.priceProblem || 0) : 0) +
+      (fileTypesToBuy.includes('etc')     ? (material.priceEtc     || 0) : 0)
+    );
 
   if (amount <= 0) {
     return NextResponse.json({ error: '결제 금액이 없습니다. 자료 가격을 확인해 주세요.' }, { status: 400 });
   }
 
-  const materialTitle = [
-    material.schoolName,
-    material.year        ? `${material.year}년`        : '',
-    material.gradeNumber ? `${material.gradeNumber}학년` : '',
-    material.subject,
-    material.topic,
-  ].filter(Boolean).join(' ');
+  const materialTitle = buildMaterialTitle(material) || material.subject;
 
   const order = await Order.create({
     userId:        user.id || '',
@@ -87,7 +123,7 @@ export async function POST(req: NextRequest) {
     userName:      user.name  || '',
     materialId,
     materialTitle,
-    fileTypes,
+    fileTypes:     fileTypesToBuy,
     amount,
     status:        'pending',
     paymentMethod: paymentMethod || 'bank_transfer',

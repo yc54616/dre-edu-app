@@ -6,6 +6,7 @@ import Order from '@/lib/models/Order';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { buildMaterialNameParts } from '@/lib/material-display';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,12 +37,19 @@ export async function GET(req: NextRequest, { params }: Params) {
   const user = session.user as { id?: string; role?: string };
   const role = user.role || 'student';
   if (!material.isFree && role !== 'admin') {
-    const order = await Order.findOne({
-      userId:     user.id,
-      materialId,
-      status:     'paid',
-      fileTypes:  fileType,
-    }).lean();
+    const isTeacherMaterial = material.targetAudience === 'teacher';
+    const order = isTeacherMaterial
+      ? await Order.findOne({
+        userId: user.id,
+        materialId,
+        status: 'paid',
+      }).lean()
+      : await Order.findOne({
+        userId:     user.id,
+        materialId,
+        status:     'paid',
+        fileTypes:  fileType,
+      }).lean();
     if (!order) {
       return NextResponse.json({ error: '구매 후 다운로드할 수 있습니다.' }, { status: 403 });
     }
@@ -66,17 +74,13 @@ export async function GET(req: NextRequest, { params }: Params) {
   const contentType =
     ext === 'hwp'
       ? 'application/x-hwp'
+      : ext === 'hwpx'
+        ? 'application/octet-stream'
       : 'application/pdf';
 
-  const downloadName = [
-    material.schoolName,
-    material.year         ? `${material.year}년`         : '',
-    material.gradeNumber  ? `${material.gradeNumber}학년` : '',
-    material.semester     ? `${material.semester}학기`    : '',
-    material.subject,
-    material.topic,
-    fileType === 'etc' ? '(기타)' : '',
-  ].filter(Boolean).join('_') + `.${ext}`;
+  const nameParts = buildMaterialNameParts(material);
+  if (fileType === 'etc') nameParts.push('(기타)');
+  const downloadName = `${nameParts.join('_') || material.materialId}.${ext}`;
 
   return new NextResponse(fileBuffer.buffer as ArrayBuffer, {
     headers: {

@@ -2,11 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Clock, BookOpen, ShoppingBag } from 'lucide-react';
+import { buildMaterialTitle } from '@/lib/material-display';
+
+const NEW_BADGE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+const RENDERED_AT = Date.now();
 
 interface MaterialItem {
     materialId: string;
+    sourceCategory?: string;
+    publisher?: string | null;
+    bookTitle?: string | null;
     subject: string;
     topic?: string | null;
     type: string;
@@ -18,14 +26,11 @@ interface MaterialItem {
     difficultyLabel: string;
     isFree?: boolean;
     priceProblem?: number;
+    priceEtc?: number;
     previewImages?: string[];
     downloadCount?: number;
     fileType?: string;
     createdAt?: string;
-}
-
-function buildTitle(m: MaterialItem) {
-    return [m.schoolName, m.year ? `${m.year}년` : '', m.gradeNumber ? `${m.gradeNumber}학년` : '', m.semester ? `${m.semester}학기` : '', m.subject, m.topic].filter(Boolean).join(' ');
 }
 
 export default function CurationTabs({
@@ -83,8 +88,8 @@ export default function CurationTabs({
                     className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5"
                 >
                     {items.slice(0, 10).map((m, idx) => {
-                        const title = buildTitle(m);
-                        const isNew = m.createdAt && (Date.now() - new Date(m.createdAt).getTime()) < 14 * 24 * 60 * 60 * 1000;
+                        const title = buildMaterialTitle(m);
+                        const isNew = m.createdAt && (RENDERED_AT - new Date(m.createdAt).getTime()) < NEW_BADGE_WINDOW_MS;
 
                         return (
                             <motion.div
@@ -101,10 +106,12 @@ export default function CurationTabs({
                                 >
                                     <div className="aspect-[4/3] overflow-hidden relative bg-gray-50">
                                         {m.previewImages?.[0] ? (
-                                            <img
+                                            <Image
                                                 src={`/uploads/previews/${m.previewImages[0]}`}
-                                                alt={title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                alt={title || m.subject || m.type}
+                                                fill
+                                                sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 20vw"
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
                                             />
                                         ) : (
                                             <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-50 to-white">
@@ -140,8 +147,8 @@ export default function CurationTabs({
                                             </span>
                                             {m.isFree
                                                 ? <span className="text-[12px] font-black text-[var(--color-dre-blue)]">무료</span>
-                                                : m.priceProblem && m.priceProblem > 0
-                                                    ? <span className="text-[12px] font-black text-gray-900">{m.priceProblem.toLocaleString()}원</span>
+                                                : ((m.priceProblem ?? 0) + (m.priceEtc ?? 0)) > 0
+                                                    ? <span className="text-[12px] font-black text-gray-900">{((m.priceProblem ?? 0) + (m.priceEtc ?? 0)).toLocaleString()}원</span>
                                                     : null
                                             }
                                         </div>

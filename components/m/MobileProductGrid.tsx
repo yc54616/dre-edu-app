@@ -3,10 +3,26 @@
 import Link from 'next/link';
 import { BookOpen, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
+import { buildMaterialTitle } from '@/lib/material-display';
+
+interface MobileMaterial {
+  materialId: string;
+  sourceCategory?: string;
+  publisher?: string | null;
+  bookTitle?: string | null;
+  schoolName?: string | null;
+  subject: string;
+  topic?: string | null;
+  difficulty: number;
+  fileType?: string;
+  isFree?: boolean;
+  priceProblem?: number;
+  previewImages?: string[];
+  downloadCount?: number;
+}
 
 interface ProductGridProps {
-  materials: any[];
+  materials: MobileMaterial[];
 }
 
 const DIFFICULTY_LABEL: Record<number, string> = {
@@ -48,7 +64,7 @@ export default function MobileProductGrid({ materials }: ProductGridProps) {
   return (
     <div className="grid grid-cols-2 gap-3 px-4 pb-20">
       {materials.map((m, idx) => {
-        const title = [m.schoolName, m.subject, m.topic].filter(Boolean).join(' ');
+        const title = buildMaterialTitle(m);
         const dc = DIFFICULTY_COLOR[m.difficulty] || 'blue';
         
         return (
@@ -83,11 +99,6 @@ export default function MobileProductGrid({ materials }: ProductGridProps) {
                 
                 {/* Labels */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
-                  {m.isFree && (
-                    <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-bold rounded-md shadow-sm">
-                      FREE
-                    </span>
-                  )}
                    {/* Difficulty Badge */}
                    <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold shadow-sm ${diffStyle[dc]}`}>
                       {DIFFICULTY_LABEL[m.difficulty]}

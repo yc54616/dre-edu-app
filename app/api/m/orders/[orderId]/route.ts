@@ -16,11 +16,22 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   const { orderId } = await params;
-  const body   = await req.json();
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: '잘못된 요청 형식입니다.' }, { status: 400 });
+  }
   const status = body.status as 'paid' | 'cancelled';
 
   if (!['paid', 'cancelled'].includes(status)) {
     return NextResponse.json({ error: '잘못된 상태값' }, { status: 400 });
+  }
+  if (status === 'cancelled') {
+    return NextResponse.json(
+      { error: '주문 취소는 환불 API(/api/m/admin/orders/[orderId]/refund)로만 가능합니다.' },
+      { status: 400 },
+    );
   }
 
   await connectMongo();
@@ -29,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     {
       $set: {
         status,
-        paidAt: status === 'paid' ? new Date() : null,
+        paidAt: new Date(),
       },
     }
   );

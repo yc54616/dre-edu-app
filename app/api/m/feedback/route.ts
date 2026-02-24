@@ -15,8 +15,14 @@ export async function POST(req: NextRequest) {
   const userId = (session.user as { id?: string }).id;
   if (!userId) return NextResponse.json({ error: '사용자 정보 없음' }, { status: 400 });
 
-  const { materialId, difficulty } = await req.json();
-  if (!materialId || !['easy', 'normal', 'hard'].includes(difficulty)) {
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: '잘못된 요청 형식입니다.' }, { status: 400 });
+  }
+  const { materialId, difficulty } = body;
+  if (!materialId || !['easy', 'normal', 'hard'].includes(difficulty as string)) {
     return NextResponse.json({ error: '잘못된 파라미터' }, { status: 400 });
   }
 
@@ -32,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await processFeedback({ materialId, userId, difficulty });
+    const result = await processFeedback({ materialId: materialId as string, userId, difficulty: difficulty as 'easy' | 'normal' | 'hard' });
     return NextResponse.json({ success: true, ...result });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : '서버 오류';

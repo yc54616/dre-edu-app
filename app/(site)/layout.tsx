@@ -1,7 +1,6 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SocialConnect from '@/components/SocialConnect';
-import FloatingCallBtn from '@/components/FloatingCallBtn';
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +11,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       </main>
       <Footer />
       <SocialConnect />
-      <FloatingCallBtn />
     </>
   );
 }

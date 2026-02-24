@@ -6,6 +6,27 @@ export interface IUser extends Document {
   username: string;
   password: string;
   role: 'admin' | 'teacher' | 'student';
+  teacherApprovalStatus: 'approved' | 'pending';
+  emailVerified: boolean;
+  verifyTokenHash?: string | null;
+  verifyTokenExpires?: Date | null;
+  birthDate?: Date | null;
+  isUnder14AtSignup?: boolean;
+  legalGuardianConsent?: {
+    agreedAt: Date;
+    guardianName: string;
+    guardianContact: string;
+  } | null;
+  consents?: {
+    terms?: {
+      agreedAt: Date;
+      version: string;
+    } | null;
+    privacy?: {
+      agreedAt: Date;
+      version: string;
+    } | null;
+  };
   createdAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
 }
@@ -14,11 +35,39 @@ interface IUserModel extends Model<IUser> {
   findByEmail(email: string): Promise<IUser | null>;
 }
 
+const consentSchema = new Schema(
+  {
+    agreedAt: { type: Date, required: true },
+    version: { type: String, required: true, trim: true },
+  },
+  { _id: false },
+);
+
+const legalGuardianConsentSchema = new Schema(
+  {
+    agreedAt: { type: Date, required: true },
+    guardianName: { type: String, required: true, trim: true },
+    guardianContact: { type: String, required: true, trim: true },
+  },
+  { _id: false },
+);
+
 const userSchema = new Schema<IUser>({
   email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
   username: { type: String, required: true, trim: true },
   password: { type: String, required: true },
   role:     { type: String, enum: ['admin', 'teacher', 'student'], default: 'student' },
+  teacherApprovalStatus: { type: String, enum: ['approved', 'pending'], default: 'approved' },
+  emailVerified: { type: Boolean, default: true },
+  verifyTokenHash: { type: String, default: null },
+  verifyTokenExpires: { type: Date, default: null },
+  birthDate: { type: Date, default: null },
+  isUnder14AtSignup: { type: Boolean, default: false },
+  legalGuardianConsent: { type: legalGuardianConsentSchema, default: null },
+  consents: {
+    terms: { type: consentSchema, default: null },
+    privacy: { type: consentSchema, default: null },
+  },
   createdAt:{ type: Date, default: Date.now },
 });
 

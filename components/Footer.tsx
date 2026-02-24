@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { MapPin, Phone, Clock } from 'lucide-react';
 
 export default function Footer() {
     return (
@@ -19,23 +19,6 @@ export default function Footer() {
                             가르치지 않고 깨닫게 합니다.<br />
                             진짜 실력을 만드는 DRE 수학학원.
                         </p>
-                        <div className="flex space-x-4">
-                            {/* Social Icons */}
-                            <Link
-                                href="https://blog.naver.com/dre_institute"
-                                target="_blank"
-                                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#03C75A] transition-colors cursor-pointer text-white font-bold"
-                            >
-                                B
-                            </Link>
-                            <Link
-                                href="https://www.instagram.com/dre_math2023/"
-                                target="_blank"
-                                className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#E1306C] transition-colors cursor-pointer text-white font-bold"
-                            >
-                                I
-                            </Link>
-                        </div>
                     </div>
 
                     {/* Quick Links */}
@@ -45,7 +28,7 @@ export default function Footer() {
                             <li><Link href="/about/system" className="hover:text-white transition-colors">DRE 시스템</Link></li>
                             <li><Link href="/about/facility" className="hover:text-white transition-colors">시설 안내/오시는 길</Link></li>
                             <li><Link href="/curriculum" className="hover:text-white transition-colors">커리큘럼</Link></li>
-                            <li><Link href="/coaching/class" className="hover:text-white transition-colors">온라인 코칭/수업</Link></li>
+                            <li><Link href="/coaching/math" className="hover:text-white transition-colors">코칭 안내</Link></li>
                             <li><Link href="/hall-of-fame" className="hover:text-white transition-colors">명예의 전당</Link></li>
                             <li><Link href="/admission" className="hover:text-dre-blue transition-colors font-bold text-dre-blue-light">입학 안내/신청</Link></li>
                         </ul>

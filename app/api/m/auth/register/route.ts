@@ -38,6 +38,10 @@ export async function POST(req: NextRequest) {
     username: username.trim(),
     password,
     role:     newRole,
+    teacherApprovalStatus: 'approved',
+    emailVerified: true,
+    verifyTokenHash: null,
+    verifyTokenExpires: null,
   });
 
   return NextResponse.json({

@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { BookOpen, Download, ExternalLink, Lock } from 'lucide-react';
 import {
   DIFFICULTY_LABEL, DIFFICULTY_COLOR,
   FILE_TYPE_LABEL, TARGET_AUDIENCE_LABEL,
+  MATERIAL_SOURCE_CATEGORY_LABEL,
+  type MaterialSourceCategory,
 } from '@/lib/constants/material';
+import { buildMaterialTitle, resolveSourceCategory } from '@/lib/material-display';
 
 const diffStyle: Record<string, string> = {
   emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -16,7 +20,12 @@ const diffStyle: Record<string, string> = {
 };
 
 interface FormData {
+  sourceCategory:  MaterialSourceCategory;
   type:            string;
+  publisher:       string;
+  bookTitle:       string;
+  ebookDescription:string;
+  ebookToc:        string;
   subject:         string;
   topic:           string;
   schoolLevel:     string;
@@ -36,15 +45,15 @@ interface FormData {
 export default function MaterialPreview({ data }: { data: FormData }) {
   const [activePreview, setActivePreview] = useState(0);
   const images = data.previewImages || [];
+  const resolvedSourceCategory = resolveSourceCategory(data);
+  const isSchoolExam = resolvedSourceCategory === 'school_exam';
+  const isEbook = resolvedSourceCategory === 'ebook';
+  const ebookTocItems = data.ebookToc
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
 
-  const title = [
-    data.schoolName,
-    data.year        ? `${data.year}년`        : '',
-    data.gradeNumber ? `${data.gradeNumber}학년` : '',
-    data.semester    ? `${data.semester}학기`   : '',
-    data.subject,
-    data.topic,
-  ].filter(Boolean).join(' ');
+  const title = buildMaterialTitle(data);
 
   const dc = DIFFICULTY_COLOR[data.difficulty] || 'blue';
 
@@ -62,10 +71,12 @@ export default function MaterialPreview({ data }: { data: FormData }) {
             <div className="relative aspect-[3/4] bg-slate-50 overflow-hidden">
               {images.length > 0 ? (
                 <>
-                  <img
+                  <Image
                     src={`/uploads/previews/${images[activePreview]}`}
-                    alt="미리보기"
-                    className="w-full h-full object-cover"
+                    alt={`미리보기 ${activePreview + 1}`}
+                    fill
+                    sizes="(max-width: 1536px) 100vw, 50vw"
+                    className="object-cover"
                   />
                   {!data.isFree && (
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent from-50% to-white" />
@@ -93,11 +104,17 @@ export default function MaterialPreview({ data }: { data: FormData }) {
                     key={i}
                     type="button"
                     onClick={() => setActivePreview(i)}
-                    className={`w-14 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
+                    className={`relative w-14 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
                       i === activePreview ? 'border-[var(--color-dre-blue)] shadow-sm' : 'border-transparent hover:border-gray-200'
                     }`}
                   >
-                    <img src={`/uploads/previews/${img}`} alt="" className="w-full h-full object-cover" />
+                    <Image
+                      src={`/uploads/previews/${img}`}
+                      alt={`썸네일 ${i + 1}`}
+                      fill
+                      sizes="56px"
+                      className="object-cover"
+                    />
                   </button>
                 ))}
               </div>
@@ -116,6 +133,9 @@ export default function MaterialPreview({ data }: { data: FormData }) {
               {data.type && (
                 <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">{data.type}</span>
               )}
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">
+                {MATERIAL_SOURCE_CATEGORY_LABEL[resolvedSourceCategory] || '내신기출'}
+              </span>
               {data.fileType && (
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                   data.fileType === 'hwp' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
@@ -126,29 +146,66 @@ export default function MaterialPreview({ data }: { data: FormData }) {
                   data.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
                 }`}>{TARGET_AUDIENCE_LABEL[data.targetAudience] || '학생용'}</span>
               )}
-              {data.isFree && (
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">FREE</span>
-              )}
             </div>
 
             <h2 className="text-base font-bold text-gray-900 mb-3 leading-snug min-h-[3rem]">
-              {title || <span className="text-gray-300">제목이 여기에 표시됩니다</span>}
+              {title || data.bookTitle || <span className="text-gray-300">제목이 여기에 표시됩니다</span>}
             </h2>
 
             <div className="space-y-1.5 text-sm">
-              {[
-                { label: '과목',   value: data.subject     || '-' },
-                { label: '단원',   value: data.topic       || '-' },
-                { label: '학교급', value: data.schoolLevel || '-' },
-                { label: '학년',   value: data.gradeNumber ? `${data.gradeNumber}학년` : '-' },
-                { label: '학교',   value: data.schoolName  || '-' },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex justify-between gap-4 py-1.5 border-b border-gray-100">
+                {[
+                  { key: 'type', label: '유형', value: data.type || '-' },
+                  ...(isSchoolExam
+                    ? [
+                        { key: 'subject', label: '과목', value: data.subject || '-' },
+                        { key: 'school', label: '학교', value: data.schoolName || '-' },
+                      { key: 'exam', label: '시험', value: [data.year ? `${data.year}년` : '', data.semester ? `${data.semester}학기` : ''].filter(Boolean).join(' ') || '-' },
+                    ]
+                  : isEbook
+                    ? [
+                        { key: 'publisher', label: '출판사', value: data.publisher || '-' },
+                        { key: 'bookTitle', label: '도서명', value: data.bookTitle || '-' },
+                        { key: 'year', label: '연도', value: data.year ? `${data.year}년` : '-' },
+                        { key: 'topic', label: '주제/키워드', value: data.topic || '-' },
+                      ]
+                    : [
+                        { key: 'subject', label: '과목', value: data.subject || '-' },
+                        { key: 'publisher', label: '출판사', value: data.publisher || '-' },
+                        { key: 'bookTitle', label: '교재명', value: data.bookTitle || '-' },
+                        { key: 'target', label: '대상', value: [data.schoolLevel || '', data.gradeNumber ? `${data.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-' },
+                        { key: 'year', label: '연도', value: data.year ? `${data.year}년` : '-' },
+                        { key: 'topic', label: '단원/주제', value: data.topic || '-' },
+                      ]),
+              ].map(({ key, label, value }) => (
+                <div key={key} className="flex justify-between gap-4 py-1.5 border-b border-gray-100">
                   <span className="text-gray-400">{label}</span>
                   <span className={`font-medium ${value === '-' ? 'text-gray-300' : 'text-gray-700'}`}>{value}</span>
                 </div>
               ))}
             </div>
+
+            {isEbook && (data.ebookDescription || ebookTocItems.length > 0) && (
+              <div className="mt-4 space-y-3 border-t border-gray-100 pt-3">
+                <div>
+                  <p className="text-xs font-bold text-gray-500 mb-1.5">책 소개</p>
+                  <p className="text-[13px] leading-relaxed text-gray-600">
+                    {data.ebookDescription || '설명이 아직 등록되지 않았습니다.'}
+                  </p>
+                </div>
+                {ebookTocItems.length > 0 && (
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 mb-1.5">목차</p>
+                    <ul className="space-y-1">
+                      {ebookTocItems.slice(0, 6).map((item, idx) => (
+                        <li key={`${item}-${idx}`} className="text-[13px] text-gray-600">
+                          {idx + 1}. {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 구매/다운로드 카드 */}

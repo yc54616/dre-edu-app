@@ -25,7 +25,6 @@ export default async function MAppLayout({ children }: { children: React.ReactNo
     <div className="m-theme m-page-bg min-h-screen">
       <TopNav
         userName={user.name || ''}
-        userRole={role}
         isAdmin={isAdmin}
         currentMode={currentMode}
       />

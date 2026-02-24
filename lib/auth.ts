@@ -18,6 +18,11 @@ export const authConfig: NextAuthConfig = {
         const user = await User.findByEmail(credentials.email as string);
         if (!user) return null;
 
+        // 일반 회원가입 유저는 이메일 인증 완료 전 로그인 제한
+        if (user.emailVerified === false) return null;
+        // 교사 계정은 관리자 승인 완료 전 로그인 제한
+        if (user.role === 'teacher' && user.teacherApprovalStatus !== 'approved') return null;
+
         const isValid = await bcrypt.compare(
           credentials.password as string,
           user.password

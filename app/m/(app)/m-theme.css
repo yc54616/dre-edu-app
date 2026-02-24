@@ -459,6 +459,51 @@
   }
 
   .m-detail-title {
-    font-size: clamp(1.7rem, 7vw, 2.1rem);
+    font-size: clamp(1.55rem, 7vw, 2rem);
+    line-height: 1.22;
+  }
+
+  .m-detail-subtitle {
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .m-detail-btn-primary,
+  .m-detail-btn-secondary {
+    min-height: 2.75rem;
+    border-radius: 0.9rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+
+  .m-detail-page .rounded-2xl {
+    border-radius: 0.95rem;
+  }
+
+  .m-detail-page .rounded-3xl {
+    border-radius: 1.15rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .m-detail-container {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .m-detail-page .text-\[15px\] {
+    font-size: 0.93rem !important;
+  }
+
+  .m-detail-page .text-\[16px\] {
+    font-size: 0.98rem !important;
+  }
+
+  .m-detail-page .text-lg {
+    font-size: 1.05rem;
+  }
+
+  .m-detail-page .text-xl {
+    font-size: 1.15rem;
   }
 }

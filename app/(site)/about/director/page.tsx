@@ -108,10 +108,10 @@ export default function DirectorPage() {
                 title="원장 소개"
                 subtitle="DIRECTOR"
                 description="교육의 진정성을 믿는 유재무 원장입니다."
-                bgImage="/images/director.png"
+                bgImage="/director.png"
             />
 
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-20 relative overflow-hidden">
+            <div className="relative mx-auto max-w-5xl overflow-hidden px-4 py-10 sm:px-6 md:py-20 lg:px-8">
                 {/* Background Blobs */}
                 <div className="absolute top-0 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-blue-50 rounded-full blur-3xl opacity-50 -z-10 translate-x-1/3 -translate-y-1/4" />
                 <div className="absolute bottom-0 left-0 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-purple-50 rounded-full blur-3xl opacity-30 -z-10 -translate-x-1/3 translate-y-1/4" />
@@ -127,7 +127,7 @@ export default function DirectorPage() {
                             className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border-4 border-white max-w-[320px] mx-auto md:max-w-none"
                         >
                             <Image
-                                src="/images/director.png"
+                                src="/director.png"
                                 alt="유재무 원장"
                                 fill
                                 className="object-cover"
@@ -156,9 +156,9 @@ export default function DirectorPage() {
                             Master Director
                         </div>
 
-                        <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 md:mb-8 leading-tight font-display text-center md:text-left break-keep">
-                            "꿈은 사람을 이끌고,<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-dre-blue)] to-indigo-600">사람은 꿈을 이룹니다."</span>
+                        <h2 className="mb-6 break-keep text-center font-display text-3xl font-bold leading-tight text-gray-900 md:mb-8 md:text-left md:text-5xl">
+                            &ldquo;꿈은 사람을 이끌고,<br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-dre-blue)] to-indigo-600">사람은 꿈을 이룹니다.&rdquo;</span>
                         </h2>
 
                         <div className="prose prose-lg text-gray-600 mb-8 md:mb-10 leading-loose text-sm md:text-base">
@@ -201,7 +201,7 @@ export default function DirectorPage() {
 
                 {/* Timeline Section */}
                 <div className="relative">
-                    <div className="text-center mb-10 md:mb-16">
+                    <div className="mb-10 text-center md:mb-16">
                         <span className="text-[var(--color-dre-blue)] font-bold tracking-wider text-xs md:text-sm uppercase mb-2 block">History path</span>
                         <h3 className="text-2xl md:text-3xl font-bold text-gray-900">전문가 히스토리</h3>
                     </div>
@@ -221,7 +221,7 @@ export default function DirectorPage() {
                                     }`}
                             >
                                 {/* Date Column (Desktop) */}
-                                <div className={`hidden md:block w-1/2 text-${index % 2 === 0 ? 'left' : 'right'} pt-3`}>
+                                <div className={`hidden w-1/2 pt-3 md:block ${index % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
                                     <span className="text-4xl font-bold text-gray-300">{item.year}</span>
                                 </div>
 
@@ -264,8 +264,8 @@ export default function DirectorPage() {
                         <Quote className="w-8 h-8 md:w-12 md:h-12 text-white/20 mx-auto mb-6 rotate-180" />
 
                         <p className="text-xl md:text-3xl font-medium leading-relaxed font-display mb-6 md:mb-8 relative z-10">
-                            "가르치지 않고 깨닫게 합니다.<br />
-                            설명하지 않고 질문합니다."
+                            &ldquo;가르치지 않고 깨닫게 합니다.<br />
+                            설명하지 않고 질문합니다.&rdquo;
                         </p>
 
                         <div className="w-12 md:w-16 h-1 bg-blue-400/50 mx-auto mb-6 md:mb-8" />

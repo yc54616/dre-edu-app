@@ -24,14 +24,16 @@ export default function Header() {
         },
         { name: '커리큘럼', href: '/curriculum' },
         {
-            name: '온라인 코칭/수업',
-            href: '/coaching/class',
+            name: '코칭 안내',
+            href: '/coaching/consulting',
             dropdown: [
-                { name: '온라인 수업', href: '/coaching/class' },
-                { name: '입시 컨설팅', href: '/coaching/consulting' },
+                { name: '입시컨설팅', href: '/coaching/consulting' },
+                { name: '수업 설계 컨설팅', href: '/coaching/teacher' },
+                { name: '온라인 수학 코칭', href: '/coaching/math' },
             ]
         },
         { name: '명예의 전당', href: '/hall-of-fame' },
+        { name: '커뮤니티', href: '/community' },
         { name: '입학 안내/신청', href: '/admission' },
     ];
 
@@ -96,30 +98,6 @@ export default function Header() {
 
                     {/* Right Side Actions */}
                     <div className="hidden lg:flex items-center space-x-6">
-                        {/* Social Icons */}
-                        <div className="flex items-center space-x-3">
-                            <Link
-                                href="https://blog.naver.com/dre_institute"
-                                target="_blank"
-                                className="text-gray-400 hover:text-[#03C75A] transition-colors"
-                                title="네이버 블로그"
-                            >
-                                <span className="font-extrabold text-lg">B</span>
-                            </Link>
-                            <Link
-                                href="https://www.instagram.com/dre_math2023/"
-                                target="_blank"
-                                className="text-gray-400 hover:text-[#E1306C] transition-colors"
-                                title="인스타그램"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                                </svg>
-                            </Link>
-                        </div>
-
                         {/* DRE M Button */}
                         <Link
                             href="/m"

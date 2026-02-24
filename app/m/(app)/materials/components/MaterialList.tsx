@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { BookOpen, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { DIFFICULTY_COLOR, DIFFICULTY_LABEL } from '@/lib/models/Material';
 import { buildTitle, diffStyle, isNewMaterial, type MaterialCardData } from '../lib/utils';
@@ -17,10 +18,12 @@ interface Props {
 function Preview({ item, title }: { item: MaterialCardData; title: string }) {
   if (item.previewImages?.[0]) {
     return (
-      <img
+      <Image
         src={`/uploads/previews/${item.previewImages[0]}`}
-        alt={title}
-        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        alt={title || item.subject || item.type}
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
       />
     );
   }
@@ -105,11 +108,6 @@ export default function MaterialList({
                   <div className="relative aspect-[4/3] overflow-hidden border-b border-blue-50">
                     <Preview item={item} title={title} />
                     <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-                      {item.isFree && (
-                        <span className="rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-black text-white">
-                          FREE
-                        </span>
-                      )}
                       {isNewMaterial(item.createdAt) && (
                         <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[10px] font-black text-white">
                           NEW
@@ -141,11 +139,12 @@ export default function MaterialList({
                       <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400">
                         <ShoppingBag size={12} /> {(item.downloadCount ?? 0).toLocaleString()}건
                       </span>
-                      {item.isFree ? (
-                        <span className="text-sm font-black text-emerald-600">FREE</span>
-                      ) : (item.priceProblem ?? 0) > 0 ? (
-                        <span className="text-sm font-black text-slate-900">{(item.priceProblem ?? 0).toLocaleString()}원~</span>
-                      ) : null}
+                      {(() => {
+                        const price = (item.priceProblem ?? 0) + (item.priceEtc ?? 0);
+                        if (item.isFree) return <span className="text-sm font-black text-emerald-600">무료</span>;
+                        if (price > 0) return <span className="text-sm font-black text-slate-900">{price.toLocaleString()}원~</span>;
+                        return null;
+                      })()}
                     </div>
                   </div>
                 </Link>

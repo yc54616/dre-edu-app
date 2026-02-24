@@ -1,11 +1,12 @@
 /**
- * PDF / HWP → 미리보기 이미지 자동 생성
+ * PDF / HWP / HWPX → 미리보기 이미지 자동 생성
  *
  * PDF : pdftoppm (poppler-utils) → JPEG
  * HWP : PrvImage 추출 우선 → 실패 시 hwp5odt + soffice + pdftoppm
+ * HWPX: Preview/PrvImage.* 추출 우선 → 실패 시 soffice + pdftoppm
  */
 import { spawn } from 'child_process';
-import { basename, join } from 'path';
+import { basename, extname, join } from 'path';
 import { access, copyFile, mkdir, mkdtemp, readdir, rm, writeFile } from 'fs/promises';
 import { nanoid } from 'nanoid';
 
@@ -157,7 +158,44 @@ async function tryExtractHwpEmbeddedPreview(
     await writeFile(join(previewDir, filename), stdout);
     return filename;
   } catch (error) {
-    console.warn('[generatePreview] HWP PrvImage 추출 실패:', error);
+    console.warn('[generatePreview] HWP PrvImage 추출 실패:', error instanceof Error ? error.message : String(error));
+    return null;
+  }
+}
+
+async function tryExtractHwpxEmbeddedPreview(
+  filePath: string,
+  previewDir: string,
+): Promise<string | null> {
+  const pythonScript = [
+    'import sys, zipfile',
+    'src = sys.argv[1]',
+    'with zipfile.ZipFile(src) as z:',
+    "    candidates = [n for n in z.namelist() if n.lower().startswith('preview/prvimage.')]",
+    '    if not candidates:',
+    '        raise SystemExit(3)',
+    '    sys.stdout.buffer.write(z.read(candidates[0]))',
+  ].join('\n');
+
+  try {
+    const { stdout } = await runCommand('python3', ['-c', pythonScript, filePath], {
+      timeoutMs: 30_000,
+      maxStdoutBytes: 20 * 1024 * 1024,
+    });
+
+    if (!stdout || stdout.length < 32) return null;
+
+    const ext = detectImageExtension(stdout);
+    if (!ext) {
+      console.warn('[generatePreview] HWPX Preview/PrvImage 포맷 인식 실패');
+      return null;
+    }
+
+    const filename = `${nanoid(12)}.${ext}`;
+    await writeFile(join(previewDir, filename), stdout);
+    return filename;
+  } catch (error) {
+    console.warn('[generatePreview] HWPX Preview/PrvImage 추출 실패:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -167,7 +205,7 @@ async function convertHwpToOdt(filePath: string, odtPath: string): Promise<boole
     await runCommand('hwp5odt', ['--output', odtPath, filePath], { timeoutMs: 90_000 });
     if (await pathExists(odtPath)) return true;
   } catch (error) {
-    console.warn('[generatePreview] hwp5odt 기본 변환 실패:', error);
+    console.warn('[generatePreview] hwp5odt 기본 변환 실패:', error instanceof Error ? error.message : String(error));
   }
 
   // hwp5odt의 RelaxNG 검증 실패 시 우회 변환
@@ -187,35 +225,68 @@ async function convertHwpToOdt(filePath: string, odtPath: string): Promise<boole
     await runCommand('python3', ['-c', pythonScript, filePath, odtPath], { timeoutMs: 120_000 });
     return await pathExists(odtPath);
   } catch (error) {
-    console.warn('[generatePreview] hwp5odt 검증 우회 변환 실패:', error);
+    console.warn('[generatePreview] hwp5odt 검증 우회 변환 실패:', error instanceof Error ? error.message : String(error));
     return false;
   }
 }
 
-async function convertOdtToPdf(odtPath: string, workDir: string): Promise<string | null> {
-  const pdfPath = join(workDir, `${basename(odtPath, '.odt')}.pdf`);
+async function convertDocumentToPdf(inputPath: string, workDir: string): Promise<string | null> {
+  const stem = basename(inputPath).replace(/\.[^.]+$/, '');
+  const expectedPdfPath = join(workDir, `${stem}.pdf`);
+  const ext = extname(inputPath).toLowerCase();
+  const commandCandidates: string[][] = [
+    [
+      '--headless',
+      '--nologo',
+      '--nolockcheck',
+      '--norestore',
+      '--convert-to',
+      'pdf',
+      inputPath,
+      '--outdir',
+      workDir,
+    ],
+  ];
 
-  try {
-    await runCommand(
-      'soffice',
-      [
-        '--headless',
-        '--nologo',
-        '--nolockcheck',
-        '--norestore',
-        '--convert-to',
-        'pdf',
-        odtPath,
-        '--outdir',
-        workDir,
-      ],
-      { timeoutMs: 120_000 },
-    );
-  } catch (error) {
-    console.warn('[generatePreview] soffice 변환 명령 실패:', error);
+  if (ext === '.hwp' || ext === '.hwpx') {
+    commandCandidates.push([
+      '--headless',
+      '--nologo',
+      '--nolockcheck',
+      '--norestore',
+      '--infilter=Hwp2002_File',
+      '--convert-to',
+      'pdf:writer_pdf_Export',
+      inputPath,
+      '--outdir',
+      workDir,
+    ]);
+    commandCandidates.push([
+      '--headless',
+      '--nologo',
+      '--nolockcheck',
+      '--norestore',
+      '--infilter=Hwp2002_File',
+      '--convert-to',
+      'pdf',
+      inputPath,
+      '--outdir',
+      workDir,
+    ]);
   }
 
-  if (await pathExists(pdfPath)) return pdfPath;
+  for (const args of commandCandidates) {
+    try {
+      await runCommand('soffice', args, { timeoutMs: 120_000 });
+      if (await pathExists(expectedPdfPath)) return expectedPdfPath;
+      const files = await readdir(workDir);
+      const fallbackPdf = files.find((f) => /\.pdf$/i.test(f));
+      if (fallbackPdf) return join(workDir, fallbackPdf);
+    } catch (error) {
+      console.warn('[generatePreview] soffice 변환 명령 실패:', error instanceof Error ? error.message : String(error));
+    }
+  }
+
   return null;
 }
 
@@ -255,14 +326,14 @@ async function convertPdfToJpegs(
 
 /**
  * @param filePath  저장된 원본 파일의 절대 경로
- * @param ext       'pdf' | 'hwp'
- * @param maxPages  변환할 최대 페이지 수 (기본 3)
+ * @param ext       'pdf' | 'hwp' | 'hwpx'
+ * @param maxPages  변환할 최대 페이지 수 (기본 2)
  * @returns         생성된 미리보기 파일명 배열 (빈 배열 = 실패)
  */
 export async function generatePreview(
   filePath: string,
   ext: string,
-  maxPages = 3,
+  maxPages = 2,
 ): Promise<string[]> {
   const previewDir = PREVIEW_DIR();
   const tmpBaseDir = TMP_BASE_DIR();
@@ -274,15 +345,27 @@ export async function generatePreview(
 
   try {
     if (ext === 'hwp') {
-      // HWP 내부의 미리보기 이미지가 있으면 가장 빠르고 안정적이다.
+      // HWP 내부 미리보기가 있으면 가장 빠르고 안정적이다.
       const embeddedPreview = await tryExtractHwpEmbeddedPreview(filePath, previewDir);
       if (embeddedPreview) return [embeddedPreview];
 
       const odtPath = join(workDir, `hwp_${nanoid(8)}.odt`);
       const odtReady = await convertHwpToOdt(filePath, odtPath);
-      if (!odtReady) return [];
+      const pdfPath = odtReady
+        ? await convertDocumentToPdf(odtPath, workDir)
+        : await convertDocumentToPdf(filePath, workDir);
+      if (!pdfPath) return [];
 
-      const pdfPath = await convertOdtToPdf(odtPath, workDir);
+      return await convertPdfToJpegs(pdfPath, workDir, previewDir, maxPages);
+    }
+
+    if (ext === 'hwpx') {
+      // HWPX는 ZIP 컨테이너 내부 Preview/PrvImage.* 추출이 가장 안정적이다.
+      const embeddedPreview = await tryExtractHwpxEmbeddedPreview(filePath, previewDir);
+      if (embeddedPreview) return [embeddedPreview];
+
+      // 일부 문서는 Preview가 없을 수 있어 soffice 변환을 보조 경로로 시도한다.
+      const pdfPath = await convertDocumentToPdf(filePath, workDir);
       if (!pdfPath) return [];
 
       return await convertPdfToJpegs(pdfPath, workDir, previewDir, maxPages);

@@ -9,8 +9,8 @@ const spaces = [
         id: 'lecture',
         title: "Focus Lecture Room",
         subtitle: "몰입형 강의실",
-        desc: "오직 칠판과 선생님에게만 집중할 수 있는 시선 설계. 불필요한 장식을 배제하고 조도와 책상 간격까지 세심하게 조정한 몰입의 공간입니다.",
-        img: "/images/classroom_1.png",
+        desc: "칠판과 선생님에게만 집중할 수 있도록, 불필요한 것을 빼고 조명과 책상 배치까지 신경 쓴 공간입니다.",
+        img: "/images/facility_classroom2.jpg",
         icon: <Library className="w-6 h-6" />,
         colSpan: "md:col-span-2"
     },
@@ -18,8 +18,8 @@ const spaces = [
         id: 'study',
         title: "Deep Study Zone",
         subtitle: "자기주도 학습실",
-        desc: "강의 후 바로 복습할 수 있는 최적의 동선. 카페 같은 편안함 속에서 깊이 있는 사고를 할 수 있습니다.",
-        img: "/images/study_area.png",
+        desc: "수업 끝나고 바로 복습할 수 있는 자리. 편하게 앉아서 집중할 수 있습니다.",
+        img: "/images/facility_study2.jpg",
         icon: <Coffee className="w-6 h-6" />,
         colSpan: "md:col-span-1"
     },
@@ -27,8 +27,8 @@ const spaces = [
         id: 'coaching',
         title: "1:1 Coaching Lab",
         subtitle: "개별 클리닉 룸",
-        desc: "질문과 토론이 끊이지 않는 곳. 1:1 밀착 지도를 통해 개인별 약점을 완벽하게 보완합니다.",
-        img: "/images/classroom_2.png",
+        desc: "궁금한 건 바로 물어볼 수 있는 1:1 공간. 모르는 부분을 그때그때 해결합니다.",
+        img: "/images/facility_classroom3.jpg",
         icon: <Search className="w-6 h-6" />,
         colSpan: "md:col-span-1"
     }
@@ -39,9 +39,9 @@ export default function FacilityDetail() {
         <section className="bg-white">
 
             {/* Space Philosophy */}
-            <div className="py-12 md:py-24 bg-gray-50 relative overflow-hidden">
+            <div className="relative overflow-hidden bg-gray-50 py-12 md:py-24">
                 <div className="absolute inset-0 bg-[url('/pattern-grid.svg')] opacity-5" />
-                <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+                <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
                     <motion.span
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -55,17 +55,17 @@ export default function FacilityDetail() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 leading-tight font-display"
+                        className="mb-6 text-3xl font-bold leading-tight text-gray-900 font-display md:mb-8 md:text-4xl"
                     >
-                        환경이 성적을 바꿉니다.<br />
-                        <span className="text-gray-500">DRE는 공간 하나에도 교육 철학을 담았습니다.</span>
+                        환경이 달라지면 공부도 달라집니다.<br />
+                        <span className="text-gray-500">DRE는 공간 하나도 허투루 만들지 않았습니다.</span>
                     </motion.h2>
                 </div>
             </div>
 
             {/* Premium Gallery */}
-            <div className="max-w-7xl mx-auto px-4 -mt-12 relative z-20 mb-32">
-                <div className="grid md:grid-cols-2 gap-6">
+            <div className="relative z-20 mx-auto -mt-10 mb-14 max-w-7xl px-4 md:-mt-12 md:mb-24">
+                <div className="grid gap-4 md:grid-cols-2 md:gap-6">
                     {spaces.map((space, index) => (
                         <motion.div
                             key={space.id}
@@ -73,7 +73,7 @@ export default function FacilityDetail() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
-                            className={`group relative rounded-3xl overflow-hidden shadow-xl h-[400px] ${space.colSpan}`}
+                            className={`group relative h-[300px] overflow-hidden rounded-3xl shadow-xl sm:h-[340px] md:h-[400px] ${space.colSpan}`}
                         >
                             <Image
                                 src={space.img}
@@ -83,15 +83,15 @@ export default function FacilityDetail() {
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
-                            <div className="absolute bottom-0 left-0 p-8 md:p-10 w-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            <div className="absolute bottom-0 left-0 w-full transform p-5 transition-transform duration-300 group-hover:translate-y-0 sm:p-6 md:p-10 md:translate-y-4">
                                 <div className="flex items-center gap-3 mb-3 text-blue-300">
                                     <div className="p-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
                                         {space.icon}
                                     </div>
-                                    <span className="font-bold tracking-wider text-sm uppercase">{space.title}</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider sm:text-sm">{space.title}</span>
                                 </div>
-                                <h3 className="text-2xl font-bold text-white mb-3">{space.subtitle}</h3>
-                                <p className="text-gray-300 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75">
+                                <h3 className="mb-2 text-xl font-bold text-white sm:mb-3 sm:text-2xl">{space.subtitle}</h3>
+                                <p className="text-sm leading-relaxed text-gray-300 opacity-100 transition-opacity duration-300 delay-75 md:opacity-0 md:group-hover:opacity-100 md:text-base">
                                     {space.desc}
                                 </p>
                             </div>
@@ -112,23 +112,23 @@ export default function FacilityDetail() {
             </div>
 
             {/* Directions Section (Integrated from Location Page) */}
-            <div className="bg-gray-900 py-12 md:py-24 relative overflow-hidden text-white">
+            <div className="relative overflow-hidden bg-gray-900 py-12 text-white md:py-24">
                 {/* Background Blobs */}
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-900/20 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-900/20 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    <div className="text-center mb-16">
+                    <div className="mb-10 text-center md:mb-16">
                         <span className="text-blue-400 font-bold tracking-widest text-sm uppercase mb-2 block">Location</span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">오시는 길</h2>
-                        <p className="text-gray-400">꿈을 향해 나아가는 DRE 수학학원의 위치입니다.</p>
+                        <h2 className="mb-3 text-3xl font-bold text-white md:mb-4 md:text-4xl">오시는 길</h2>
+                        <p className="text-sm text-gray-400 md:text-base">DRE 수학학원 위치 안내입니다.</p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-12 items-start">
+                    <div className="grid items-start gap-6 md:grid-cols-2 md:gap-12">
                         {/* Map */}
-                        <div className="bg-gray-800 rounded-3xl overflow-hidden h-[350px] md:h-[450px] shadow-2xl border border-gray-700 relative group">
+                        <div className="group relative h-[300px] overflow-hidden rounded-3xl border border-gray-700 bg-gray-800 shadow-2xl sm:h-[350px] md:h-[450px]">
                             {/* Naver Map Embed with Smart Crop */}
-                            <div className="absolute left-1/2 top-1/2 -translate-x-[62%] -translate-y-[55%] lg:-translate-x-1/2 lg:-translate-y-1/2 w-[400%] h-[200%] lg:w-[300%] lg:h-[160%]">
+                            <div className="absolute left-1/2 top-1/2 h-[185%] w-[360%] -translate-x-[58%] -translate-y-[55%] sm:h-[200%] sm:w-[400%] sm:-translate-x-[62%] lg:h-[160%] lg:w-[300%] lg:-translate-x-1/2 lg:-translate-y-1/2">
                                 <iframe
                                     src="https://map.naver.com/p/entry/place/1087649900?c=15.00,0,0,0,dh"
                                     width="100%"
@@ -143,12 +143,12 @@ export default function FacilityDetail() {
                             </div>
 
                             {/* Overlay Button for better UX */}
-                            <div className="absolute bottom-4 right-4 z-10">
+                            <div className="absolute bottom-3 right-3 z-10 md:bottom-4 md:right-4">
                                 <a
                                     href="https://map.naver.com/p/entry/place/1087649900"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="bg-[#03C75A] text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg flex items-center gap-1 hover:bg-[#02b351] transition-colors"
+                                    className="flex items-center gap-1 rounded-full bg-[#03C75A] px-3 py-2 text-[11px] font-bold text-white shadow-lg transition-colors hover:bg-[#02b351] md:text-xs"
                                 >
                                     <span className="font-extrabold">N</span> 네이버 지도 보기
                                 </a>
@@ -156,17 +156,17 @@ export default function FacilityDetail() {
                         </div>
 
                         {/* Info Card */}
-                        <div className="bg-white/5 backdrop-blur-lg p-10 rounded-3xl border border-white/10 shadow-xl">
-                            <h3 className="text-2xl font-bold text-white mb-8 border-b border-white/10 pb-6">Contact Info</h3>
+                        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-lg sm:p-8 md:p-10">
+                            <h3 className="mb-6 border-b border-white/10 pb-5 text-xl font-bold text-white sm:mb-8 sm:pb-6 sm:text-2xl">Contact Info</h3>
 
-                            <div className="space-y-8">
+                            <div className="space-y-6 sm:space-y-8">
                                 <div className="flex items-start group">
-                                    <div className="w-12 h-12 bg-[#03C75A]/10 rounded-2xl flex items-center justify-center text-[#03C75A] mr-5 shrink-0 border border-[#03C75A]/20 group-hover:bg-[#03C75A] group-hover:text-white transition-all duration-300">
+                                    <div className="mr-4 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#03C75A]/20 bg-[#03C75A]/10 text-[#03C75A] transition-all duration-300 group-hover:bg-[#03C75A] group-hover:text-white sm:mr-5 sm:h-12 sm:w-12">
                                         <MapPin size={24} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm text-gray-400 uppercase tracking-wider mb-1 font-bold">Address</h4>
-                                        <p className="text-gray-100 text-lg leading-relaxed">
+                                        <h4 className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-400 sm:text-sm">Address</h4>
+                                        <p className="text-base leading-relaxed text-gray-100 sm:text-lg">
                                             서울 중구 퇴계로 452-1 스타빌딩 B동 7층<br />
                                             (신당역 2번 출구 도보 3분)
                                         </p>
@@ -177,24 +177,24 @@ export default function FacilityDetail() {
                                 </div>
 
                                 <div className="flex items-start group">
-                                    <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400 mr-5 shrink-0 border border-blue-500/20 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                                    <div className="mr-4 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400 transition-all duration-300 group-hover:bg-blue-500 group-hover:text-white sm:mr-5 sm:h-12 sm:w-12">
                                         <Phone size={24} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm text-gray-400 uppercase tracking-wider mb-1 font-bold">Contact</h4>
-                                        <p className="text-gray-100 text-xl font-bold font-mono">
+                                        <h4 className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-400 sm:text-sm">Contact</h4>
+                                        <p className="font-mono text-lg font-bold text-gray-100 sm:text-xl">
                                             0507-1346-1125
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="flex items-start group">
-                                    <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400 mr-5 shrink-0 border border-blue-500/20 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                                    <div className="mr-4 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-400 transition-all duration-300 group-hover:bg-blue-500 group-hover:text-white sm:mr-5 sm:h-12 sm:w-12">
                                         <Clock size={24} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm text-gray-400 uppercase tracking-wider mb-1 font-bold">Office Hours</h4>
-                                        <ul className="text-gray-300 space-y-1">
+                                        <h4 className="mb-1 text-xs font-bold uppercase tracking-wider text-gray-400 sm:text-sm">Office Hours</h4>
+                                        <ul className="space-y-1 text-sm text-gray-300 sm:text-base">
                                             <li>평일: 10:00 - 22:00</li>
                                             <li>토요일: 09:00 - 13:00</li>
                                             <li className="text-gray-500 text-sm">* 일요일 및 공휴일 휴무</li>
@@ -205,7 +205,7 @@ export default function FacilityDetail() {
 
                             <a
                                 href="tel:050713461125"
-                                className="mt-10 block w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-center rounded-xl hover:from-blue-500 hover:to-indigo-500 transition-all shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-1"
+                                className="mt-8 block w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 text-center text-sm font-bold text-white shadow-lg transition-all hover:-translate-y-1 hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-500/30 sm:mt-10 sm:py-4 sm:text-base"
                             >
                                 전화 상담 연결하기
                             </a>

@@ -12,6 +12,7 @@ export interface FeedbackRecord {
   topic:                string;
   ratingBefore:         number;  // 피드백 전 유저 토픽 레이팅
   materialRatingBefore: number;  // 피드백 전 자료 레이팅
+  materialDelta?:       number;  // 피드백 시 자료 레이팅 변화량
   ratingChange:         number;  // 변화량
   newRating:            number;  // 피드백 후 유저 토픽 레이팅
   createdAt:            Date;
@@ -45,6 +46,7 @@ const feedbackRecordSchema = new Schema<FeedbackRecord>(
     topic:                { type: String, required: true },
     ratingBefore:         { type: Number, required: true },
     materialRatingBefore: { type: Number, required: true },
+    materialDelta:        { type: Number, default: 0 },
     ratingChange:         { type: Number, required: true },
     newRating:            { type: Number, required: true },
     createdAt:            { type: Date, default: Date.now },

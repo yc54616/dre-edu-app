@@ -2,9 +2,11 @@ import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
 import Material, { DIFFICULTY_LABEL } from '@/lib/models/Material';
+import Order from '@/lib/models/Order';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import PurchaseForm from './PurchaseForm';
+import { buildMaterialTitle } from '@/lib/material-display';
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || '';
 
@@ -28,17 +30,20 @@ export default async function PurchasePage({
 
   const material = await Material.findOne({ materialId, isActive: true }).lean();
   if (!material) notFound();
+  const isTeacherMaterial = material.targetAudience === 'teacher';
 
   if (material.isFree) redirect(`/m/materials/${materialId}`);
 
-  const title = [
-    material.schoolName,
-    material.year ? `${material.year}년` : '',
-    material.gradeNumber ? `${material.gradeNumber}학년` : '',
-    material.semester ? `${material.semester}학기` : '',
-    material.subject,
-    material.topic,
-  ].filter(Boolean).join(' ');
+  const paidOrders = await Order.find({ userId: user.id, materialId, status: 'paid' }, { fileTypes: 1 }).lean();
+  const purchasedSet = new Set<string>();
+  for (const order of paidOrders) {
+    for (const type of order.fileTypes || []) purchasedSet.add(type);
+  }
+  const purchasedFileTypes = isTeacherMaterial && paidOrders.length > 0
+    ? ['problem', 'etc']
+    : [...purchasedSet];
+
+  const title = buildMaterialTitle(material);
 
   return (
     <div className="m-detail-page min-h-screen">
@@ -53,11 +58,11 @@ export default async function PurchasePage({
             자료로 돌아가기
           </Link>
           <h1 className="m-detail-title">자료 구매</h1>
-          <p className="text-base text-gray-600 mt-2.5 font-medium flex items-center gap-2">
+          <p className="mt-2.5 flex flex-wrap items-center gap-2 text-sm font-medium text-gray-600 sm:text-base">
             <span className="font-extrabold px-2.5 py-1 text-[11px] rounded-full bg-blue-50/80 text-blue-500 border border-blue-100">
               {DIFFICULTY_LABEL[material.difficulty]}
             </span>
-            <span className="truncate">{title || material.subject}</span>
+            <span className="min-w-0 truncate">{title || material.subject}</span>
           </p>
         </div>
       </div>
@@ -70,11 +75,13 @@ export default async function PurchasePage({
           priceEtc={material.priceEtc || 0}
           hasProblemFile={!!material.problemFile}
           hasEtcFile={!!material.etcFile}
+          isTeacherMaterial={isTeacherMaterial}
           tossClientKey={TOSS_CLIENT_KEY}
           userId={user.id || ''}
           userEmail={user.email || ''}
           userName={user.name || ''}
           initialFileTypes={initialFiles}
+          purchasedFileTypes={purchasedFileTypes}
         />
       </div>
     </div>
