@@ -65,7 +65,7 @@ const faqs = [
 
 export default function AdmissionDetail() {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
-    const [form, setForm] = useState({ name: '', phone: '', schoolGrade: '', message: '' });
+    const [form, setForm] = useState({ name: '', phone: '', schoolGrade: '', message: '', agreeMarketing: false });
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<'success' | 'error' | null>(null);
 
@@ -90,7 +90,7 @@ export default function AdmissionDetail() {
             });
             if (!res.ok) throw new Error();
             setResult('success');
-            setForm({ name: '', phone: '', schoolGrade: '', message: '' });
+            setForm({ name: '', phone: '', schoolGrade: '', message: '', agreeMarketing: false });
         } catch {
             setResult('error');
         } finally {
@@ -252,6 +252,16 @@ export default function AdmissionDetail() {
                                     placeholder="현재 성적, 고민 사항, 희망 상담 시간 등을 자유롭게 남겨주세요."
                                 />
                             </div>
+
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={form.agreeMarketing}
+                                    onChange={(e) => setForm({ ...form, agreeMarketing: e.target.checked })}
+                                    className="h-4 w-4 rounded border-gray-300 text-[var(--color-dre-blue)] focus:ring-blue-200"
+                                />
+                                [선택] 혜택/이벤트 정보 수신 동의
+                            </label>
 
                             {result === 'success' && (
                                 <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800 font-medium">

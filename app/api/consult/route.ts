@@ -5,6 +5,7 @@ import Consultation, { CONSULTATION_TYPES, CONSULTATION_STATUSES } from '@/lib/m
 import { notifyConsultation } from '@/lib/solapi';
 
 export const dynamic = 'force-dynamic';
+const MARKETING_CONSENT_VERSION = '2026-02-26';
 
 // POST /api/consult — 상담 신청 (비로그인 가능)
 export async function POST(req: NextRequest) {
@@ -18,6 +19,7 @@ export async function POST(req: NextRequest) {
   const name = (body.name as string || '').trim();
   const phone = (body.phone as string || '').trim();
   const type = body.type as string;
+  const agreeMarketing = body.agreeMarketing === true;
 
   if (!name || !phone || !type) {
     return NextResponse.json({ error: '이름, 연락처, 유형은 필수입니다.' }, { status: 400 });
@@ -38,6 +40,9 @@ export async function POST(req: NextRequest) {
     type,
     name,
     phone: phoneDigits,
+    marketingConsent: agreeMarketing,
+    marketingConsentAt: agreeMarketing ? new Date() : null,
+    marketingConsentVersion: agreeMarketing ? MARKETING_CONSENT_VERSION : null,
     schoolGrade: (body.schoolGrade as string || '').trim(),
     currentScore: (body.currentScore as string || '').trim(),
     targetUniv: (body.targetUniv as string || '').trim(),

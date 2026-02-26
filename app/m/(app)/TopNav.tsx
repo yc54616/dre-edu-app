@@ -16,12 +16,16 @@ interface Props {
   userName: string;
   isAdmin: boolean;
   currentMode: 'teacher' | 'student';
+  pendingTeacherCount?: number;
+  pendingConsultationCount?: number;
+  pendingScheduleCount?: number;
 }
 
 type NavItem = {
   href: string;
   label: string;
   icon: React.ReactNode;
+  badgeCount?: number;
   exact?: boolean;
   matcher?: (path: string) => boolean;
 };
@@ -34,10 +38,21 @@ function isNavActive(pathname: string, item: NavItem) {
 
 const ADMIN_PRIMARY_COUNT = 7;
 
+function formatBadgeCount(count: number) {
+  return count > 99 ? '99+' : String(count);
+}
+
 /* ═══════════════════════════════════════════════════
    TopNav — 1:1 DRE Main Header.tsx style
    ═══════════════════════════════════════════════════ */
-export default function TopNav({ userName, isAdmin, currentMode }: Props) {
+export default function TopNav({
+  userName,
+  isAdmin,
+  currentMode,
+  pendingTeacherCount = 0,
+  pendingConsultationCount = 0,
+  pendingScheduleCount = 0,
+}: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -54,11 +69,26 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
         { href: '/m/admin/materials/new', label: '자료 등록', icon: <PlusCircle size={17} />, exact: true },
         { href: '/m/admin/orders', label: '주문 관리', icon: <ClipboardList size={17} /> },
         { href: '/m/admin/hall-of-fame', label: '명예의 전당 관리', icon: <Trophy size={17} /> },
-        { href: '/m/admin/consultations', label: '상담 관리', icon: <MessageSquare size={17} /> },
-        { href: '/m/admin/schedule', label: '일정 관리', icon: <CalendarClock size={17} /> },
+        {
+          href: '/m/admin/consultations',
+          label: '상담 관리',
+          icon: <MessageSquare size={17} />,
+          badgeCount: pendingConsultationCount > 0 ? pendingConsultationCount : undefined,
+        },
+        {
+          href: '/m/admin/schedule',
+          label: '일정 관리',
+          icon: <CalendarClock size={17} />,
+          badgeCount: pendingScheduleCount > 0 ? pendingScheduleCount : undefined,
+        },
         { href: '/m/admin/community-products', label: '상품 관리', icon: <Tag size={17} /> },
         { href: '/m/admin/community-upgrade-orders', label: '상품 결제 관리', icon: <CreditCard size={17} /> },
-        { href: '/m/admin/users', label: '회원 관리', icon: <UserCog size={17} /> },
+        {
+          href: '/m/admin/users',
+          label: '회원 관리',
+          icon: <UserCog size={17} />,
+          badgeCount: pendingTeacherCount > 0 ? pendingTeacherCount : undefined,
+        },
         { href: '/m/admin/broadcast', label: '친구톡', icon: <Megaphone size={17} /> },
       ]
       : [
@@ -69,7 +99,7 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
         { href: '/m/recommend', label: 'ELO 맞춤 추천', icon: <Sparkles size={17} /> },
         { href: '/m/my-orders', label: '내 구매 내역', icon: <ShoppingBag size={17} /> },
       ]),
-    [isAdmin, currentMode]
+    [isAdmin, currentMode, pendingTeacherCount, pendingConsultationCount, pendingScheduleCount]
   );
 
   const primaryNavItems = isAdmin ? navItems.slice(0, ADMIN_PRIMARY_COUNT) : navItems;
@@ -88,7 +118,12 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
           }`}
       >
         {item.icon}
-        {item.label}
+        <span>{item.label}</span>
+        {typeof item.badgeCount === 'number' && item.badgeCount > 0 && (
+          <span className="ml-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-500 px-1.5 py-[1px] text-[10px] font-extrabold leading-4 text-white">
+            {formatBadgeCount(item.badgeCount)}
+          </span>
+        )}
       </Link>
     );
   }
@@ -267,7 +302,12 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
                         }`}
                     >
                       {item.icon}
-                      {item.label}
+                      <span>{item.label}</span>
+                      {typeof item.badgeCount === 'number' && item.badgeCount > 0 && (
+                        <span className="ml-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-amber-500 px-1.5 py-[1px] text-[10px] font-extrabold leading-4 text-white">
+                          {formatBadgeCount(item.badgeCount)}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

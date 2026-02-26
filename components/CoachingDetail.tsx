@@ -65,7 +65,7 @@ const steps = [
 ];
 
 export default function CoachingDetail() {
-  const [form, setForm] = useState({ name: '', phone: '', gradeLevel: '', message: '' });
+  const [form, setForm] = useState({ name: '', phone: '', gradeLevel: '', message: '', agreeMarketing: false });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<'success' | 'error' | null>(null);
 
@@ -89,7 +89,7 @@ export default function CoachingDetail() {
       });
       if (!res.ok) throw new Error();
       setResult('success');
-      setForm({ name: '', phone: '', gradeLevel: '', message: '' });
+      setForm({ name: '', phone: '', gradeLevel: '', message: '', agreeMarketing: false });
     } catch {
       setResult('error');
     } finally {
@@ -295,6 +295,16 @@ export default function CoachingDetail() {
               <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
                 카카오톡 봇으로 접수하면 신청 단계, 피드백 일정, 진행 상태를 한 화면에서 확인할 수 있습니다.
               </div>
+
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={form.agreeMarketing}
+                  onChange={(e) => setForm({ ...form, agreeMarketing: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-[var(--color-dre-blue)] focus:ring-blue-200"
+                />
+                [선택] 혜택/이벤트 정보 수신 동의
+              </label>
 
               {result === 'success' && (
                 <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800 font-medium">

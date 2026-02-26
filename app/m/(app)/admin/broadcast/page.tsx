@@ -1,16 +1,22 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import connectMongo from '@/lib/mongoose';
-import Consultation, { CONSULTATION_TYPE_LABEL, ConsultationType } from '@/lib/models/Consultation';
+import User from '@/lib/models/User';
+import Consultation, { type ConsultationType } from '@/lib/models/Consultation';
 import { Megaphone } from 'lucide-react';
 import BroadcastForm from './BroadcastForm';
 
 export const dynamic = 'force-dynamic';
 
-const typeColor: Record<ConsultationType, string> = {
-  admission: 'text-green-600 bg-green-50 border-green-200',
-  consulting: 'text-blue-600 bg-blue-50 border-blue-200',
-  coaching: 'text-purple-600 bg-purple-50 border-purple-200',
+type BroadcastRole = 'student' | 'teacher';
+
+const roleLabel: Record<BroadcastRole, string> = {
+  student: '학생',
+  teacher: '교사',
+};
+
+const roleColor: Record<BroadcastRole, string> = {
+  student: 'text-blue-600 bg-blue-50 border-blue-200',
   teacher: 'text-orange-600 bg-orange-50 border-orange-200',
 };
 
@@ -21,37 +27,114 @@ export default async function BroadcastPage() {
 
   await connectMongo();
 
-  // 고유 전화번호+이름 목록 조회 (중복 제거)
-  const raw = await Consultation.find(
-    { status: { $ne: 'cancelled' } },
-  ).select('phone name type').lean();
+  const [rawUsers, rawConsultations] = await Promise.all([
+    User.find({
+      role: { $in: ['student', 'teacher'] },
+      phone: { $exists: true, $nin: [null, ''] },
+      'consents.marketing': { $exists: true, $ne: null },
+    })
+      .sort({ createdAt: -1 })
+      .select('phone username role consents.marketing')
+      .lean() as Promise<Array<{
+        phone?: string | null;
+        username?: string;
+        role?: BroadcastRole;
+        consents?: {
+          marketing?: {
+            agreedAt?: Date | string;
+          } | null;
+        };
+      }>>,
+    Consultation.find({
+      status: { $ne: 'cancelled' },
+      phone: { $exists: true, $nin: [null, ''] },
+      marketingConsent: true,
+    })
+      .sort({ createdAt: -1 })
+      .select('phone name type marketingConsentAt')
+      .lean() as Promise<Array<{
+        phone?: string | null;
+        name?: string;
+        type?: ConsultationType;
+        marketingConsentAt?: Date | string | null;
+      }>>,
+  ]);
 
-  // phone 기준 중복 제거
-  const phoneMap = new Map<string, { phone: string; name: string; types: Set<ConsultationType> }>();
-  for (const doc of raw) {
-    const existing = phoneMap.get(doc.phone);
+  // phone 기준으로 중복 제거 (동일 번호의 최신 사용자 이름/동의일시를 우선 사용)
+  const phoneMap = new Map<string, {
+    phone: string;
+    name: string;
+    roles: Set<BroadcastRole>;
+    marketingAgreedAt: Date | null;
+  }>();
+
+  for (const doc of rawUsers) {
+    const phone = typeof doc.phone === 'string' ? doc.phone.replace(/\D/g, '') : '';
+    if (!phone) continue;
+
+    const userRole = doc.role === 'teacher' ? 'teacher' : 'student';
+    const agreedAt = doc.consents?.marketing?.agreedAt
+      ? new Date(doc.consents.marketing.agreedAt)
+      : null;
+    const existing = phoneMap.get(phone);
+
     if (existing) {
-      existing.types.add(doc.type);
-    } else {
-      phoneMap.set(doc.phone, {
-        phone: doc.phone,
-        name: doc.name,
-        types: new Set([doc.type]),
-      });
+      existing.roles.add(userRole);
+      continue;
     }
+
+    phoneMap.set(phone, {
+      phone,
+      name: (doc.username || '').trim() || '회원',
+      roles: new Set([userRole]),
+      marketingAgreedAt: agreedAt,
+    });
+  }
+
+  const resolveConsultRole = (type?: ConsultationType): BroadcastRole =>
+    type === 'teacher' ? 'teacher' : 'student';
+
+  for (const doc of rawConsultations) {
+    const phone = typeof doc.phone === 'string' ? doc.phone.replace(/\D/g, '') : '';
+    if (!phone) continue;
+
+    const agreedAt = doc.marketingConsentAt ? new Date(doc.marketingConsentAt) : null;
+    const consultRole = resolveConsultRole(doc.type);
+    const existing = phoneMap.get(phone);
+
+    if (existing) {
+      existing.roles.add(consultRole);
+      if (!existing.marketingAgreedAt && agreedAt) {
+        existing.marketingAgreedAt = agreedAt;
+      }
+      if (existing.name === '회원' && (doc.name || '').trim()) {
+        existing.name = (doc.name || '').trim();
+      }
+      continue;
+    }
+
+    phoneMap.set(phone, {
+      phone,
+      name: (doc.name || '').trim() || '상담 신청자',
+      roles: new Set([consultRole]),
+      marketingAgreedAt: agreedAt,
+    });
   }
 
   const recipients = Array.from(phoneMap.values()).map((r) => ({
     phone: r.phone,
     name: r.name,
-    types: Array.from(r.types) as ConsultationType[],
+    roles: Array.from(r.roles) as BroadcastRole[],
+    marketingAgreedAt: r.marketingAgreedAt,
   }));
 
-  // 유형별 카운트
-  const typeCounts = {} as Record<ConsultationType, number>;
+  const roleCounts: Record<BroadcastRole, number> = {
+    student: 0,
+    teacher: 0,
+  };
   for (const r of recipients) {
-    for (const t of r.types) {
-      typeCounts[t] = (typeCounts[t] || 0) + 1;
+    for (const oneRole of r.roles) {
+      roleCounts[oneRole] += 1;
     }
   }
 
@@ -67,17 +150,16 @@ export default async function BroadcastPage() {
             <div>
               <h1 className="text-3xl sm:text-[2.25rem] font-extrabold text-gray-900 tracking-tight leading-tight">친구톡 발송</h1>
               <p className="text-[16px] text-gray-400 font-medium mt-1.5">
-                총 <strong className="text-blue-500 font-extrabold">{recipients.length}</strong>명의 고유 수신자
+                총 <strong className="text-blue-500 font-extrabold">{recipients.length}</strong>명의 발송 대상
               </p>
             </div>
           </div>
 
-          {/* 유형별 카운트 */}
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {(Object.entries(CONSULTATION_TYPE_LABEL) as [ConsultationType, string][]).map(([key, label]) => (
-              <div key={key} className={`m-detail-card p-4 text-center border ${typeColor[key]}`}>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            {(Object.entries(roleLabel) as [BroadcastRole, string][]).map(([key, label]) => (
+              <div key={key} className={`m-detail-card p-4 text-center border ${roleColor[key]}`}>
                 <div className="text-[13px] font-bold opacity-80">{label}</div>
-                <div className="text-2xl font-extrabold mt-1">{typeCounts[key] || 0}</div>
+                <div className="text-2xl font-extrabold mt-1">{roleCounts[key]}</div>
               </div>
             ))}
           </div>

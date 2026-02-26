@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 export interface IUser extends Document {
   email: string;
   username: string;
+  phone?: string | null;
   password: string;
   role: 'admin' | 'teacher' | 'student';
   teacherApprovalStatus: 'approved' | 'pending';
@@ -23,6 +24,10 @@ export interface IUser extends Document {
       version: string;
     } | null;
     privacy?: {
+      agreedAt: Date;
+      version: string;
+    } | null;
+    marketing?: {
       agreedAt: Date;
       version: string;
     } | null;
@@ -55,6 +60,7 @@ const legalGuardianConsentSchema = new Schema(
 const userSchema = new Schema<IUser>({
   email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
   username: { type: String, required: true, trim: true },
+  phone: { type: String, default: null, trim: true },
   password: { type: String, required: true },
   role:     { type: String, enum: ['admin', 'teacher', 'student'], default: 'student' },
   teacherApprovalStatus: { type: String, enum: ['approved', 'pending'], default: 'pending' },
@@ -67,6 +73,7 @@ const userSchema = new Schema<IUser>({
   consents: {
     terms: { type: consentSchema, default: null },
     privacy: { type: consentSchema, default: null },
+    marketing: { type: consentSchema, default: null },
   },
   createdAt:{ type: Date, default: Date.now },
 });

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { User, Mail, Lock, ChevronRight, CheckCircle2, CalendarDays } from 'lucide-react';
+import { User, Mail, Phone, Lock, ChevronRight, CheckCircle2, CalendarDays, Rocket, ShieldCheck } from 'lucide-react';
 import PolicyLinks from '@/components/m/PolicyLinks';
 
 const MINOR_AGE = 14;
@@ -14,12 +14,14 @@ export default function SignupForm() {
   const [form, setForm] = useState({
     username: '',
     email: '',
+    phone: '',
     birthDate: '',
     password: '',
     confirmPassword: '',
     userRole: 'student',
     agreeTerms: false,
     agreePrivacy: false,
+    agreeMarketing: false,
     guardianName: '',
     guardianContact: '',
     agreeLegalGuardian: false,
@@ -40,9 +42,22 @@ export default function SignupForm() {
 
     const normalizedUsername = form.username.trim();
     const normalizedEmail = form.email.trim().toLowerCase();
+    const normalizedPhoneDigits = form.phone.replace(/\D/g, '');
+    const hasPhoneInput = normalizedPhoneDigits.length > 0;
+    const isValidPhone = /^01[016789]\d{7,8}$/.test(normalizedPhoneDigits);
 
     if (!normalizedUsername) {
       setError('이름을 입력해 주세요.');
+      return;
+    }
+
+    if (hasPhoneInput && !isValidPhone) {
+      setError('올바른 연락처 형식이 아닙니다.');
+      return;
+    }
+
+    if (form.agreeMarketing && !isValidPhone) {
+      setError('혜택/이벤트 정보 수신 동의 시 연락처(휴대전화)를 입력해 주세요.');
       return;
     }
 
@@ -85,11 +100,13 @@ export default function SignupForm() {
       body: JSON.stringify({
         username: normalizedUsername,
         email: normalizedEmail,
+        phone: hasPhoneInput ? normalizedPhoneDigits : '',
         birthDate: form.birthDate,
         password: form.password,
         userRole: form.userRole,
         agreeTerms: form.agreeTerms,
         agreePrivacy: form.agreePrivacy,
+        agreeMarketing: form.agreeMarketing,
         guardianName: isUnder14 ? form.guardianName.trim() : '',
         guardianContact: isUnder14 ? form.guardianContact.trim() : '',
         agreeLegalGuardian: isUnder14 ? form.agreeLegalGuardian : false,
@@ -123,12 +140,14 @@ export default function SignupForm() {
     setForm({
       username: '',
       email: '',
+      phone: '',
       birthDate: '',
       password: '',
       confirmPassword: '',
       userRole: 'student',
       agreeTerms: false,
       agreePrivacy: false,
+      agreeMarketing: false,
       guardianName: '',
       guardianContact: '',
       agreeLegalGuardian: false,
@@ -219,6 +238,18 @@ export default function SignupForm() {
                 onChange={(value) => setForm((prev) => ({ ...prev, email: value }))}
                 placeholder="name@example.com"
                 required
+              />
+            </Field>
+
+            <Field label="연락처 (휴대전화)">
+              <Input
+                icon={<Phone size={17} />}
+                type="tel"
+                value={form.phone}
+                onChange={(value) => setForm((prev) => ({ ...prev, phone: formatKoreanMobileInput(value) }))}
+                placeholder="010-0000-0000"
+                required={form.agreeMarketing}
+                maxLength={13}
               />
             </Field>
 
@@ -317,6 +348,22 @@ export default function SignupForm() {
               </div>
             </div>
 
+            <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="mb-2 text-xs font-bold tracking-wide text-gray-500">선택 동의</p>
+              <div className="space-y-2">
+                <AgreementCheck
+                  checked={form.agreeMarketing}
+                  onChange={(checked) => setForm((prev) => ({ ...prev, agreeMarketing: checked }))}
+                  label="혜택/이벤트 정보 수신 동의"
+                  href="/policy/privacy"
+                  type="선택"
+                />
+                <p className="ml-6 text-xs font-medium text-gray-500">
+                  마케팅 수신 동의 시 연락처(휴대전화) 입력이 필요합니다.
+                </p>
+              </div>
+            </div>
+
             {error && (
               <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
                 {error}
@@ -385,13 +432,23 @@ export default function SignupForm() {
 
               <div className="grid gap-4 xl:grid-cols-2">
                 <div className="rounded-2xl bg-white/88 p-5 shadow-[0_16px_34px_-28px_rgba(37,99,235,0.35)] backdrop-blur-sm">
-                  <p className="text-base font-bold text-gray-900">빠른 시작</p>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                      <Rocket size={16} />
+                    </span>
+                    <p className="text-base font-bold text-gray-900">빠른 시작</p>
+                  </div>
                   <p className="mt-2 text-sm font-medium leading-relaxed text-gray-600">
                     계정 생성과 인증을 마치면 즉시 자료 탐색과 추천을 사용할 수 있습니다.
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white/88 p-5 shadow-[0_16px_34px_-28px_rgba(37,99,235,0.35)] backdrop-blur-sm">
-                  <p className="text-base font-bold text-gray-900">안전한 가입</p>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                      <ShieldCheck size={16} />
+                    </span>
+                    <p className="text-base font-bold text-gray-900">안전한 가입</p>
+                  </div>
                   <p className="mt-2 text-sm font-medium leading-relaxed text-gray-600">
                     필수 약관 동의와 이메일 인증, 미성년자 법정대리인 동의 흐름을 제공합니다.
                   </p>
@@ -444,11 +501,13 @@ function AgreementCheck({
   onChange,
   label,
   href,
+  type = '필수',
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
   href: string;
+  type?: '필수' | '선택';
 }) {
   return (
     <div className="flex flex-col items-start gap-1.5 text-sm sm:flex-row sm:items-center sm:justify-between">
@@ -459,7 +518,7 @@ function AgreementCheck({
           onChange={(e) => onChange(e.target.checked)}
           className="h-4 w-4 rounded border-gray-300 text-[var(--color-dre-blue)] focus:ring-blue-200"
         />
-        <span className="font-semibold">[필수] {label}</span>
+        <span className="font-semibold">[{type}] {label}</span>
       </label>
       <Link href={href} target="_blank" className="font-bold text-blue-600 hover:text-blue-700">
         보기
@@ -474,6 +533,13 @@ function getTodayDateInputValue() {
   const m = `${now.getMonth() + 1}`.padStart(2, '0');
   const d = `${now.getDate()}`.padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+function formatKoreanMobileInput(raw: string) {
+  const digits = raw.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
 
 function getAgeFromBirthDate(raw: string): number | null {

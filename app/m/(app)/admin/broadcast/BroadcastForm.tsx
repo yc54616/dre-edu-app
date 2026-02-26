@@ -2,26 +2,23 @@
 
 import { useState, useMemo } from 'react';
 
-type ConsultationType = 'admission' | 'consulting' | 'coaching' | 'teacher';
+type UserRole = 'student' | 'teacher';
 
-const TYPE_LABEL: Record<ConsultationType, string> = {
-  admission: '입학 안내',
-  consulting: '입시컨설팅',
-  coaching: '온라인수학코칭',
-  teacher: '수업설계컨설팅',
+const ROLE_LABEL: Record<UserRole, string> = {
+  student: '학생',
+  teacher: '교사',
 };
 
-const TYPE_COLOR: Record<ConsultationType, string> = {
-  admission: 'bg-green-50 text-green-700 border-green-200',
-  consulting: 'bg-blue-50 text-blue-700 border-blue-200',
-  coaching: 'bg-purple-50 text-purple-700 border-purple-200',
+const ROLE_COLOR: Record<UserRole, string> = {
+  student: 'bg-blue-50 text-blue-700 border-blue-200',
   teacher: 'bg-orange-50 text-orange-700 border-orange-200',
 };
 
 interface Recipient {
   phone: string;
   name: string;
-  types: ConsultationType[];
+  roles: UserRole[];
+  marketingAgreedAt: string | Date | null;
 }
 
 interface Props {
@@ -30,15 +27,15 @@ interface Props {
 
 export default function BroadcastForm({ recipients }: Props) {
   const [selectedPhones, setSelectedPhones] = useState<Set<string>>(new Set());
-  const [typeFilter, setTypeFilter] = useState<ConsultationType | 'all'>('all');
+  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const filteredRecipients = useMemo(() => {
-    if (typeFilter === 'all') return recipients;
-    return recipients.filter((r) => r.types.includes(typeFilter));
-  }, [recipients, typeFilter]);
+    if (roleFilter === 'all') return recipients;
+    return recipients.filter((r) => r.roles.includes(roleFilter));
+  }, [recipients, roleFilter]);
 
   const allFilteredSelected = filteredRecipients.length > 0
     && filteredRecipients.every((r) => selectedPhones.has(r.phone));
@@ -65,7 +62,6 @@ export default function BroadcastForm({ recipients }: Props) {
   }
 
   const selectedRecipients = recipients.filter((r) => selectedPhones.has(r.phone));
-
   const previewMessage = `(광고) DRE수학학원\n${message || '메시지를 입력하세요'}\n\n무료수신거부 0507-1346-1125`;
 
   const isNightTime = (() => {
@@ -122,24 +118,27 @@ export default function BroadcastForm({ recipients }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* 유형 필터 */}
+      <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-800">
+        회원가입 마케팅 동의 대상과 상담 마케팅 동의 대상(취소 제외)만 수신자 목록에 포함됩니다.
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <button
-          onClick={() => setTypeFilter('all')}
+          onClick={() => setRoleFilter('all')}
           className={`px-3.5 py-2 rounded-xl text-[13px] font-bold transition-all ${
-            typeFilter === 'all'
+            roleFilter === 'all'
               ? 'bg-blue-100 text-blue-600 border border-blue-100'
               : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
           }`}
         >
           전체
         </button>
-        {(Object.entries(TYPE_LABEL) as [ConsultationType, string][]).map(([key, label]) => (
+        {(Object.entries(ROLE_LABEL) as [UserRole, string][]).map(([key, label]) => (
           <button
             key={key}
-            onClick={() => setTypeFilter(key)}
+            onClick={() => setRoleFilter(key)}
             className={`px-3.5 py-2 rounded-xl text-[13px] font-bold transition-all ${
-              typeFilter === key
+              roleFilter === key
                 ? 'bg-blue-100 text-blue-600 border border-blue-100'
                 : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
             }`}
@@ -149,7 +148,6 @@ export default function BroadcastForm({ recipients }: Props) {
         ))}
       </div>
 
-      {/* 수신자 목록 */}
       <div className="m-detail-card overflow-hidden">
         <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <label className="flex items-center gap-2.5 text-[13px] font-extrabold text-gray-500 uppercase tracking-widest cursor-pointer">
@@ -162,7 +160,7 @@ export default function BroadcastForm({ recipients }: Props) {
             전체 선택 ({filteredRecipients.length}명)
           </label>
           <span className="text-[13px] font-bold text-blue-500">
-            {selectedPhones.size}명 선택
+            {selectedRecipients.length}명 선택
           </span>
         </div>
         <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
@@ -183,10 +181,18 @@ export default function BroadcastForm({ recipients }: Props) {
                   {r.phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}
                 </span>
               </div>
-              <div className="flex gap-1 shrink-0">
-                {r.types.map((t) => (
-                  <span key={t} className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-bold border ${TYPE_COLOR[t]}`}>
-                    {TYPE_LABEL[t]}
+              <div className="flex gap-1 shrink-0 items-center">
+                {r.marketingAgreedAt && (
+                  <span
+                    className="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200"
+                    title={`동의일시: ${new Date(r.marketingAgreedAt).toLocaleString('ko-KR')}`}
+                  >
+                    마케팅 동의
+                  </span>
+                )}
+                {r.roles.map((role) => (
+                  <span key={role} className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-bold border ${ROLE_COLOR[role]}`}>
+                    {ROLE_LABEL[role]}
                   </span>
                 ))}
               </div>
@@ -195,7 +201,6 @@ export default function BroadcastForm({ recipients }: Props) {
         </div>
       </div>
 
-      {/* 메시지 작성 */}
       <div className="m-detail-card p-5 space-y-4">
         <h3 className="text-[12px] font-extrabold text-gray-500 uppercase tracking-widest">메시지 작성</h3>
         <textarea
@@ -210,7 +215,6 @@ export default function BroadcastForm({ recipients }: Props) {
         </div>
       </div>
 
-      {/* 미리보기 */}
       <div className="m-detail-card p-5 space-y-4">
         <h3 className="text-[12px] font-extrabold text-gray-500 uppercase tracking-widest">발송 미리보기</h3>
         <div className="bg-[#B2C7D9] rounded-2xl p-5 max-w-sm mx-auto">
@@ -222,7 +226,6 @@ export default function BroadcastForm({ recipients }: Props) {
         </div>
       </div>
 
-      {/* 야간 경고 */}
       {isNightTime && (
         <div className="m-detail-card p-4 border-l-4 border-yellow-400 bg-yellow-50">
           <p className="text-[14px] font-bold text-yellow-800">
@@ -231,7 +234,6 @@ export default function BroadcastForm({ recipients }: Props) {
         </div>
       )}
 
-      {/* 발송 결과 */}
       {result && (
         <div
           className={`m-detail-card p-4 border-l-4 ${
@@ -246,13 +248,12 @@ export default function BroadcastForm({ recipients }: Props) {
         </div>
       )}
 
-      {/* 발송 버튼 */}
       <button
         onClick={handleSend}
-        disabled={sending || selectedPhones.size === 0 || !message.trim()}
+        disabled={sending || selectedRecipients.length === 0 || !message.trim()}
         className="w-full py-3.5 rounded-xl text-white font-extrabold text-[15px] transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--color-dre-blue)] hover:bg-blue-800 shadow-md hover:shadow-lg"
       >
-        {sending ? '발송 중...' : `${selectedPhones.size}명에게 친구톡 발송`}
+        {sending ? '발송 중...' : `${selectedRecipients.length}명에게 친구톡 발송`}
       </button>
     </div>
   );

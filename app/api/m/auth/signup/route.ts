@@ -7,6 +7,7 @@ import { getAppBaseUrl } from '@/lib/appUrl';
 export const dynamic = 'force-dynamic';
 const TERMS_VERSION = '2026-02-26';
 const PRIVACY_VERSION = '2026-02-26';
+const MARKETING_VERSION = '2026-02-26';
 const MINOR_AGE = 14;
 
 function parseBirthDate(raw: string): Date | null {
@@ -55,11 +56,13 @@ export async function POST(req: NextRequest) {
   const payload = body as {
     email?: string;
     username?: string;
+    phone?: string;
     password?: string;
     birthDate?: string;
     userRole?: string;
     agreeTerms?: boolean;
     agreePrivacy?: boolean;
+    agreeMarketing?: boolean;
     guardianName?: string;
     guardianContact?: string;
     agreeLegalGuardian?: boolean;
@@ -67,11 +70,13 @@ export async function POST(req: NextRequest) {
 
   const email = (payload.email || '').toLowerCase().trim();
   const username = (payload.username || '').trim();
+  const phoneDigits = (payload.phone || '').replace(/\D/g, '');
   const password = payload.password || '';
   const birthDateRaw = (payload.birthDate || '').trim();
   const userRole = payload.userRole || 'student';
   const agreeTerms = payload.agreeTerms === true;
   const agreePrivacy = payload.agreePrivacy === true;
+  const agreeMarketing = payload.agreeMarketing === true;
   const guardianName = (payload.guardianName || '').trim();
   const guardianContact = (payload.guardianContact || '').trim();
   const agreeLegalGuardian = payload.agreeLegalGuardian === true;
@@ -90,6 +95,18 @@ export async function POST(req: NextRequest) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return NextResponse.json({ error: '올바른 이메일 형식이 아닙니다.' }, { status: 400 });
+  }
+
+  const hasPhoneInput = phoneDigits.length > 0;
+  const isValidPhone = /^01[016789]\d{7,8}$/.test(phoneDigits);
+  if (hasPhoneInput && !isValidPhone) {
+    return NextResponse.json({ error: '올바른 연락처 형식이 아닙니다.' }, { status: 400 });
+  }
+  if (agreeMarketing && !isValidPhone) {
+    return NextResponse.json(
+      { error: '혜택/이벤트 정보 수신 동의 시 연락처(휴대전화) 입력이 필요합니다.' },
+      { status: 400 },
+    );
   }
 
   if (username.length < 2 || username.length > 20) {
@@ -143,6 +160,7 @@ export async function POST(req: NextRequest) {
   const user = await User.create({
     email,
     username,
+    phone: hasPhoneInput ? phoneDigits : null,
     password,
     role: userRole,
     teacherApprovalStatus: userRole === 'teacher' ? 'pending' : 'approved',
@@ -161,6 +179,7 @@ export async function POST(req: NextRequest) {
     consents: {
       terms: { agreedAt: consentAt, version: TERMS_VERSION },
       privacy: { agreedAt: consentAt, version: PRIVACY_VERSION },
+      marketing: agreeMarketing ? { agreedAt: consentAt, version: MARKETING_VERSION } : null,
     },
   });
   const verifyUrl = `${baseUrl}/api/m/auth/verify-email?token=${encodeURIComponent(token)}&uid=${encodeURIComponent(String(user._id))}`;

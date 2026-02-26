@@ -5,6 +5,7 @@ import { notifyConsultation } from '@/lib/solapi';
 import { KakaoSkillRequest, simpleTextResponse, errorResponse } from '@/lib/kakao-skill';
 
 export const dynamic = 'force-dynamic';
+const CHANNEL_MARKETING_CONSENT_VERSION = '2026-02-26-kakao-channel';
 
 const ACTION_TYPE_MAP: Record<string, ConsultationType> = {
   submit_admission: 'admission',
@@ -19,6 +20,20 @@ async function findScheduledConsultation(name: string, phone: string) {
     await Consultation.findOne({ name, phone: cleaned, status: 'scheduled' }).sort({ updatedAt: -1 }) ||
     await Consultation.findOne({ name, phone, status: 'scheduled' }).sort({ updatedAt: -1 });
   return consultation;
+}
+
+function markChannelMarketingConsent(consultation: {
+  marketingConsent?: boolean;
+  marketingConsentAt?: Date | null;
+  marketingConsentVersion?: string | null;
+}) {
+  consultation.marketingConsent = true;
+  if (!consultation.marketingConsentAt) {
+    consultation.marketingConsentAt = new Date();
+  }
+  if (!consultation.marketingConsentVersion) {
+    consultation.marketingConsentVersion = CHANNEL_MARKETING_CONSENT_VERSION;
+  }
 }
 
 async function handleScheduleChange(params: Record<string, string>) {
@@ -40,6 +55,7 @@ async function handleScheduleChange(params: Record<string, string>) {
   }
 
   consultation.scheduleChangeRequest = message || '일정 변경 요청';
+  markChannelMarketingConsent(consultation);
   consultation.updatedAt = new Date();
   await consultation.save();
 
@@ -67,6 +83,7 @@ async function handleCancel(params: Record<string, string>) {
   }
 
   consultation.scheduleChangeRequest = reason ? `취소 요청: ${reason}` : '취소 요청';
+  markChannelMarketingConsent(consultation);
   consultation.updatedAt = new Date();
   await consultation.save();
 
@@ -124,6 +141,7 @@ export async function POST(req: NextRequest) {
       }
 
       consultation.scheduleConfirmedAt = new Date();
+      markChannelMarketingConsent(consultation);
       consultation.updatedAt = new Date();
       await consultation.save();
 
@@ -171,6 +189,9 @@ export async function POST(req: NextRequest) {
       type,
       name,
       phone,
+      marketingConsent: true,
+      marketingConsentAt: new Date(),
+      marketingConsentVersion: CHANNEL_MARKETING_CONSENT_VERSION,
       schoolGrade: (params.schoolGrade || '').trim(),
       currentScore: (params.currentScore || '').trim(),
       targetUniv: (params.targetUniv || '').trim(),

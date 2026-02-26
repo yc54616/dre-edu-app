@@ -22,7 +22,11 @@ const STATUS_OPTIONS = [
   { val: 'cancelled', label: '취소' },
 ];
 
-export default function ConsultFilters() {
+interface Props {
+  resetHref?: string;
+}
+
+export default function ConsultFilters({ resetHref = '/m/admin/consultations' }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -86,7 +90,7 @@ export default function ConsultFilters() {
 
       {hasFilter && (
         <Link
-          href="/m/admin/consultations"
+          href={resetHref}
           className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-center text-[15px] font-semibold text-gray-600 transition-colors hover:bg-gray-100 sm:w-auto"
         >
           초기화

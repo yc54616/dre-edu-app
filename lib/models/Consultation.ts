@@ -27,6 +27,9 @@ export interface IConsultation extends Document {
   type: ConsultationType;
   name: string;
   phone: string;
+  marketingConsent: boolean;
+  marketingConsentAt: Date | null;
+  marketingConsentVersion: string | null;
   schoolGrade: string;
   currentScore: string;
   targetUniv: string;
@@ -49,6 +52,9 @@ const consultationSchema = new Schema<IConsultation>({
   type:           { type: String, enum: CONSULTATION_TYPES, required: true, index: true },
   name:           { type: String, required: true },
   phone:          { type: String, required: true },
+  marketingConsent: { type: Boolean, default: false },
+  marketingConsentAt: { type: Date, default: null },
+  marketingConsentVersion: { type: String, default: null },
   schoolGrade:    { type: String, default: '' },
   currentScore:   { type: String, default: '' },
   targetUniv:     { type: String, default: '' },
