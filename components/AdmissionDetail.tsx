@@ -71,8 +71,13 @@ export default function AdmissionDetail() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.name.trim() || !form.phone.trim()) {
-            alert('이름과 연락처를 입력해주세요.');
+        if (!form.name.trim()) {
+            alert('이름을 입력해주세요.');
+            return;
+        }
+        const phoneDigits = form.phone.replace(/\D/g, '');
+        if (!/^01[016789]\d{7,8}$/.test(phoneDigits)) {
+            alert('올바른 연락처를 입력해주세요. (예: 010-0000-0000)');
             return;
         }
         setSubmitting(true);
@@ -223,13 +228,17 @@ export default function AdmissionDetail() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">학부모 연락처</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">연락처</label>
                                 <input
                                     type="tel"
                                     value={form.phone}
-                                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                                        const formatted = digits.length <= 3 ? digits : digits.length <= 7 ? `${digits.slice(0,3)}-${digits.slice(3)}` : `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
+                                        setForm({ ...form, phone: formatted });
+                                    }}
                                     className="w-full px-5 py-3.5 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-[var(--color-dre-blue)] transition-all"
-                                    placeholder="숫자만 입력해 주세요"
+                                    placeholder="010-0000-0000"
                                     required
                                 />
                             </div>

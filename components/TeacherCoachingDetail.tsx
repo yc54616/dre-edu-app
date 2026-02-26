@@ -78,8 +78,13 @@ export default function TeacherCoachingDetail() {
   const [result, setResult] = useState<'success' | 'error' | null>(null);
 
   const handleSubmit = async () => {
-    if (!form.name.trim() || !form.phone.trim()) {
-      alert('성함과 연락처를 입력해주세요.');
+    if (!form.name.trim()) {
+      alert('성함을 입력해주세요.');
+      return;
+    }
+    const phoneDigits = form.phone.replace(/\D/g, '');
+    if (!/^01[016789]\d{7,8}$/.test(phoneDigits)) {
+      alert('올바른 연락처를 입력해주세요. (예: 010-0000-0000)');
       return;
     }
     setSubmitting(true);
@@ -275,7 +280,11 @@ export default function TeacherCoachingDetail() {
                   <input
                     type="tel"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                      const formatted = digits.length <= 3 ? digits : digits.length <= 7 ? `${digits.slice(0,3)}-${digits.slice(3)}` : `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
+                      setForm({ ...form, phone: formatted });
+                    }}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 outline-none transition-all focus:border-[var(--color-dre-blue)] focus:bg-white focus:ring-1 focus:ring-[var(--color-dre-blue)] sm:px-5 sm:py-4"
                     placeholder="010-0000-0000"
                     required

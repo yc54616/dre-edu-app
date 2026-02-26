@@ -1,0 +1,91 @@
+{
+  "config": {
+    "db": "dre-edu",
+    "collection": "materials",
+    "skipFileCheck": false
+  },
+  "stat": {
+    "total": 339,
+    "invalidSourceCategory": 0,
+    "invalidCurriculum": 0,
+    "invalidFileType": 0,
+    "invalidTargetAudience": 0,
+    "missingTopic": 0,
+    "missingSchoolNameForSchoolExam": 298,
+    "missingBothFiles": 7,
+    "freePriceMismatch": 0,
+    "paidZeroPrice": 0,
+    "brokenProblemFileRef": 0,
+    "brokenEtcFileRef": 0,
+    "noPreviewImages": 339,
+    "brokenPreviewRefDoc": 0,
+    "brokenPreviewRefFileCount": 0
+  },
+  "distributions": {
+    "bySourceCategory": {
+      "school_exam": 337,
+      "ebook": 2
+    },
+    "byFileType": {
+      "pdf": 301,
+      "hwp": 38
+    }
+  },
+  "duplicateMaterialIds": [],
+  "samples": {
+    "noPreviewImages": [
+      "ez79__5bSe",
+      "njzcHqudVH",
+      "EcVImKycCk",
+      "vz0ySYf4D5",
+      "DWDhAJlQYZ",
+      "Cq_sQ_5hLi",
+      "N8GgsaOdh4",
+      "2bqbl3_wsC",
+      "lHT6z-ItdO",
+      "eAv8UCNOEg",
+      "g0F7TeVEp7",
+      "Lo9CN7An_2",
+      "0skSZwDKu1",
+      "k8JXcEQfc3",
+      "c3mzTYu6uj",
+      "61AK3Obr0n",
+      "D3fu7Qe7Jd",
+      "w6BpEX5sqj",
+      "t3BvBzBGsc",
+      "A_dtxw86Lf"
+    ],
+    "missingSchoolNameForSchoolExam": [
+      "lVs3xCpqwI",
+      "WgQdHn7JjP",
+      "fXR8qwDQMi",
+      "5pIAsJ7HLS",
+      "XCPeWHpBT7",
+      "eipHM2fmJh",
+      "CCKEnv2wAM",
+      "BBrF_SNtRd",
+      "_r5Imb_wdu",
+      "VePDQBmGXE",
+      "rm3ddYXGVa",
+      "ajW4LEaHqG",
+      "vsNxhsi-c1",
+      "uupWskata9",
+      "PsqQ-q6Dws",
+      "gifvtH3Xfo",
+      "iSlkhxxZk_",
+      "g-8vLMYSmq",
+      "DMJ7gNbt0q",
+      "kiPdpLGLS6"
+    ],
+    "missingBothFiles": [
+      "869ooD1jkQ",
+      "INnpCsrarn",
+      "_xL93IHVFl",
+      "SaeHdlRcld",
+      "ptL0SW1KFi",
+      "ot3DNBo0qw",
+      "FpbgXRqNvK"
+    ]
+  },
+  "generatedAt": "2026-02-25T06:21:56.490Z"
+}

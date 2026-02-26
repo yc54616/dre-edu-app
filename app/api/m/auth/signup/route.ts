@@ -5,8 +5,8 @@ import { createVerificationToken, sendVerificationEmail } from '@/lib/emailVerif
 import { getAppBaseUrl } from '@/lib/appUrl';
 
 export const dynamic = 'force-dynamic';
-const TERMS_VERSION = '2026-02-23';
-const PRIVACY_VERSION = '2026-02-23';
+const TERMS_VERSION = '2026-02-26';
+const PRIVACY_VERSION = '2026-02-26';
 const MINOR_AGE = 14;
 
 function parseBirthDate(raw: string): Date | null {

@@ -70,8 +70,13 @@ export default function CoachingDetail() {
   const [result, setResult] = useState<'success' | 'error' | null>(null);
 
   const handleSubmit = async () => {
-    if (!form.name.trim() || !form.phone.trim()) {
-      alert('이름과 연락처를 입력해주세요.');
+    if (!form.name.trim()) {
+      alert('이름을 입력해주세요.');
+      return;
+    }
+    const phoneDigits = form.phone.replace(/\D/g, '');
+    if (!/^01[016789]\d{7,8}$/.test(phoneDigits)) {
+      alert('올바른 연락처를 입력해주세요. (예: 010-0000-0000)');
       return;
     }
     setSubmitting(true);
@@ -245,7 +250,11 @@ export default function CoachingDetail() {
                   <input
                     type="tel"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                      const formatted = digits.length <= 3 ? digits : digits.length <= 7 ? `${digits.slice(0,3)}-${digits.slice(3)}` : `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
+                      setForm({ ...form, phone: formatted });
+                    }}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 outline-none transition-all focus:border-[var(--color-dre-blue)] focus:bg-white focus:ring-1 focus:ring-[var(--color-dre-blue)] sm:px-5 sm:py-4"
                     placeholder="010-0000-0000"
                     required
@@ -281,6 +290,10 @@ export default function CoachingDetail() {
                   className="h-28 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 outline-none transition-all focus:border-[var(--color-dre-blue)] focus:bg-white focus:ring-1 focus:ring-[var(--color-dre-blue)] sm:h-32 sm:px-5 sm:py-4"
                   placeholder="현재 수학 성적, 고민되는 단원, 원하는 목표를 남겨주세요."
                 />
+              </div>
+
+              <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                카카오톡 봇으로 접수하면 신청 단계, 피드백 일정, 진행 상태를 한 화면에서 확인할 수 있습니다.
               </div>
 
               {result === 'success' && (

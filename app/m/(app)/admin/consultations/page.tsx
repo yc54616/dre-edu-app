@@ -9,7 +9,7 @@ import Consultation, {
 } from '@/lib/models/Consultation';
 import type { ConsultationType, ConsultationStatus } from '@/lib/models/Consultation';
 import Link from 'next/link';
-import { MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import ConsultFilters from './ConsultFilters';
 import StatusActions from './StatusActions';
 import { Suspense } from 'react';
@@ -183,11 +183,26 @@ export default async function AdminConsultationsPage({
                     </div>
                   )}
 
+                  {c.scheduledDate && c.scheduledTime && (
+                    <div className="rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-700 flex items-center gap-2">
+                      <span className="font-bold">상담 일정:</span> {c.scheduledDate.slice(5).replace('-', '/')} {c.scheduledTime}
+                      {c.scheduleConfirmedAt && <CheckCircle2 size={14} className="text-green-600" />}
+                    </div>
+                  )}
+
+                  {c.scheduleChangeRequest && (
+                    <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 border border-red-200">
+                      <span className="font-bold">일정 변경 요청:</span> {c.scheduleChangeRequest}
+                    </div>
+                  )}
+
                   <div className="border-t border-gray-100 pt-3">
                     <StatusActions
                       consultationId={c.consultationId}
                       currentStatus={c.status}
                       currentMemo={c.adminMemo}
+                      scheduledDate={c.scheduledDate}
+                      scheduledTime={c.scheduledTime}
                     />
                   </div>
                 </div>
@@ -204,7 +219,7 @@ export default async function AdminConsultationsPage({
                         <th className="text-left px-6 py-3.5 text-[12px] font-extrabold text-gray-500 uppercase tracking-widest w-[220px]">신청자</th>
                         <th className="text-left px-4 py-3.5 text-[12px] font-extrabold text-gray-500 uppercase tracking-widest">상담 내용</th>
                         <th className="text-left px-4 py-3.5 text-[12px] font-extrabold text-gray-500 uppercase tracking-widest w-[110px]">신청일</th>
-                        <th className="text-left px-4 py-3.5 text-[12px] font-extrabold text-gray-500 uppercase tracking-widest w-[190px]">상태</th>
+                        <th className="text-left px-4 py-3.5 text-[12px] font-extrabold text-gray-500 uppercase tracking-widest w-[260px]">상태</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -251,6 +266,17 @@ export default async function AdminConsultationsPage({
                                   {c.adminMemo}
                                 </p>
                               )}
+                              {c.scheduledDate && c.scheduledTime && (
+                                <span className="mt-1.5 inline-flex items-center gap-1 rounded bg-indigo-50 px-2 py-1 text-[12px] text-indigo-700 ml-1">
+                                  상담 {c.scheduledDate.slice(5).replace('-', '/')} {c.scheduledTime}
+                                  {c.scheduleConfirmedAt && <CheckCircle2 size={11} className="text-green-600" />}
+                                </span>
+                              )}
+                              {c.scheduleChangeRequest && (
+                                <p className="mt-1.5 inline-block rounded bg-red-50 border border-red-200 px-2 py-1 text-[12px] text-red-700 ml-1">
+                                  변경요청: {c.scheduleChangeRequest}
+                                </p>
+                              )}
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap">
                               <p className="text-[13px] text-gray-400 tabular-nums">{formatDate(c.createdAt)}</p>
@@ -260,6 +286,8 @@ export default async function AdminConsultationsPage({
                                 consultationId={c.consultationId}
                                 currentStatus={c.status}
                                 currentMemo={c.adminMemo}
+                                scheduledDate={c.scheduledDate}
+                                scheduledTime={c.scheduledTime}
                               />
                             </td>
                           </tr>

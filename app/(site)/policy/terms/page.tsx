@@ -1,5 +1,5 @@
-const EFFECTIVE_DATE = '2026년 2월 23일';
-const UPDATED_DATE = '2026년 2월 23일';
+const EFFECTIVE_DATE = '2026년 2월 26일';
+const UPDATED_DATE = '2026년 2월 26일';
 
 export default function TermsPage() {
   return (
@@ -63,6 +63,8 @@ export default function TermsPage() {
             <li>회원가입, 로그인, 이메일 인증</li>
             <li>학습 자료 조회, 구매, 다운로드</li>
             <li>학습 수준(레이팅) 기반 추천 및 피드백 서비스</li>
+            <li>카카오톡 채널 챗봇을 통한 상담 신청, 일정 변경·취소 요청</li>
+            <li>카카오 알림톡을 통한 상담 접수 확인, 일정 안내 등 알림 발송</li>
             <li>
               학원은 운영상/기술상 필요에 따라 서비스의 전부 또는 일부를 변경할 수 있으며,
               중요한 변경은 사전 공지합니다.

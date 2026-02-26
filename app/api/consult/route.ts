@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
 import Consultation, { CONSULTATION_TYPES, CONSULTATION_STATUSES } from '@/lib/models/Consultation';
+import { notifyConsultation } from '@/lib/solapi';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '이름, 연락처, 유형은 필수입니다.' }, { status: 400 });
   }
 
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (!/^01[016789]\d{7,8}$/.test(phoneDigits)) {
+    return NextResponse.json({ error: '올바른 연락처 형식이 아닙니다.' }, { status: 400 });
+  }
+
   if (!CONSULTATION_TYPES.includes(type as typeof CONSULTATION_TYPES[number])) {
     return NextResponse.json({ error: '잘못된 상담 유형입니다.' }, { status: 400 });
   }
@@ -31,7 +37,7 @@ export async function POST(req: NextRequest) {
   const consultation = await Consultation.create({
     type,
     name,
-    phone,
+    phone: phoneDigits,
     schoolGrade: (body.schoolGrade as string || '').trim(),
     currentScore: (body.currentScore as string || '').trim(),
     targetUniv: (body.targetUniv as string || '').trim(),
@@ -40,6 +46,11 @@ export async function POST(req: NextRequest) {
     subject: (body.subject as string || '').trim(),
     message: (body.message as string || '').trim(),
   });
+
+  // 알림톡 비동기 발송 (fire-and-forget)
+  notifyConsultation(consultation).catch((err) =>
+    console.error('[알림톡] 발송 실패:', err),
+  );
 
   return NextResponse.json({ consultationId: consultation.consultationId }, { status: 201 });
 }

@@ -1,5 +1,5 @@
-const EFFECTIVE_DATE = '2026년 2월 23일';
-const UPDATED_DATE = '2026년 2월 23일';
+const EFFECTIVE_DATE = '2026년 2월 26일';
+const UPDATED_DATE = '2026년 2월 26일';
 
 export default function PrivacyPage() {
   return (
@@ -39,6 +39,13 @@ export default function PrivacyPage() {
               맞춤 추천 기능: 학습 토픽별 레이팅, 시도/정답 수, 피드백 이력(난이도 선택 등)
             </li>
             <li>
+              상담 신청(웹사이트/카카오톡 챗봇): 이름, 연락처, 학교/학년, 성적, 목표 대학,
+              희망 방향, 과목, 문의 내용
+            </li>
+            <li>
+              카카오 알림톡: 수신 연락처, 발송 내역(상담 접수 확인, 일정 안내 등)
+            </li>
+            <li>
               자동 수집 정보: 접속 IP, 브라우저/기기 정보, 쿠키, 접속 일시(서비스 운영 및
               보안 목적)
             </li>
@@ -51,6 +58,7 @@ export default function PrivacyPage() {
             <li>회원 식별 및 인증, 계정 관리, 부정 이용 방지</li>
             <li>유료 콘텐츠 주문 처리, 결제 확인, 구매 이력 관리</li>
             <li>학습 수준 기반 추천, 서비스 개인화 및 품질 개선</li>
+            <li>상담 신청 접수, 일정 안내 및 변경·취소 처리, 카카오 알림톡 발송</li>
             <li>민원 대응, 분쟁 처리, 법령상 의무 이행</li>
             <li>보안, 장애 대응, 서비스 안정성 확보</li>
           </ul>
@@ -74,6 +82,9 @@ export default function PrivacyPage() {
             <li>
               만 14세 미만 법정대리인 동의 기록: 회원 탈퇴 시까지(법령상 별도 보관의무가 있는
               경우 해당 기간)
+            </li>
+            <li>
+              상담 신청 정보(이름, 연락처, 상담 내용 등): 상담 완료 후 1년 보관 후 파기
             </li>
             <li>소비자 불만 또는 분쟁처리 기록: 3년</li>
             <li>표시·광고에 관한 기록: 6개월</li>
@@ -101,6 +112,10 @@ export default function PrivacyPage() {
             <li>
               결제 처리: 토스페이먼츠 (결제 승인 처리, 수탁 처리항목: 주문번호, 결제 관련 식별자,
               결제금액 등)
+            </li>
+            <li>
+              카카오 알림톡 발송: 솔라피(Solapi) (상담 접수 확인·일정 안내 알림톡 발송,
+              수탁 처리항목: 수신자 연락처, 수신자 이름, 상담 유형, 일정 정보)
             </li>
           </ul>
           <p className="text-sm text-gray-500 mt-3">

@@ -35,6 +35,10 @@ export interface IConsultation extends Document {
   subject: string;
   message: string;
   status: ConsultationStatus;
+  scheduledDate: string;
+  scheduledTime: string;
+  scheduleChangeRequest: string;
+  scheduleConfirmedAt: Date | null;
   adminMemo: string;
   createdAt: Date;
   updatedAt: Date;
@@ -53,6 +57,10 @@ const consultationSchema = new Schema<IConsultation>({
   subject:        { type: String, default: '' },
   message:        { type: String, default: '' },
   status:         { type: String, enum: CONSULTATION_STATUSES, default: 'pending', index: true },
+  scheduledDate:  { type: String, default: '' },
+  scheduledTime:  { type: String, default: '' },
+  scheduleChangeRequest: { type: String, default: '' },
+  scheduleConfirmedAt:   { type: Date, default: null },
   adminMemo:      { type: String, default: '' },
   createdAt:      { type: Date, default: Date.now },
   updatedAt:      { type: Date, default: Date.now },

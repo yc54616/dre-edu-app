@@ -8,7 +8,7 @@ import { signOut } from 'next-auth/react';
 import PolicyLinks from '@/components/m/PolicyLinks';
 import {
   BookOpen, Sparkles, LayoutGrid, PlusCircle, LogOut,
-  Menu, ShoppingBag, ClipboardList, UserCog, Home, Trophy, CreditCard, MessageSquare, Tag,
+  Menu, ShoppingBag, ClipboardList, UserCog, Home, Trophy, CreditCard, MessageSquare, Tag, CalendarClock, Megaphone, ChevronDown,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -32,6 +32,8 @@ function isNavActive(pathname: string, item: NavItem) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
+const ADMIN_PRIMARY_COUNT = 7;
+
 /* ═══════════════════════════════════════════════════
    TopNav — 1:1 DRE Main Header.tsx style
    ═══════════════════════════════════════════════════ */
@@ -39,6 +41,7 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const showDesktopPolicyLinks = !isAdmin;
 
   const navItems = useMemo<NavItem[]>(
@@ -52,9 +55,11 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
         { href: '/m/admin/orders', label: '주문 관리', icon: <ClipboardList size={17} /> },
         { href: '/m/admin/hall-of-fame', label: '명예의 전당 관리', icon: <Trophy size={17} /> },
         { href: '/m/admin/consultations', label: '상담 관리', icon: <MessageSquare size={17} /> },
+        { href: '/m/admin/schedule', label: '일정 관리', icon: <CalendarClock size={17} /> },
         { href: '/m/admin/community-products', label: '상품 관리', icon: <Tag size={17} /> },
         { href: '/m/admin/community-upgrade-orders', label: '상품 결제 관리', icon: <CreditCard size={17} /> },
         { href: '/m/admin/users', label: '회원 관리', icon: <UserCog size={17} /> },
+        { href: '/m/admin/broadcast', label: '친구톡', icon: <Megaphone size={17} /> },
       ]
       : [
         {
@@ -67,14 +72,35 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
     [isAdmin, currentMode]
   );
 
+  const primaryNavItems = isAdmin ? navItems.slice(0, ADMIN_PRIMARY_COUNT) : navItems;
+  const secondaryNavItems = isAdmin ? navItems.slice(ADMIN_PRIMARY_COUNT) : [];
+  const hasSecondary = secondaryNavItems.length > 0;
+  const secondaryHasActive = secondaryNavItems.some((item) => isNavActive(pathname, item));
+
+  function renderNavLink(item: NavItem, active: boolean) {
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={`shrink-0 flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-2.5 text-[13px] font-bold transition-colors xl:px-3 xl:text-sm ${active
+          ? 'text-[var(--color-dre-blue)]'
+          : 'text-gray-700 hover:text-[var(--color-dre-blue)]'
+          }`}
+      >
+        {item.icon}
+        {item.label}
+      </Link>
+    );
+  }
+
   return (
     <>
-      {/* ══ Header — EXACT match: DRE Main Header.tsx ══ */}
+      {/* ══ Header ══ */}
       <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/20 bg-white/70 backdrop-blur-xl shadow-sm transition-all duration-300 hover:bg-white/90">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
 
-            {/* Left: Logo — EXACT match: Header.tsx */}
+            {/* Left: Logo */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileOpen(true)}
@@ -96,25 +122,25 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
               </Link>
             </div>
 
-            {/* Center Nav — EXACT match: Header.tsx nav style */}
+            {/* Center Nav */}
             <nav className="hidden min-w-0 flex-1 px-3 lg:flex">
               <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                {navItems.map((item) => {
-                  const active = isNavActive(pathname, item);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`shrink-0 flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-2.5 text-[13px] font-bold transition-colors xl:px-3 xl:text-sm ${active
+                {primaryNavItems.map((item) => renderNavLink(item, isNavActive(pathname, item)))}
+
+                {/* 더보기 토글 버튼 */}
+                {hasSecondary && (
+                  <button
+                    onClick={() => setMoreOpen((v) => !v)}
+                    className={`shrink-0 flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-2.5 text-[13px] font-bold transition-colors xl:px-3 xl:text-sm ${
+                      moreOpen || secondaryHasActive
                         ? 'text-[var(--color-dre-blue)]'
                         : 'text-gray-700 hover:text-[var(--color-dre-blue)]'
-                        }`}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </Link>
-                  );
-                })}
+                    }`}
+                  >
+                    더보기
+                    <ChevronDown size={14} className={`transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
               </div>
             </nav>
 
@@ -189,9 +215,28 @@ export default function TopNav({ userName, isAdmin, currentMode }: Props) {
             </div>
           </div>
         </div>
+
+        {/* ══ 더보기 2단 행 (데스크탑) ══ */}
+        <AnimatePresence>
+          {moreOpen && hasSecondary && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="hidden lg:block overflow-hidden border-t border-gray-100 bg-white/90 backdrop-blur-xl"
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center gap-0.5 py-2">
+                  {secondaryNavItems.map((item) => renderNavLink(item, isNavActive(pathname, item)))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* ══ Mobile Menu — EXACT match: Header.tsx AnimatePresence ══ */}
+      {/* ══ Mobile Menu ══ */}
       <AnimatePresence>
         {mobileOpen && (
           <>

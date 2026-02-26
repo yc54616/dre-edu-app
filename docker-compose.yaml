@@ -1,0 +1,60 @@
+networks:
+  dre_net:
+    driver: bridge
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/mime.types:/etc/nginx/mime.types:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - previews-data:/srv/previews:ro
+      - logs-nginx:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - dre_net
+    restart: always
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_TOSS_CLIENT_KEY: ${NEXT_PUBLIC_TOSS_CLIENT_KEY}
+        NEXT_PUBLIC_DRE_NAVER_CAFE_URL: ${NEXT_PUBLIC_DRE_NAVER_CAFE_URL}
+    expose:
+      - "3000"
+    env_file:
+      - .env.docker
+    depends_on:
+      - mongo
+    networks:
+      - dre_net
+    restart: always
+    volumes:
+      - uploads-data:/app/uploads
+      - previews-data:/app/public/uploads/previews
+      - tmp-data:/app/tmp
+
+  mongo:
+    image: mongo:6.0
+    expose:
+      - "27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - dre_net
+    restart: always
+
+volumes:
+  uploads-data:
+  previews-data:
+  tmp-data:
+  mongo-data:
+  logs-nginx:

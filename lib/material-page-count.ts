@@ -168,21 +168,30 @@ async function convertToPdf(inputPath: string, workDir: string): Promise<string 
 }
 
 async function getHwpxEstimatedPageCount(filePath: string): Promise<number | null> {
+  // HWPX는 ZIP 내부 XML을 분석하여 페이지 수 추정
+  // 1) pageBreak 속성 카운트
+  // 2) pageBreak가 없으면 문단 수 + XML 크기 기반 추정 (A4 기준 ~15문단/페이지)
   const pythonScript = [
     'import re, sys, zipfile',
     'src = sys.argv[1]',
-    'section_files = []',
+    'total_paragraphs = 0',
+    'total_xml_size = 0',
     'page_breaks = 0',
+    'section_count = 0',
     'with zipfile.ZipFile(src) as z:',
     "    section_files = sorted([n for n in z.namelist() if n.lower().startswith('contents/section') and n.lower().endswith('.xml')])",
+    '    section_count = len(section_files)',
     '    for name in section_files:',
     "        xml = z.read(name).decode('utf-8', 'ignore')",
-    "        page_breaks += len(re.findall(r'<hp:p\\\\b[^>]*\\\\bpageBreak=\"1\"', xml))",
-    'section_count = len(section_files)',
-    'if section_count > 0:',
+    '        total_xml_size += len(xml)',
+    "        total_paragraphs += len(re.findall(r'<hp:p\\b', xml))",
+    "        page_breaks += len(re.findall(r'pageBreak=[\"\\']1[\"\\']', xml))",
+    'if page_breaks > 0:',
     '    pages = max(1, section_count + page_breaks)',
+    'elif total_paragraphs > 0:',
+    '    pages = max(1, (total_paragraphs + 14) // 15)',
     'else:',
-    '    pages = max(1, page_breaks + 1)',
+    '    pages = max(1, total_xml_size // 3000)',
     'print(pages)',
   ].join('\n');
 
