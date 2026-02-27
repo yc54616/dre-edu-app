@@ -25,6 +25,28 @@ RUN npx esbuild scripts/seed.ts \
       --external:bson --external:@mongodb-js/* --external:kerberos \
       --external:@aws-sdk/* --external:snappy --external:mongodb-client-encryption
 
+# Bundle migration scripts so they can be executed inside the runtime container.
+RUN npx esbuild scripts/migrateLegacyMaterials.ts \
+      --bundle --platform=node --format=cjs \
+      --outfile=dist/migrateLegacyMaterials.js \
+      --external:mongodb --external:mongoose \
+      --external:bson --external:@mongodb-js/* --external:kerberos \
+      --external:@aws-sdk/* --external:snappy --external:mongodb-client-encryption
+
+RUN npx esbuild scripts/regeneratePreviews.ts \
+      --bundle --platform=node --format=cjs \
+      --outfile=dist/regeneratePreviews.js \
+      --external:mongodb --external:mongoose \
+      --external:bson --external:@mongodb-js/* --external:kerberos \
+      --external:@aws-sdk/* --external:snappy --external:mongodb-client-encryption
+
+RUN npx esbuild scripts/auditMigratedData.ts \
+      --bundle --platform=node --format=cjs \
+      --outfile=dist/auditMigratedData.js \
+      --external:mongodb --external:mongoose \
+      --external:bson --external:@mongodb-js/* --external:kerberos \
+      --external:@aws-sdk/* --external:snappy --external:mongodb-client-encryption
+
 # ── Stage 4: runner ───────────────────────────────────────────
 FROM base AS runner
 ENV NODE_ENV=production
@@ -64,10 +86,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Copy bundled seed script
 COPY --from=builder --chown=nextjs:nodejs /app/dist/seed.js ./seed.js
+COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate-in-container.sh ./scripts/migrate-in-container.sh
 
 # Copy entrypoint
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
-RUN chmod +x docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh /app/scripts/migrate-in-container.sh
 
 USER nextjs
 

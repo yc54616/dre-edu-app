@@ -1,6 +1,7 @@
 import {
   MATERIAL_SOURCE_CATEGORIES,
   MATERIAL_TYPES_BY_SOURCE,
+  getMaterialSubjectFilterCandidates,
   type MaterialSourceCategory,
 } from '@/lib/constants/material';
 import { normalizeText } from '@/lib/api-helpers';
@@ -45,6 +46,64 @@ const ebookTypeHints = new Set([
 const textbookTypeHints: Set<string> = new Set(MATERIAL_TYPES_BY_SOURCE.textbook as readonly string[]);
 const referenceTypeHints: Set<string> = new Set(MATERIAL_TYPES_BY_SOURCE.reference as readonly string[]);
 
+function normalizeDisplayText(value: unknown): string {
+  return normalizeText(value)
+    .replace(/_+/g, ' ')
+    .replace(/\s*·\s*/g, ' · ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function toCompareKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[ _.\-·:|,()[\]{}]+/g, '');
+}
+
+function uniqueDisplayParts(parts: unknown[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const part of parts) {
+    const normalized = normalizeDisplayText(part);
+    if (!normalized) continue;
+    const key = toCompareKey(normalized);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(normalized);
+  }
+  return result;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function stripLeadingDisplayHint(text: string, hint: string): string {
+  if (!text || !hint) return text;
+  const pattern = new RegExp(`^${escapeRegExp(hint)}(?:\\s*[·\\-_:|,/]+\\s*)?`, 'i');
+  return text.replace(pattern, '').trim();
+}
+
+function normalizeTopicForDisplay(topicValue: unknown, subjectValue: unknown): string {
+  const topic = normalizeDisplayText(topicValue);
+  const subject = normalizeDisplayText(subjectValue);
+  if (!topic || !subject) return topic;
+
+  const hints = getMaterialSubjectFilterCandidates(subject)
+    .map((value) => normalizeDisplayText(value))
+    .filter(Boolean);
+
+  let stripped = topic;
+  for (const hint of hints) {
+    stripped = stripLeadingDisplayHint(stripped, hint);
+  }
+
+  if (!stripped || toCompareKey(stripped) === toCompareKey(subject)) {
+    return '';
+  }
+  return stripped;
+}
+
 export function resolveSourceCategory(data: MaterialDisplayData): MaterialSourceCategory {
   const normalized = normalizeSourceCategory(data.sourceCategory);
 
@@ -66,19 +125,74 @@ export function resolveSourceCategory(data: MaterialDisplayData): MaterialSource
 }
 
 export function buildMaterialTitle(data: MaterialDisplayData): string {
-  const parts = buildMaterialNameParts(data);
-  return parts.join(' ');
+  const sourceCategory = resolveSourceCategory(data);
+  const subject = normalizeDisplayText(data.subject);
+  const topic = normalizeTopicForDisplay(data.topic, subject);
+  const type = normalizeDisplayText(data.type);
+  const bookTitle = normalizeDisplayText(data.bookTitle);
+  const publisher = normalizeDisplayText(data.publisher);
+
+  if (sourceCategory === 'school_exam') {
+    return uniqueDisplayParts([
+      subject,
+      topic || normalizeDisplayText(data.topic) || type,
+    ]).join(' ');
+  }
+
+  if (sourceCategory === 'ebook') {
+    const topicWithoutBookTitle = stripLeadingDisplayHint(topic, bookTitle);
+    return uniqueDisplayParts([
+      bookTitle || topic || subject,
+      topicWithoutBookTitle,
+      publisher,
+    ]).join(' ');
+  }
+
+  return uniqueDisplayParts([
+    subject,
+    bookTitle || topic,
+    type,
+  ]).join(' ');
 }
 
 export function buildMaterialSubline(data: MaterialDisplayData): string {
   const sourceCategory = resolveSourceCategory(data);
+  const year = data.year ? `${data.year}년` : '';
+  const grade = data.gradeNumber ? `${data.gradeNumber}학년` : '';
+  const semester = data.semester ? `${data.semester}학기` : '';
+  const schoolName = normalizeDisplayText(data.schoolName);
+  const schoolLevel = normalizeDisplayText(data.schoolLevel);
+  const subject = normalizeDisplayText(data.subject);
+  const topic = normalizeTopicForDisplay(data.topic, subject);
+  const bookTitle = normalizeDisplayText(data.bookTitle);
+  const publisher = normalizeDisplayText(data.publisher);
+
   if (sourceCategory === 'school_exam') {
-    return [data.subject, data.topic].filter(Boolean).join(' · ');
+    return uniqueDisplayParts([
+      schoolName,
+      year,
+      grade,
+      semester,
+      schoolLevel,
+    ]).join(' · ');
   }
+
   if (sourceCategory === 'ebook') {
-    return [data.publisher, data.year ? `${data.year}년` : '', data.topic].filter(Boolean).join(' · ');
+    const topicWithoutBookTitle = stripLeadingDisplayHint(topic, bookTitle);
+    return uniqueDisplayParts([
+      publisher,
+      year,
+      topicWithoutBookTitle,
+    ]).join(' · ');
   }
-  return [data.subject, data.bookTitle || data.topic, data.publisher].filter(Boolean).join(' · ');
+
+  return uniqueDisplayParts([
+    publisher,
+    schoolLevel,
+    year,
+    grade,
+    topic,
+  ]).join(' · ');
 }
 
 export function buildMaterialNameParts(data: MaterialDisplayData): string[] {

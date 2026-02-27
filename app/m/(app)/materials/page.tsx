@@ -203,7 +203,7 @@ function MaterialCard({
               {title || item.bookTitle || item.subject || item.type}
             </p>
             <p className="mt-1 text-sm text-gray-500 truncate">
-              {subtitle}{item.schoolLevel ? ` · ${item.schoolLevel}` : ''}
+              {subtitle}
             </p>
 
             <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
