@@ -330,8 +330,8 @@ export default async function RecommendPage({
             <Link
               href={buildUrl('grid')}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${view === 'grid'
-                  ? 'bg-blue-100 text-blue-600 border border-blue-100'
-                  : 'text-gray-500 hover:text-blue-500'
+                ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                : 'text-gray-500 hover:text-blue-500'
                 }`}
             >
               <LayoutGrid size={14} />
@@ -340,8 +340,8 @@ export default async function RecommendPage({
             <Link
               href={buildUrl('list')}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${view === 'list'
-                  ? 'bg-blue-100 text-blue-600 border border-blue-100'
-                  : 'text-gray-500 hover:text-blue-500'
+                ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                : 'text-gray-500 hover:text-blue-500'
                 }`}
             >
               <Rows3 size={14} />
@@ -363,7 +363,7 @@ export default async function RecommendPage({
           </div>
 
           {materials.length === 0 ? (
-            <div className="m-detail-card flex flex-col items-center justify-center py-20 sm:py-32 px-4 mx-4 sm:mx-0">
+            <div className="m-detail-card flex flex-col items-center justify-center py-20 sm:py-32 px-4">
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-5 sm:mb-6 border border-gray-100">
                 <BookOpen size={28} className="text-gray-300 sm:w-[34px] sm:h-[34px]" />
               </div>
