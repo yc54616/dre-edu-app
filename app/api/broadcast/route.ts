@@ -59,8 +59,7 @@ export async function POST(req: NextRequest) {
       User.find({
         role: { $in: ['student', 'teacher'] },
         phone: { $in: Array.from(uniquePhoneSet) },
-        'consents.marketing': { $exists: true, $ne: null },
-      }).select('phone').lean() as Promise<Array<{ phone?: string | null }>>,
+      }).select('phone consents.marketing').lean() as Promise<Array<{ phone?: string | null; consents?: { marketing?: { agreedAt?: string | Date } | null } }>>,
       Consultation.find({
         status: { $ne: 'cancelled' },
         phone: { $in: Array.from(uniquePhoneSet) },
@@ -69,13 +68,29 @@ export async function POST(req: NextRequest) {
     ]);
 
     const allowedPhoneSet = new Set<string>();
+    const revokedPhoneSet = new Set<string>();
+
     for (const user of agreedUsers) {
       const phone = typeof user.phone === 'string' ? user.phone.replace(/\D/g, '') : '';
-      if (phone) allowedPhoneSet.add(phone);
+      if (!phone) continue;
+
+      const agreedAt = user.consents?.marketing?.agreedAt;
+      if (agreedAt) {
+        allowedPhoneSet.add(phone);
+      } else {
+        revokedPhoneSet.add(phone);
+      }
     }
+
     for (const consultation of consultationRecipients) {
       const phone = typeof consultation.phone === 'string' ? consultation.phone.replace(/\D/g, '') : '';
-      if (phone) allowedPhoneSet.add(phone);
+      if (!phone) continue;
+
+      if (revokedPhoneSet.has(phone)) {
+        continue;
+      }
+
+      allowedPhoneSet.add(phone);
     }
 
     const blockedPhones = Array.from(uniquePhoneSet).filter((phone) => !allowedPhoneSet.has(phone));

@@ -31,7 +31,6 @@ export default async function BroadcastPage() {
     User.find({
       role: { $in: ['student', 'teacher'] },
       phone: { $exists: true, $nin: [null, ''] },
-      'consents.marketing': { $exists: true, $ne: null },
     })
       .sort({ createdAt: -1 })
       .select('phone username role consents.marketing')
@@ -68,6 +67,9 @@ export default async function BroadcastPage() {
     marketingAgreedAt: Date | null;
   }>();
 
+  // 사용자 리스트 먼저 처리 (회원이면 회원의 마케팅 동의 여부가 절대적 기준)
+  const registeredUserMarketingStatus = new Map<string, boolean>();
+
   for (const doc of rawUsers) {
     const phone = typeof doc.phone === 'string' ? doc.phone.replace(/\D/g, '') : '';
     if (!phone) continue;
@@ -76,6 +78,13 @@ export default async function BroadcastPage() {
     const agreedAt = doc.consents?.marketing?.agreedAt
       ? new Date(doc.consents.marketing.agreedAt)
       : null;
+
+    registeredUserMarketingStatus.set(phone, !!agreedAt);
+
+    if (!agreedAt) {
+      continue;
+    }
+
     const existing = phoneMap.get(phone);
 
     if (existing) {
@@ -97,6 +106,11 @@ export default async function BroadcastPage() {
   for (const doc of rawConsultations) {
     const phone = typeof doc.phone === 'string' ? doc.phone.replace(/\D/g, '') : '';
     if (!phone) continue;
+
+    // 만약 이미 가입된 회원이고, 그 회원이 마케팅 동의를 취소했다면(false) 발송 대상에서 무조건 제외
+    if (registeredUserMarketingStatus.has(phone) && registeredUserMarketingStatus.get(phone) === false) {
+      continue;
+    }
 
     const agreedAt = doc.marketingConsentAt ? new Date(doc.marketingConsentAt) : null;
     const consultRole = resolveConsultRole(doc.type);
