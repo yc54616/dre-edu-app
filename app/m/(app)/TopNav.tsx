@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -58,6 +58,12 @@ export default function TopNav({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const showDesktopPolicyLinks = !isAdmin;
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setUserMenuOpen(false);
+    setMoreOpen(false);
+  }, [pathname]);
 
   const navItems = useMemo<NavItem[]>(
     () => (isAdmin
@@ -167,8 +173,8 @@ export default function TopNav({
                   <button
                     onClick={() => setMoreOpen((v) => !v)}
                     className={`shrink-0 flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-2.5 text-[13px] font-bold transition-colors xl:px-3 xl:text-sm ${moreOpen || secondaryHasActive
-                        ? 'text-[var(--color-dre-blue)]'
-                        : 'text-gray-700 hover:text-[var(--color-dre-blue)]'
+                      ? 'text-[var(--color-dre-blue)]'
+                      : 'text-gray-700 hover:text-[var(--color-dre-blue)]'
                       }`}
                   >
                     더보기
