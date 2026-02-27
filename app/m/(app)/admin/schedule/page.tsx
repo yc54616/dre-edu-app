@@ -58,6 +58,7 @@ export default async function AdminSchedulePage({
 
   if (status === 'confirmed') {
     filter.scheduleConfirmedAt = { $ne: null };
+    filter.status = { $ne: 'completed' };
   } else if (status) {
     filter.status = status;
   }

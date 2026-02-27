@@ -231,9 +231,11 @@ export default async function RecommendPage({
     ? `교사용 맞춤 추천 자료 ${materials.length}개`
     : `ELO 레이팅 기반 맞춤 추천 자료 ${materials.length}개`;
   const emptyTitle = isTeacherMode ? '추천할 교사용 자료가 없습니다' : '추천할 자료가 없습니다';
-  const emptyDesc = isTeacherMode
-    ? '교사용 자료를 활용할수록 수업 맞춤 추천 정확도가 높아집니다.'
-    : '자료를 학습하고 난이도 피드백을 남기면 맞춤 추천이 시작됩니다';
+  const emptyDesc = isTeacherMode ? (
+    <>교사용 자료를 활용할수록<br className="sm:hidden" /> 수업 맞춤 추천 정확도가 높아집니다.</>
+  ) : (
+    <>자료를 학습하고 난이도 피드백을 남기면<br className="sm:hidden" /> 맞춤 추천이 시작됩니다</>
+  );
   const emptyLink = isTeacherMode ? '교사용 자료에서 시작하기 →' : '자료 목록에서 시작하기 →';
   const similarSectionTitle = isTeacherMode ? '비슷한 교사의 선택' : '비슷한 수준 학생들의 선택';
   const similarSectionDesc = isTeacherMode ? '유사 활용 패턴 교사 추천' : '협업 필터링 추천';
@@ -327,22 +329,20 @@ export default async function RecommendPage({
           <div className="inline-flex items-center rounded-xl border border-blue-100 bg-white p-1">
             <Link
               href={buildUrl('grid')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${
-                view === 'grid'
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${view === 'grid'
                   ? 'bg-blue-100 text-blue-600 border border-blue-100'
                   : 'text-gray-500 hover:text-blue-500'
-              }`}
+                }`}
             >
               <LayoutGrid size={14} />
               카드
             </Link>
             <Link
               href={buildUrl('list')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${
-                view === 'list'
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${view === 'list'
                   ? 'bg-blue-100 text-blue-600 border border-blue-100'
                   : 'text-gray-500 hover:text-blue-500'
-              }`}
+                }`}
             >
               <Rows3 size={14} />
               리스트
@@ -352,7 +352,7 @@ export default async function RecommendPage({
 
         {/* ELO 추천 자료 섹션 */}
         <section>
-            <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-100 to-sky-100 flex items-center justify-center border border-blue-100 shadow-sm shadow-blue-100/60">
               <Sparkles size={18} className="text-blue-500" />
             </div>
@@ -363,13 +363,15 @@ export default async function RecommendPage({
           </div>
 
           {materials.length === 0 ? (
-            <div className="m-detail-card flex flex-col items-center justify-center py-20 sm:py-32">
-              <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100">
-                <BookOpen size={34} className="text-gray-300" />
+            <div className="m-detail-card flex flex-col items-center justify-center py-20 sm:py-32 px-4 mx-4 sm:mx-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-5 sm:mb-6 border border-gray-100">
+                <BookOpen size={28} className="text-gray-300 sm:w-[34px] sm:h-[34px]" />
               </div>
-              <p className="text-xl font-bold text-gray-400 mb-2">{emptyTitle}</p>
-              <p className="text-base text-gray-500 mb-6">{emptyDesc}</p>
-              <Link href="/m/materials" className="text-base text-blue-500 font-semibold hover:underline">
+              <p className="text-lg sm:text-xl font-bold text-gray-400 mb-2 text-center break-keep">{emptyTitle}</p>
+              <p className="text-[14px] sm:text-base text-gray-500 mb-6 text-center break-keep leading-relaxed">
+                {emptyDesc}
+              </p>
+              <Link href="/m/materials" className="text-[14px] sm:text-base text-blue-500 font-extrabold hover:text-blue-600 transition-colors">
                 {emptyLink}
               </Link>
             </div>
