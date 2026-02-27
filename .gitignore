@@ -23,7 +23,7 @@
 # misc
 .DS_Store
 *.pem
-/ssl/
+# /ssl/
 
 # debug
 npm-debug.log*
