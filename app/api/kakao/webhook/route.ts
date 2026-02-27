@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectMongo from '@/lib/mongoose';
-import Consultation, { ConsultationType } from '@/lib/models/Consultation';
+import Consultation, { ConsultationType, CONSULTATION_TYPE_LABEL } from '@/lib/models/Consultation';
 import { notifyConsultation } from '@/lib/solapi';
-import { KakaoSkillRequest, simpleTextResponse, errorResponse } from '@/lib/kakao-skill';
+import {
+  KakaoSkillRequest,
+  simpleTextResponse,
+  simpleTextWithQuickReplies,
+  errorResponse,
+} from '@/lib/kakao-skill';
 
 export const dynamic = 'force-dynamic';
 const CHANNEL_MARKETING_CONSENT_VERSION = '2026-02-26-kakao-channel';
@@ -13,6 +18,42 @@ const ACTION_TYPE_MAP: Record<string, ConsultationType> = {
   submit_coaching: 'coaching',
   submit_teacher: 'teacher',
 };
+
+const CONSULT_TYPE_QUICK_REPLIES: Array<{ label: string; messageText: string }> = [
+  { label: '입학 안내', messageText: '입학안내' },
+  { label: '입시컨설팅', messageText: '입시컨설팅' },
+  { label: '온라인수학코칭', messageText: '온라인수학코칭' },
+  { label: '수업설계컨설팅', messageText: '수업설계컨설팅' },
+];
+
+function detectConsultationTypeFromUtterance(rawUtterance: string): ConsultationType | null {
+  const normalized = rawUtterance.trim().replace(/\s+/g, '').toLowerCase();
+  if (!normalized) return null;
+
+  if (normalized.includes('수업설계')) return 'teacher';
+  if (normalized.includes('온라인') || normalized.includes('코칭')) return 'coaching';
+  if (normalized.includes('입학')) return 'admission';
+  if (normalized.includes('입시')) return 'consulting';
+
+  return null;
+}
+
+function consultationSwitchGuideText(currentType: ConsultationType, requestedType?: ConsultationType): string {
+  const currentLabel = CONSULTATION_TYPE_LABEL[currentType];
+  if (requestedType && requestedType !== currentType) {
+    return [
+      `현재는 "${currentLabel}" 상담 흐름입니다.`,
+      `중간에 "${CONSULTATION_TYPE_LABEL[requestedType]}"로 바꾸시려면 아래 버튼에서 다시 시작해주세요.`,
+      '같은 흐름을 계속 진행하려면 이름과 연락처를 입력해주세요.',
+    ].join('\n');
+  }
+
+  return [
+    `현재는 "${currentLabel}" 상담 흐름입니다.`,
+    '이 단계에서는 이름과 연락처를 입력해야 합니다.',
+    '다른 상담으로 바꾸려면 아래 버튼에서 다시 시작해주세요.',
+  ].join('\n');
+}
 
 async function findScheduledConsultation(name: string, phone: string) {
   const cleaned = phone.replace(/-/g, '');
@@ -103,6 +144,7 @@ export async function POST(req: NextRequest) {
   const params = body.action?.params || {};
   // action_type 파라미터 우선, 없으면 action.name 폴백
   const actionType = params.action_type || body.action?.name || '';
+  const utterance = body.userRequest?.utterance || '';
 
   console.log(`[카카오 웹훅] action_type=${actionType}`, JSON.stringify(params));
 
@@ -170,15 +212,24 @@ export async function POST(req: NextRequest) {
   // 상담 신청
   const type = ACTION_TYPE_MAP[actionType];
   if (!type) {
-    return NextResponse.json(errorResponse('알 수 없는 요청입니다.'));
+    return NextResponse.json(
+      simpleTextWithQuickReplies(
+        '요청을 이해하지 못했습니다. 아래 상담 유형에서 다시 시작해주세요.',
+        CONSULT_TYPE_QUICK_REPLIES,
+      ),
+    );
   }
 
   const name = (params.name || '').trim();
   const phone = (params.phone || '').trim().replace(/\D/g, '');
 
   if (!name || !phone) {
+    const requestedType = detectConsultationTypeFromUtterance(utterance);
     return NextResponse.json(
-      simpleTextResponse('이름과 연락처는 필수입니다. 다시 시도해주세요.'),
+      simpleTextWithQuickReplies(
+        consultationSwitchGuideText(type, requestedType || undefined),
+        CONSULT_TYPE_QUICK_REPLIES,
+      ),
     );
   }
 

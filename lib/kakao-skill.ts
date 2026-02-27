@@ -28,6 +28,11 @@ export interface KakaoSkillResponse {
   version: '2.0';
   template: {
     outputs: Array<{ simpleText?: { text: string } }>;
+    quickReplies?: Array<{
+      label: string;
+      action: 'message';
+      messageText: string;
+    }>;
   };
 }
 
@@ -36,6 +41,23 @@ export function simpleTextResponse(text: string): KakaoSkillResponse {
     version: '2.0',
     template: {
       outputs: [{ simpleText: { text } }],
+    },
+  };
+}
+
+export function simpleTextWithQuickReplies(
+  text: string,
+  quickReplies: Array<{ label: string; messageText: string }>,
+): KakaoSkillResponse {
+  return {
+    version: '2.0',
+    template: {
+      outputs: [{ simpleText: { text } }],
+      quickReplies: quickReplies.map((item) => ({
+        label: item.label,
+        action: 'message',
+        messageText: item.messageText,
+      })),
     },
   };
 }
