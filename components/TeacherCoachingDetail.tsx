@@ -221,7 +221,9 @@ export default function TeacherCoachingDetail() {
           {/* Contact Buttons */}
           <div className="mb-10 grid gap-4 md:mb-16 md:grid-cols-2 md:gap-6">
             <a
-              href="/community"
+              href="http://pf.kakao.com/_Lbbxgxj/chat"
+              target="_blank"
+              rel="noopener noreferrer"
               className="group flex items-center rounded-2xl bg-[#FAE100] p-4 shadow-md transition-colors hover:bg-[#FDD835] sm:p-6"
             >
               <div className="mr-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white/50 text-[#3C1E1E] sm:mr-4 sm:h-12 sm:w-12">
@@ -282,7 +284,7 @@ export default function TeacherCoachingDetail() {
                     value={form.phone}
                     onChange={(e) => {
                       const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                      const formatted = digits.length <= 3 ? digits : digits.length <= 7 ? `${digits.slice(0,3)}-${digits.slice(3)}` : `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7)}`;
+                      const formatted = digits.length <= 3 ? digits : digits.length <= 7 ? `${digits.slice(0, 3)}-${digits.slice(3)}` : `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
                       setForm({ ...form, phone: formatted });
                     }}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 outline-none transition-all focus:border-[var(--color-dre-blue)] focus:bg-white focus:ring-1 focus:ring-[var(--color-dre-blue)] sm:px-5 sm:py-4"
