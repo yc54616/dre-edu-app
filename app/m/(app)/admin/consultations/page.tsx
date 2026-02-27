@@ -49,7 +49,7 @@ export default async function AdminConsultationsPage({
 
   const sp = await searchParams;
   const type = CONSULTATION_TYPES.includes(sp.type as ConsultationType) ? sp.type : '';
-  const status = CONSULTATION_STATUSES.includes(sp.status as ConsultationStatus) ? sp.status : '';
+  const status = (sp.status === 'confirmed' || CONSULTATION_STATUSES.includes(sp.status as ConsultationStatus)) ? sp.status : '';
   const q = sp.q?.trim() || '';
   const page = Math.max(1, parseInt(sp.page || '1'));
   const limit = 30;
@@ -58,7 +58,12 @@ export default async function AdminConsultationsPage({
 
   const filter: Record<string, unknown> = {};
   if (type) filter.type = type;
-  if (status) filter.status = status;
+
+  if (status === 'confirmed') {
+    filter.scheduleConfirmedAt = { $ne: null };
+  } else if (status) {
+    filter.status = status;
+  }
   if (q) {
     filter.$or = [
       { name: { $regex: q, $options: 'i' } },
@@ -324,11 +329,10 @@ export default async function AdminConsultationsPage({
                         : <Link
                           key={p}
                           href={buildUrl({ page: String(p) })}
-                          className={`flex h-10 w-10 items-center justify-center rounded-xl text-[15px] font-bold transition-all ${
-                            p === page
-                              ? 'bg-blue-100 text-blue-600 border border-blue-100'
-                              : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
-                          }`}
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl text-[15px] font-bold transition-all ${p === page
+                            ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                            : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
+                            }`}
                         >
                           {p}
                         </Link>

@@ -18,6 +18,7 @@ const STATUS_OPTIONS = [
   { val: 'pending', label: '접수' },
   { val: 'contacted', label: '연락 완료' },
   { val: 'scheduled', label: '상담 예정' },
+  { val: 'confirmed', label: '상담 확정' },
   { val: 'completed', label: '완료' },
   { val: 'cancelled', label: '취소' },
 ];

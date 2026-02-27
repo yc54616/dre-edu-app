@@ -18,9 +18,10 @@ interface Props {
   currentMemo: string;
   scheduledDate?: string;
   scheduledTime?: string;
+  hasChangeRequest?: boolean;
 }
 
-export default function StatusActions({ consultationId, currentStatus, currentMemo, scheduledDate: initDate, scheduledTime: initTime }: Props) {
+export default function StatusActions({ consultationId, currentStatus, currentMemo, scheduledDate: initDate, scheduledTime: initTime, hasChangeRequest }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [memo, setMemo] = useState(currentMemo);
@@ -91,9 +92,27 @@ export default function StatusActions({ consultationId, currentStatus, currentMe
     }
   };
 
+  const handleClearChangeRequest = async () => {
+    if (!confirm('이 사용자의 일정 변경요청(내용 및 뱃지)을 완전히 지우시겠습니까?')) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/consult/${consultationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clearChangeRequest: true }),
+      });
+      if (!res.ok) throw new Error();
+      router.refresh();
+    } catch {
+      alert('변경요청 해제에 실패했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <select
           value={status}
           onChange={(e) => handleStatusChange(e.target.value)}
@@ -118,6 +137,16 @@ export default function StatusActions({ consultationId, currentStatus, currentMe
         >
           <CalendarClock size={15} />
         </button>
+        {hasChangeRequest && (
+          <button
+            onClick={handleClearChangeRequest}
+            disabled={saving}
+            title="변경요청 지우기"
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={13} className="animate-spin" /> : <X size={15} strokeWidth={2.5} />}
+          </button>
+        )}
       </div>
 
       {showMemo && (

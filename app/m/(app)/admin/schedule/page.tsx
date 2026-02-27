@@ -48,14 +48,20 @@ export default async function AdminSchedulePage({
 
   const sp = await searchParams;
   const type = CONSULTATION_TYPES.includes(sp.type as ConsultationType) ? sp.type : '';
-  const status = CONSULTATION_STATUSES.includes(sp.status as ConsultationStatus) ? sp.status : '';
+  const status = (sp.status === 'confirmed' || CONSULTATION_STATUSES.includes(sp.status as ConsultationStatus)) ? sp.status : '';
   const q = sp.q?.trim() || '';
 
   await connectMongo();
 
   const filter: Record<string, unknown> = {};
   if (type) filter.type = type;
-  if (status) filter.status = status;
+
+  if (status === 'confirmed') {
+    filter.scheduleConfirmedAt = { $ne: null };
+  } else if (status) {
+    filter.status = status;
+  }
+
   if (q) {
     filter.$or = [
       { name: { $regex: q, $options: 'i' } },
@@ -137,9 +143,8 @@ export default async function AdminSchedulePage({
             {consultations.map((c) => (
               <div
                 key={c.consultationId}
-                className={`m-detail-card p-4 space-y-3 ${
-                  c.scheduleChangeRequest ? 'border-l-4 border-red-400' : ''
-                }`}
+                className={`m-detail-card p-4 space-y-3 ${c.scheduleChangeRequest ? 'border-l-4 border-red-400' : ''
+                  }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -195,6 +200,7 @@ export default async function AdminSchedulePage({
                   currentMemo={c.adminMemo}
                   scheduledDate={c.scheduledDate}
                   scheduledTime={c.scheduledTime}
+                  hasChangeRequest={!!c.scheduleChangeRequest}
                 />
               </div>
             ))}

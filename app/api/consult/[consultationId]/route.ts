@@ -37,6 +37,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     updates.adminMemo = (body.adminMemo as string).trim();
   }
 
+  if (body.clearChangeRequest === true) {
+    updates.scheduleChangeRequest = '';
+  }
+
   await connectMongo();
   const result = await Consultation.updateOne({ consultationId }, { $set: updates });
 
