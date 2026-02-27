@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { cookies, headers } from 'next/headers';
 import connectMongo from '@/lib/mongoose';
-import Material, { DIFFICULTY_LABEL, DIFFICULTY_COLOR } from '@/lib/models/Material';
+import Material, { DIFFICULTY_LABEL, DIFFICULTY_COLOR, SCHOOL_LEVELS } from '@/lib/models/Material';
 import {
   getMaterialSubjectFilterCandidates,
   LEGACY_ONLY_MATERIAL_SUBJECTS,
@@ -71,6 +71,8 @@ const CURRICULUM_OPTIONS: { value: Exclude<CurriculumFilter, 'all'>; label: stri
   { value: 'revised_2022', label: MATERIAL_CURRICULUM_LABEL.revised_2022 },
   { value: 'legacy', label: MATERIAL_CURRICULUM_LABEL.legacy },
 ];
+const SCHOOL_LEVEL_OPTIONS = [...SCHOOL_LEVELS] as readonly string[];
+const GRADE_OPTIONS = [1, 2, 3] as const;
 
 const legacyOnlySubjectHints = LEGACY_ONLY_MATERIAL_SUBJECTS as readonly string[];
 const buildCurriculumQuery = (curriculum: Exclude<CurriculumFilter, 'all'>): Record<string, unknown> => (
@@ -315,7 +317,9 @@ export default async function MaterialsPage({
     role === 'student' ? 'student' :
       role === 'teacher'
         ? (modeCookie === 'student' ? 'student' : 'teacher')
-        : 'student';
+        : role === 'admin'
+          ? (modeCookie === 'teacher' ? 'teacher' : 'student')
+          : 'student';
 
   const sp = await searchParams;
   const headerStore = await headers();
@@ -329,6 +333,13 @@ export default async function MaterialsPage({
       ? sp.curriculum
       : DEFAULT_CURRICULUM;
   const subject = sp.subject || '';
+  const schoolLevel = SCHOOL_LEVEL_OPTIONS.includes(sp.schoolLevel as string)
+    ? sp.schoolLevel
+    : '';
+  const parsedGradeNumber = Number.parseInt(sp.gradeNumber || '', 10);
+  const gradeNumber = schoolLevel && Number.isFinite(parsedGradeNumber) && parsedGradeNumber >= 1 && parsedGradeNumber <= 3
+    ? parsedGradeNumber
+    : 0;
   const sort = sp.sort || 'newest';
   const query = sp.q || '';
   const view: ViewMode = (sp.view === 'list' || sp.view === 'grid') ? sp.view : defaultView;
@@ -340,6 +351,8 @@ export default async function MaterialsPage({
     ? [subject, ...subjectFilterBase]
     : subjectFilterBase;
   const curriculumLabel = curriculum === 'all' ? '통합 보기' : MATERIAL_CURRICULUM_LABEL[curriculum];
+  const schoolLevelLabel = schoolLevel || '전체 학교급';
+  const gradeLabel = schoolLevel ? (gradeNumber > 0 ? `${gradeNumber}학년` : '전체 학년') : '';
 
   await connectMongo();
 
@@ -381,6 +394,14 @@ export default async function MaterialsPage({
     );
   }
 
+  if (schoolLevel && scope !== 'ebook') {
+    andFilters.push({ schoolLevel });
+  }
+
+  if (gradeNumber > 0 && scope !== 'ebook') {
+    andFilters.push({ gradeNumber });
+  }
+
   if (query) {
     andFilters.push({
       $or: [
@@ -400,7 +421,14 @@ export default async function MaterialsPage({
     filter.$and = andFilters;
   }
 
-  const isSearching = !!(subject || query || scope !== 'all' || curriculum !== DEFAULT_CURRICULUM);
+  const isSearching = !!(
+    subject
+    || schoolLevel
+    || gradeNumber > 0
+    || query
+    || scope !== 'all'
+    || curriculum !== DEFAULT_CURRICULUM
+  );
   const sortQuery = sortMap[sort] || sortMap.newest;
 
   const [materials, total, newMaterials] =
@@ -421,6 +449,8 @@ export default async function MaterialsPage({
     const nextScope = (overrides.scope as MaterialScope | undefined) ?? scope;
     const nextCurriculum = (overrides.curriculum as CurriculumFilter | undefined) ?? curriculum;
     const nextSubject = overrides.subject ?? subject;
+    const nextSchoolLevel = overrides.schoolLevel ?? schoolLevel;
+    const nextGradeNumber = overrides.gradeNumber ?? (nextSchoolLevel ? (gradeNumber > 0 ? String(gradeNumber) : '') : '');
     const nextSort = overrides.sort ?? sort;
     const nextQuery = overrides.q ?? query;
     const nextView = (overrides.view as ViewMode | undefined) ?? view;
@@ -430,6 +460,8 @@ export default async function MaterialsPage({
     if (nextScope !== 'all') params.set('scope', nextScope);
     if (nextCurriculum !== DEFAULT_CURRICULUM) params.set('curriculum', nextCurriculum);
     if (nextSubject) params.set('subject', nextSubject);
+    if (nextSchoolLevel) params.set('schoolLevel', nextSchoolLevel);
+    if (nextSchoolLevel && nextGradeNumber) params.set('gradeNumber', nextGradeNumber);
     if (nextSort && nextSort !== 'newest') params.set('sort', nextSort);
     if (nextQuery) params.set('q', nextQuery);
     if (nextView !== defaultView) params.set('view', nextView);
@@ -466,7 +498,7 @@ export default async function MaterialsPage({
                 맞춤추천
                 <ArrowRight size={14} />
               </Link>
-              {role === 'teacher' && (
+              {(role === 'teacher' || role === 'admin') && (
                 <ModeToggleButton currentMode={currentMode} />
               )}
             </div>
@@ -487,9 +519,11 @@ export default async function MaterialsPage({
               <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-blue-100 bg-white px-3.5 py-2.5 text-sm font-bold text-gray-600">
                 <span className="inline-flex items-center gap-2">
                   <SlidersHorizontal size={14} className="text-blue-500" />
-                  과목 필터
+                  상세 필터
                 </span>
-                <span className="text-xs font-semibold text-blue-500">{curriculumLabel} · {subject || '전체'}</span>
+                <span className="text-xs font-semibold text-blue-500">
+                  {curriculumLabel} · {subject || '전체 과목'} · {schoolLevelLabel}{gradeLabel ? ` · ${gradeLabel}` : ''}
+                </span>
               </summary>
               <div className="mt-2 space-y-2.5">
                 <div className="flex flex-wrap gap-2">
@@ -535,6 +569,62 @@ export default async function MaterialsPage({
                     </Link>
                   ))}
                 </div>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href={buildUrl({ schoolLevel: '', gradeNumber: '' })}
+                    scroll={false}
+                    className={`rounded-full px-4 py-2 text-sm font-extrabold transition-all ${
+                      !schoolLevel
+                        ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                        : 'bg-white border border-blue-100 text-gray-600 hover:border-blue-200 hover:text-blue-500'
+                    }`}
+                  >
+                    전체 학교급
+                  </Link>
+                  {SCHOOL_LEVEL_OPTIONS.map((level) => (
+                    <Link
+                      key={level}
+                      href={buildUrl({ schoolLevel: level, gradeNumber: '' })}
+                      scroll={false}
+                      className={`rounded-full px-4 py-2 text-sm font-extrabold transition-all ${
+                        schoolLevel === level
+                          ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                          : 'bg-white border border-blue-100 text-gray-600 hover:border-blue-200 hover:text-blue-500'
+                      }`}
+                    >
+                      {level}
+                    </Link>
+                  ))}
+                </div>
+                {schoolLevel && (
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={buildUrl({ gradeNumber: '' })}
+                      scroll={false}
+                      className={`rounded-full px-4 py-2 text-sm font-extrabold transition-all ${
+                        gradeNumber === 0
+                          ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                          : 'bg-white border border-blue-100 text-gray-600 hover:border-blue-200 hover:text-blue-500'
+                      }`}
+                    >
+                      전체 학년
+                    </Link>
+                    {GRADE_OPTIONS.map((grade) => (
+                      <Link
+                        key={grade}
+                        href={buildUrl({ gradeNumber: String(grade) })}
+                        scroll={false}
+                        className={`rounded-full px-4 py-2 text-sm font-extrabold transition-all ${
+                          gradeNumber === grade
+                            ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                            : 'bg-white border border-blue-100 text-gray-600 hover:border-blue-200 hover:text-blue-500'
+                        }`}
+                      >
+                        {grade}학년
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             </details>
             )}
@@ -584,6 +674,62 @@ export default async function MaterialsPage({
                   </Link>
                 ))}
               </div>
+              <div className="m-scrollbar flex gap-2 overflow-x-auto pb-1">
+                <Link
+                  href={buildUrl({ schoolLevel: '', gradeNumber: '' })}
+                  scroll={false}
+                  className={`rounded-full px-4 py-2 text-sm font-extrabold transition-all ${
+                    !schoolLevel
+                      ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                      : 'bg-white border border-blue-100 text-gray-600 hover:border-blue-200 hover:text-blue-500'
+                  }`}
+                >
+                  전체 학교급
+                </Link>
+                {SCHOOL_LEVEL_OPTIONS.map((level) => (
+                  <Link
+                    key={level}
+                    href={buildUrl({ schoolLevel: level, gradeNumber: '' })}
+                    scroll={false}
+                    className={`rounded-full px-4 py-2 text-sm font-extrabold transition-all ${
+                      schoolLevel === level
+                        ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                        : 'bg-white border border-blue-100 text-gray-600 hover:border-blue-200 hover:text-blue-500'
+                    }`}
+                  >
+                    {level}
+                  </Link>
+                ))}
+              </div>
+              {schoolLevel && (
+                <div className="m-scrollbar flex gap-2 overflow-x-auto pb-1">
+                  <Link
+                    href={buildUrl({ gradeNumber: '' })}
+                    scroll={false}
+                    className={`rounded-full px-4 py-2 text-sm font-extrabold transition-all ${
+                      gradeNumber === 0
+                        ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                        : 'bg-white border border-blue-100 text-gray-600 hover:border-blue-200 hover:text-blue-500'
+                    }`}
+                  >
+                    전체 학년
+                  </Link>
+                  {GRADE_OPTIONS.map((grade) => (
+                    <Link
+                      key={grade}
+                      href={buildUrl({ gradeNumber: String(grade) })}
+                      scroll={false}
+                      className={`rounded-full px-4 py-2 text-sm font-extrabold transition-all ${
+                        gradeNumber === grade
+                          ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                          : 'bg-white border border-blue-100 text-gray-600 hover:border-blue-200 hover:text-blue-500'
+                      }`}
+                    >
+                      {grade}학년
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
             )}
 
@@ -650,7 +796,7 @@ export default async function MaterialsPage({
                       key={tab.value}
                       href={buildUrl({
                         scope: tab.value,
-                        ...(tab.value === 'ebook' ? { subject: '' } : {}),
+                        ...(tab.value === 'ebook' ? { subject: '', schoolLevel: '', gradeNumber: '' } : {}),
                       })}
                       scroll={false}
                       className={`relative -mb-px inline-flex h-12 min-w-[7.5rem] items-center justify-center border border-gray-300 px-5 text-[15px] font-bold transition-colors first:rounded-tl-xl last:rounded-tr-xl ${
@@ -675,7 +821,7 @@ export default async function MaterialsPage({
               <p className="mt-4 text-lg font-semibold text-slate-500">
                 {query ? `"${query}" 검색 결과가 없습니다` : '자료가 없습니다'}
               </p>
-              {(subject || query) && (
+              {(subject || schoolLevel || gradeNumber > 0 || query) && (
                 <Link href="/m/materials" className="mt-3 text-base font-semibold text-blue-500 hover:underline">
                   전체 보기
                 </Link>

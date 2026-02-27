@@ -113,7 +113,8 @@ export async function GET(req: NextRequest) {
   const topic      = searchParams.get('topic')      || '';
   const type       = searchParams.get('type')       || '';
   const difficulty = searchParams.get('difficulty') || '';
-  const grade      = searchParams.get('grade')      || '';
+  const schoolLevel = searchParams.get('schoolLevel') || '';
+  const gradeNumberParam = searchParams.get('gradeNumber') || searchParams.get('grade') || '';
   const sort       = searchParams.get('sort')       || 'latest';
   const page       = Math.max(1, parseInt(searchParams.get('page') || '1'));
   const limit      = 20;
@@ -143,7 +144,13 @@ export async function GET(req: NextRequest) {
   if (topic)      filter.topic        = topic;
   if (type)       filter.type         = type;
   if (difficulty) filter.difficulty   = Number(difficulty);
-  if (grade)      filter.gradeNumber  = Number(grade);
+  if (schoolLevel) filter.schoolLevel = schoolLevel;
+  if (gradeNumberParam) {
+    const parsedGradeNumber = Number.parseInt(gradeNumberParam, 10);
+    if (Number.isFinite(parsedGradeNumber)) {
+      filter.gradeNumber = parsedGradeNumber;
+    }
+  }
   if (andFilters.length > 0) filter.$and = andFilters;
 
   const sortMap: Record<string, Record<string, SortOrder>> = {
