@@ -55,10 +55,10 @@ export default function FacilityDetail() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="mb-6 text-3xl font-bold leading-tight text-gray-900 font-display md:mb-8 md:text-4xl"
+                        className="mb-6 text-3xl font-bold leading-tight text-gray-900 font-display md:mb-8 md:text-4xl break-keep"
                     >
-                        환경이 달라지면 공부도 달라집니다.<br />
-                        <span className="text-gray-500">DRE는 공간 하나도 허투루 만들지 않았습니다.</span>
+                        환경이 달라지면 <br className="sm:hidden" />공부도 달라집니다.<br />
+                        <span className="text-gray-500 text-[16px] sm:text-inherit mt-2 inline-block">DRE는 공간 하나도 허투루 만들지 않았습니다.</span>
                     </motion.h2>
                 </div>
             </div>
@@ -125,10 +125,11 @@ export default function FacilityDetail() {
                     </div>
 
                     <div className="grid items-start gap-6 md:grid-cols-2 md:gap-12">
-                        {/* Map */}
-                        <div className="group relative h-[300px] overflow-hidden rounded-3xl border border-gray-700 bg-gray-800 shadow-2xl sm:h-[350px] md:h-[450px]">
-                            {/* Naver Map Embed with Smart Crop */}
-                            <div className="absolute left-1/2 top-1/2 h-[185%] w-[360%] -translate-x-[58%] -translate-y-[55%] sm:h-[200%] sm:w-[400%] sm:-translate-x-[62%] lg:h-[160%] lg:w-[300%] lg:-translate-x-1/2 lg:-translate-y-1/2">
+                        {/* Map Area */}
+                        <div className="group relative h-[250px] overflow-hidden rounded-3xl border border-gray-700 bg-gray-800 shadow-2xl sm:h-[350px] md:h-[450px]">
+
+                            {/* Desktop: Real Iframe Map */}
+                            <div className="hidden md:block absolute left-1/2 top-1/2 h-[160%] w-[300%] -translate-x-1/2 -translate-y-1/2 lg:h-[160%] lg:w-[300%]">
                                 <iframe
                                     src="https://map.naver.com/p/entry/place/1087649900?c=15.00,0,0,0,dh"
                                     width="100%"
@@ -140,6 +141,15 @@ export default function FacilityDetail() {
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                     className="opacity-90 transition-opacity duration-300 pointer-events-auto"
                                 ></iframe>
+                            </div>
+
+                            {/* Mobile: Map Placeholder */}
+                            <div className="md:hidden absolute inset-0 bg-[#25282d] flex flex-col items-center justify-center p-6 text-center">
+                                <div className="w-12 h-12 bg-gray-700/50 rounded-2xl flex items-center justify-center mb-3">
+                                    <MapPin className="text-[#03C75A] w-6 h-6" />
+                                </div>
+                                <p className="text-gray-300 font-bold mb-2 text-[15px]">DRE 수학학원</p>
+                                <p className="text-gray-500 text-xs break-keep">쾌적한 모바일 환경을 위해<br />네이버 앱/웹에서 지도를 확인해주세요.</p>
                             </div>
 
                             {/* Overlay Button for better UX */}
