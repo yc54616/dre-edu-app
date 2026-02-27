@@ -166,11 +166,10 @@ export default function TopNav({
                 {hasSecondary && (
                   <button
                     onClick={() => setMoreOpen((v) => !v)}
-                    className={`shrink-0 flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-2.5 text-[13px] font-bold transition-colors xl:px-3 xl:text-sm ${
-                      moreOpen || secondaryHasActive
+                    className={`shrink-0 flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-2.5 text-[13px] font-bold transition-colors xl:px-3 xl:text-sm ${moreOpen || secondaryHasActive
                         ? 'text-[var(--color-dre-blue)]'
                         : 'text-gray-700 hover:text-[var(--color-dre-blue)]'
-                    }`}
+                      }`}
                   >
                     더보기
                     <ChevronDown size={14} className={`transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
@@ -209,6 +208,14 @@ export default function TopNav({
                         <Home size={15} />
                         DRE 홈
                       </Link>
+                      <Link
+                        href="/m/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
+                      >
+                        <UserCog size={15} />
+                        내 정보
+                      </Link>
                       <button
                         onClick={() => signOut({ callbackUrl: '/m' })}
                         className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
@@ -240,6 +247,14 @@ export default function TopNav({
                     >
                       <Home size={15} />
                       DRE 홈
+                    </Link>
+                    <Link
+                      href="/m/profile"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]"
+                    >
+                      <UserCog size={15} />
+                      내 정보
                     </Link>
                     <button onClick={() => signOut({ callbackUrl: '/m' })} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]">
                       로그아웃
