@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { X as XIcon } from 'lucide-react';
 
 type UserRole = 'student' | 'teacher';
 
@@ -27,15 +28,19 @@ interface Props {
 
 export default function BroadcastForm({ recipients }: Props) {
   const [selectedPhones, setSelectedPhones] = useState<Set<string>>(new Set());
+  const [deletedPhones, setDeletedPhones] = useState<Set<string>>(new Set());
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const filteredRecipients = useMemo(() => {
-    if (roleFilter === 'all') return recipients;
-    return recipients.filter((r) => r.roles.includes(roleFilter));
-  }, [recipients, roleFilter]);
+    let list = recipients;
+    if (roleFilter !== 'all') {
+      list = recipients.filter((r) => r.roles.includes(roleFilter));
+    }
+    return list.filter((r) => !deletedPhones.has(r.phone));
+  }, [recipients, roleFilter, deletedPhones]);
 
   const allFilteredSelected = filteredRecipients.length > 0
     && filteredRecipients.every((r) => selectedPhones.has(r.phone));
@@ -57,6 +62,19 @@ export default function BroadcastForm({ recipients }: Props) {
       const next = new Set(prev);
       if (next.has(phone)) next.delete(phone);
       else next.add(phone);
+      return next;
+    });
+  }
+
+  function removeRecipient(phone: string) {
+    setDeletedPhones((prev) => {
+      const next = new Set(prev);
+      next.add(phone);
+      return next;
+    });
+    setSelectedPhones((prev) => {
+      const next = new Set(prev);
+      next.delete(phone);
       return next;
     });
   }
@@ -125,11 +143,10 @@ export default function BroadcastForm({ recipients }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setRoleFilter('all')}
-          className={`px-3.5 py-2 rounded-xl text-[13px] font-bold transition-all ${
-            roleFilter === 'all'
+          className={`px-3.5 py-2 rounded-xl text-[13px] font-bold transition-all ${roleFilter === 'all'
               ? 'bg-blue-100 text-blue-600 border border-blue-100'
               : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
-          }`}
+            }`}
         >
           전체
         </button>
@@ -137,11 +154,10 @@ export default function BroadcastForm({ recipients }: Props) {
           <button
             key={key}
             onClick={() => setRoleFilter(key)}
-            className={`px-3.5 py-2 rounded-xl text-[13px] font-bold transition-all ${
-              roleFilter === key
+            className={`px-3.5 py-2 rounded-xl text-[13px] font-bold transition-all ${roleFilter === key
                 ? 'bg-blue-100 text-blue-600 border border-blue-100'
                 : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
-            }`}
+              }`}
           >
             {label}
           </button>
@@ -165,38 +181,53 @@ export default function BroadcastForm({ recipients }: Props) {
         </div>
         <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
           {filteredRecipients.map((r) => (
-            <label
+            <div
               key={r.phone}
-              className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50/50 cursor-pointer transition-colors"
+              className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50/50 transition-colors group"
             >
-              <input
-                type="checkbox"
-                checked={selectedPhones.has(r.phone)}
-                onChange={() => toggleOne(r.phone)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <span className="text-[15px] font-bold text-gray-900">{r.name}</span>
-                <span className="text-[13px] text-gray-400 tabular-nums">
-                  {r.phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}
-                </span>
-              </div>
-              <div className="flex gap-1 shrink-0 items-center">
-                {r.marketingAgreedAt && (
-                  <span
-                    className="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200"
-                    title={`동의일시: ${new Date(r.marketingAgreedAt).toLocaleString('ko-KR')}`}
-                  >
-                    마케팅 동의
+              <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={selectedPhones.has(r.phone)}
+                  onChange={() => toggleOne(r.phone)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span className="text-[15px] font-bold text-gray-900">{r.name}</span>
+                  <span className="text-[13px] text-gray-400 tabular-nums">
+                    {r.phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}
                   </span>
-                )}
-                {r.roles.map((role) => (
-                  <span key={role} className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-bold border ${ROLE_COLOR[role]}`}>
-                    {ROLE_LABEL[role]}
-                  </span>
-                ))}
+                </div>
+              </label>
+
+              <div className="flex gap-3 shrink-0 items-center">
+                <div className="flex gap-1 shrink-0 items-center">
+                  {r.marketingAgreedAt && (
+                    <span
+                      className="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200"
+                      title={`동의일시: ${new Date(r.marketingAgreedAt).toLocaleString('ko-KR')}`}
+                    >
+                      마케팅 동의
+                    </span>
+                  )}
+                  {r.roles.map((role) => (
+                    <span key={role} className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-bold border ${ROLE_COLOR[role]}`}>
+                      {ROLE_LABEL[role]}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    removeRecipient(r.phone);
+                  }}
+                  className="p-1 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors ml-1"
+                  title="발송 목록에서 제거"
+                >
+                  <XIcon size={16} strokeWidth={2.5} />
+                </button>
               </div>
-            </label>
+            </div>
           ))}
         </div>
       </div>
@@ -236,11 +267,10 @@ export default function BroadcastForm({ recipients }: Props) {
 
       {result && (
         <div
-          className={`m-detail-card p-4 border-l-4 ${
-            result.success
+          className={`m-detail-card p-4 border-l-4 ${result.success
               ? 'border-green-400 bg-green-50'
               : 'border-red-400 bg-red-50'
-          }`}
+            }`}
         >
           <p className={`text-[14px] font-bold ${result.success ? 'text-green-800' : 'text-red-800'}`}>
             {result.message}
