@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { X as XIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Trash2 } from 'lucide-react';
 
 type UserRole = 'student' | 'teacher';
 
@@ -27,11 +28,12 @@ interface Props {
 }
 
 export default function BroadcastForm({ recipients }: Props) {
+  const router = useRouter();
   const [selectedPhones, setSelectedPhones] = useState<Set<string>>(new Set());
-  const [deletedPhones, setDeletedPhones] = useState<Set<string>>(new Set());
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const filteredRecipients = useMemo(() => {
@@ -39,8 +41,8 @@ export default function BroadcastForm({ recipients }: Props) {
     if (roleFilter !== 'all') {
       list = recipients.filter((r) => r.roles.includes(roleFilter));
     }
-    return list.filter((r) => !deletedPhones.has(r.phone));
-  }, [recipients, roleFilter, deletedPhones]);
+    return list;
+  }, [recipients, roleFilter]);
 
   const allFilteredSelected = filteredRecipients.length > 0
     && filteredRecipients.every((r) => selectedPhones.has(r.phone));
@@ -66,17 +68,41 @@ export default function BroadcastForm({ recipients }: Props) {
     });
   }
 
-  function removeRecipient(phone: string) {
-    setDeletedPhones((prev) => {
-      const next = new Set(prev);
-      next.add(phone);
-      return next;
-    });
-    setSelectedPhones((prev) => {
-      const next = new Set(prev);
-      next.delete(phone);
-      return next;
-    });
+  async function removeSelected() {
+    if (selectedPhones.size === 0) {
+      alert('마케팅 동의를 해제할 수신자를 선택해주세요.');
+      return;
+    }
+
+    const count = selectedPhones.size;
+    const ok = confirm(`선택하신 ${count}명의 마케팅 수신 동의를 영구적으로 해제하시겠습니까?`);
+    if (!ok) return;
+
+    setRemoving(true);
+    setResult(null);
+
+    try {
+      const res = await fetch('/api/m/admin/broadcast/remove-consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phones: Array.from(selectedPhones),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setResult({ success: true, message: `총 ${count}명의 마케팅 동의가 해제되었습니다.` });
+        setSelectedPhones(new Set());
+        router.refresh();
+      } else {
+        setResult({ success: false, message: data.error || '마케팅 동의 해제 중 오류가 발생했습니다.' });
+      }
+    } catch {
+      setResult({ success: false, message: '네트워크 오류가 발생했습니다.' });
+    } finally {
+      setRemoving(false);
+    }
   }
 
   const selectedRecipients = recipients.filter((r) => selectedPhones.has(r.phone));
@@ -144,8 +170,8 @@ export default function BroadcastForm({ recipients }: Props) {
         <button
           onClick={() => setRoleFilter('all')}
           className={`px-3.5 py-2 rounded-xl text-[13px] font-bold transition-all ${roleFilter === 'all'
-              ? 'bg-blue-100 text-blue-600 border border-blue-100'
-              : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
+            ? 'bg-blue-100 text-blue-600 border border-blue-100'
+            : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
             }`}
         >
           전체
@@ -155,8 +181,8 @@ export default function BroadcastForm({ recipients }: Props) {
             key={key}
             onClick={() => setRoleFilter(key)}
             className={`px-3.5 py-2 rounded-xl text-[13px] font-bold transition-all ${roleFilter === key
-                ? 'bg-blue-100 text-blue-600 border border-blue-100'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
+              ? 'bg-blue-100 text-blue-600 border border-blue-100'
+              : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
               }`}
           >
             {label}
@@ -175,9 +201,19 @@ export default function BroadcastForm({ recipients }: Props) {
             />
             전체 선택 ({filteredRecipients.length}명)
           </label>
-          <span className="text-[13px] font-bold text-blue-500">
-            {selectedRecipients.length}명 선택
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[13px] font-bold text-blue-500">
+              {selectedRecipients.length}명 선택
+            </span>
+            <button
+              onClick={removeSelected}
+              disabled={selectedPhones.size === 0 || removing}
+              className="text-[12px] font-bold px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              <Trash2 size={13} strokeWidth={2.5} />
+              {removing ? '처리 중...' : '마케팅 동의 해제'}
+            </button>
+          </div>
         </div>
         <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
           {filteredRecipients.map((r) => (
@@ -200,7 +236,7 @@ export default function BroadcastForm({ recipients }: Props) {
                 </div>
               </label>
 
-              <div className="flex gap-3 shrink-0 items-center">
+              <div className="flex gap-3 shrink-0 items-center pr-2">
                 <div className="flex gap-1 shrink-0 items-center">
                   {r.marketingAgreedAt && (
                     <span
@@ -216,16 +252,6 @@ export default function BroadcastForm({ recipients }: Props) {
                     </span>
                   ))}
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    removeRecipient(r.phone);
-                  }}
-                  className="p-1 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors ml-1"
-                  title="발송 목록에서 제거"
-                >
-                  <XIcon size={16} strokeWidth={2.5} />
-                </button>
               </div>
             </div>
           ))}
@@ -268,8 +294,8 @@ export default function BroadcastForm({ recipients }: Props) {
       {result && (
         <div
           className={`m-detail-card p-4 border-l-4 ${result.success
-              ? 'border-green-400 bg-green-50'
-              : 'border-red-400 bg-red-50'
+            ? 'border-green-400 bg-green-50'
+            : 'border-red-400 bg-red-50'
             }`}
         >
           <p className={`text-[14px] font-bold ${result.success ? 'text-green-800' : 'text-red-800'}`}>
