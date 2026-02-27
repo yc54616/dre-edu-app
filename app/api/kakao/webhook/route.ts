@@ -26,8 +26,17 @@ const CONSULT_TYPE_QUICK_REPLIES: Array<{ label: string; messageText: string }> 
   { label: '수업설계컨설팅', messageText: '수업설계컨설팅' },
 ];
 
+const INITIAL_CONSULT_GUIDE_TEXT = [
+  '안녕하세요. DRE 수학 학원입니다.',
+  '원하시는 상담 유형을 선택해주세요.',
+].join('\n');
+
+function normalizeKakaoInput(value: string): string {
+  return value.trim().replace(/\s+/g, '').toLowerCase();
+}
+
 function detectConsultationTypeFromUtterance(rawUtterance: string): ConsultationType | null {
-  const normalized = rawUtterance.trim().replace(/\s+/g, '').toLowerCase();
+  const normalized = normalizeKakaoInput(rawUtterance);
   if (!normalized) return null;
 
   if (normalized.includes('수업설계')) return 'teacher';
@@ -36,6 +45,43 @@ function detectConsultationTypeFromUtterance(rawUtterance: string): Consultation
   if (normalized.includes('입시')) return 'consulting';
 
   return null;
+}
+
+function detectConsultationTypeFromAction(actionName: string): ConsultationType | null {
+  const normalized = normalizeKakaoInput(actionName);
+  if (!normalized) return null;
+
+  if (normalized.includes('teacher') || normalized.includes('수업설계')) return 'teacher';
+  if (normalized.includes('coaching') || normalized.includes('온라인') || normalized.includes('코칭')) return 'coaching';
+  if (normalized.includes('admission') || normalized.includes('입학')) return 'admission';
+  if (normalized.includes('consulting') || normalized.includes('입시')) return 'consulting';
+  return null;
+}
+
+function isInitialEntryRequest(payload: {
+  actionType: string;
+  utterance: string;
+  blockName: string;
+  intentName: string;
+}): boolean {
+  const actionType = normalizeKakaoInput(payload.actionType);
+  if (actionType) return false;
+
+  const utterance = normalizeKakaoInput(payload.utterance);
+  const blockName = normalizeKakaoInput(payload.blockName);
+  const intentName = normalizeKakaoInput(payload.intentName);
+
+  if (!utterance) return true;
+  if (blockName.includes('웰컴') || intentName.includes('웰컴')) return true;
+  if (utterance === 'start' || utterance === '시작' || utterance.includes('챗봇시작')) return true;
+
+  return false;
+}
+
+function resolveConsultationType(actionType: string, utterance: string): ConsultationType | null {
+  return ACTION_TYPE_MAP[actionType]
+    || detectConsultationTypeFromAction(actionType)
+    || detectConsultationTypeFromUtterance(utterance);
 }
 
 function consultationSwitchGuideText(currentType: ConsultationType, requestedType?: ConsultationType): string {
@@ -145,8 +191,16 @@ export async function POST(req: NextRequest) {
   // action_type 파라미터 우선, 없으면 action.name 폴백
   const actionType = params.action_type || body.action?.name || '';
   const utterance = body.userRequest?.utterance || '';
+  const blockName = body.userRequest?.block?.name || '';
+  const intentName = body.intent?.name || '';
 
   console.log(`[카카오 웹훅] action_type=${actionType}`, JSON.stringify(params));
+
+  if (isInitialEntryRequest({ actionType, utterance, blockName, intentName })) {
+    return NextResponse.json(
+      simpleTextWithQuickReplies(INITIAL_CONSULT_GUIDE_TEXT, CONSULT_TYPE_QUICK_REPLIES),
+    );
+  }
 
   // 일정 변경 요청
   if (actionType === 'submit_schedule_change') {
@@ -210,11 +264,11 @@ export async function POST(req: NextRequest) {
   }
 
   // 상담 신청
-  const type = ACTION_TYPE_MAP[actionType];
+  const type = resolveConsultationType(actionType, utterance);
   if (!type) {
     return NextResponse.json(
       simpleTextWithQuickReplies(
-        '요청을 이해하지 못했습니다. 아래 상담 유형에서 다시 시작해주세요.',
+        '원하시는 상담 유형을 선택해주세요.',
         CONSULT_TYPE_QUICK_REPLIES,
       ),
     );
