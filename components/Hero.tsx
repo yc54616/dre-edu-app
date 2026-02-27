@@ -87,9 +87,10 @@ export default function Hero() {
                             </span>
                         </h1>
 
-                        <p className="text-xl md:text-2xl text-white mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-lg font-medium">
+                        <p className="text-lg md:text-xl lg:text-2xl text-white mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-lg font-medium break-keep px-2">
                             무조건 많이 푸는 것만이 정답은 아닙니다.<br />
-                            원장이 직접 강의하고 관리하는 DRE만의 시스템으로<br className="hidden md:block" />
+                            원장이 직접 강의하고 관리하는 DRE만의 시스템으로{' '}
+                            <br className="hidden md:block" />
                             아이에게 딱 맞는 공부 전략을 세워드립니다.
                         </p>
                     </div>

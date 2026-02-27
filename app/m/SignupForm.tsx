@@ -34,6 +34,22 @@ export default function SignupForm() {
   const age = getAgeFromBirthDate(form.birthDate);
   const isUnder14 = age !== null && age < MINOR_AGE;
 
+  const isAllAgreed =
+    form.agreeTerms &&
+    form.agreePrivacy &&
+    form.agreeMarketing &&
+    (!isUnder14 || form.agreeLegalGuardian);
+
+  const handleAgreeAll = (checked: boolean) => {
+    setForm((prev) => ({
+      ...prev,
+      agreeTerms: checked,
+      agreePrivacy: checked,
+      agreeMarketing: checked,
+      agreeLegalGuardian: isUnder14 ? checked : prev.agreeLegalGuardian,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -190,210 +206,220 @@ export default function SignupForm() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-            <Field label="역할">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, userRole: 'student' }))}
-                  className={`rounded-xl border px-3 py-2.5 text-sm font-bold transition-colors ${
-                    form.userRole === 'student'
-                      ? 'border-blue-200 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 bg-white text-gray-500 hover:border-blue-100 hover:text-blue-600'
-                  }`}
-                >
-                  학생
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, userRole: 'teacher' }))}
-                  className={`rounded-xl border px-3 py-2.5 text-sm font-bold transition-colors ${
-                    form.userRole === 'teacher'
-                      ? 'border-blue-200 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 bg-white text-gray-500 hover:border-blue-100 hover:text-blue-600'
-                  }`}
-                >
-                  교사
-                </button>
-              </div>
-            </Field>
+                  <Field label="역할">
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, userRole: 'student' }))}
+                        className={`rounded-xl border px-3 py-2.5 text-sm font-bold transition-colors ${form.userRole === 'student'
+                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 bg-white text-gray-500 hover:border-blue-100 hover:text-blue-600'
+                          }`}
+                      >
+                        학생
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, userRole: 'teacher' }))}
+                        className={`rounded-xl border px-3 py-2.5 text-sm font-bold transition-colors ${form.userRole === 'teacher'
+                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 bg-white text-gray-500 hover:border-blue-100 hover:text-blue-600'
+                          }`}
+                      >
+                        교사
+                      </button>
+                    </div>
+                  </Field>
 
-            <Field label="이름">
-              <Input
-                icon={<User size={17} />}
-                type="text"
-                value={form.username}
-                onChange={(value) => setForm((prev) => ({ ...prev, username: value }))}
-                placeholder="이름을 입력하세요"
-                required
-                minLength={2}
-                maxLength={20}
-              />
-            </Field>
-
-            <Field label="이메일">
-              <Input
-                icon={<Mail size={17} />}
-                type="email"
-                value={form.email}
-                onChange={(value) => setForm((prev) => ({ ...prev, email: value }))}
-                placeholder="name@example.com"
-                required
-              />
-            </Field>
-
-            <Field label="연락처 (휴대전화)">
-              <Input
-                icon={<Phone size={17} />}
-                type="tel"
-                value={form.phone}
-                onChange={(value) => setForm((prev) => ({ ...prev, phone: formatKoreanMobileInput(value) }))}
-                placeholder="010-0000-0000"
-                required={form.agreeMarketing}
-                maxLength={13}
-              />
-            </Field>
-
-            <Field label="생년월일">
-              <Input
-                icon={<CalendarDays size={17} />}
-                type="date"
-                value={form.birthDate}
-                onChange={(value) => setForm((prev) => ({ ...prev, birthDate: value }))}
-                required
-                max={todayDate}
-              />
-              <p className="ml-1 text-xs font-medium text-gray-500">
-                만 14세 미만은 법정대리인 동의가 필요합니다.
-              </p>
-            </Field>
-
-            <Field label="비밀번호">
-              <Input
-                icon={<Lock size={17} />}
-                type="password"
-                value={form.password}
-                onChange={(value) => setForm((prev) => ({ ...prev, password: value }))}
-                placeholder="6자 이상 입력하세요"
-                required
-                minLength={6}
-              />
-            </Field>
-
-            <Field label="비밀번호 확인">
-              <Input
-                icon={<Lock size={17} />}
-                type="password"
-                value={form.confirmPassword}
-                onChange={(value) => setForm((prev) => ({ ...prev, confirmPassword: value }))}
-                placeholder="비밀번호를 다시 입력하세요"
-                required
-                minLength={6}
-              />
-            </Field>
-
-            {isUnder14 && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3">
-                <p className="mb-3 text-xs font-bold tracking-wide text-amber-700">
-                  만 14세 미만 법정대리인 동의
-                </p>
-                <div className="space-y-3">
-                  <Field label="법정대리인 성명">
+                  <Field label="이름">
                     <Input
                       icon={<User size={17} />}
                       type="text"
-                      value={form.guardianName}
-                      onChange={(value) => setForm((prev) => ({ ...prev, guardianName: value }))}
-                      placeholder="법정대리인 성명을 입력하세요"
-                      required={isUnder14}
+                      value={form.username}
+                      onChange={(value) => setForm((prev) => ({ ...prev, username: value }))}
+                      placeholder="이름을 입력하세요"
+                      required
+                      minLength={2}
+                      maxLength={20}
                     />
                   </Field>
-                  <Field label="법정대리인 연락처">
+
+                  <Field label="이메일">
                     <Input
                       icon={<Mail size={17} />}
-                      type="text"
-                      value={form.guardianContact}
-                      onChange={(value) => setForm((prev) => ({ ...prev, guardianContact: value }))}
-                      placeholder="휴대전화 또는 이메일"
-                      required={isUnder14}
+                      type="email"
+                      value={form.email}
+                      onChange={(value) => setForm((prev) => ({ ...prev, email: value }))}
+                      placeholder="name@example.com"
+                      required
                     />
                   </Field>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-amber-800">
-                    <input
-                      type="checkbox"
-                      checked={form.agreeLegalGuardian}
-                      onChange={(e) => setForm((prev) => ({ ...prev, agreeLegalGuardian: e.target.checked }))}
-                      className="h-4 w-4 rounded border-amber-300 text-[var(--color-dre-blue)] focus:ring-blue-200"
+
+                  <Field label="연락처 (휴대전화)">
+                    <Input
+                      icon={<Phone size={17} />}
+                      type="tel"
+                      value={form.phone}
+                      onChange={(value) => setForm((prev) => ({ ...prev, phone: formatKoreanMobileInput(value) }))}
+                      placeholder="010-0000-0000"
+                      required={form.agreeMarketing}
+                      maxLength={13}
                     />
-                    [필수] 법정대리인 동의를 받았습니다.
-                  </label>
-                </div>
-              </div>
-            )}
+                  </Field>
 
-            <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-              <p className="mb-2 text-xs font-bold tracking-wide text-gray-500">필수 동의</p>
-              <div className="space-y-2">
-                <AgreementCheck
-                  checked={form.agreeTerms}
-                  onChange={(checked) => setForm((prev) => ({ ...prev, agreeTerms: checked }))}
-                  label="이용약관 동의"
-                  href="/policy/terms"
-                />
-                <AgreementCheck
-                  checked={form.agreePrivacy}
-                  onChange={(checked) => setForm((prev) => ({ ...prev, agreePrivacy: checked }))}
-                  label="개인정보처리방침 동의"
-                  href="/policy/privacy"
-                />
-              </div>
-            </div>
+                  <Field label="생년월일">
+                    <Input
+                      icon={<CalendarDays size={17} />}
+                      type="date"
+                      value={form.birthDate}
+                      onChange={(value) => setForm((prev) => ({ ...prev, birthDate: value }))}
+                      required
+                      max={todayDate}
+                    />
+                    <p className="ml-1 text-xs font-medium text-gray-500">
+                      만 14세 미만은 법정대리인 동의가 필요합니다.
+                    </p>
+                  </Field>
 
-            <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-              <p className="mb-2 text-xs font-bold tracking-wide text-gray-500">선택 동의</p>
-              <div className="space-y-2">
-                <AgreementCheck
-                  checked={form.agreeMarketing}
-                  onChange={(checked) => setForm((prev) => ({ ...prev, agreeMarketing: checked }))}
-                  label="혜택/이벤트 정보 수신 동의"
-                  href="/policy/privacy"
-                  type="선택"
-                />
-                <p className="ml-6 text-xs font-medium text-gray-500">
-                  마케팅 수신 동의 시 연락처(휴대전화) 입력이 필요합니다.
-                </p>
-              </div>
-            </div>
+                  <Field label="비밀번호">
+                    <Input
+                      icon={<Lock size={17} />}
+                      type="password"
+                      value={form.password}
+                      onChange={(value) => setForm((prev) => ({ ...prev, password: value }))}
+                      placeholder="6자 이상 입력하세요"
+                      required
+                      minLength={6}
+                    />
+                  </Field>
 
-            {error && (
-              <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-                {error}
-              </div>
-            )}
+                  <Field label="비밀번호 확인">
+                    <Input
+                      icon={<Lock size={17} />}
+                      type="password"
+                      value={form.confirmPassword}
+                      onChange={(value) => setForm((prev) => ({ ...prev, confirmPassword: value }))}
+                      placeholder="비밀번호를 다시 입력하세요"
+                      required
+                      minLength={6}
+                    />
+                  </Field>
 
-            {success && (
-              <div className="flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-                <CheckCircle2 size={16} className="shrink-0" />
-                {success}
-              </div>
-            )}
+                  {isUnder14 && (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3">
+                      <p className="mb-3 text-xs font-bold tracking-wide text-amber-700">
+                        만 14세 미만 법정대리인 동의
+                      </p>
+                      <div className="space-y-3">
+                        <Field label="법정대리인 성명">
+                          <Input
+                            icon={<User size={17} />}
+                            type="text"
+                            value={form.guardianName}
+                            onChange={(value) => setForm((prev) => ({ ...prev, guardianName: value }))}
+                            placeholder="법정대리인 성명을 입력하세요"
+                            required={isUnder14}
+                          />
+                        </Field>
+                        <Field label="법정대리인 연락처">
+                          <Input
+                            icon={<Mail size={17} />}
+                            type="text"
+                            value={form.guardianContact}
+                            onChange={(value) => setForm((prev) => ({ ...prev, guardianContact: value }))}
+                            placeholder="휴대전화 또는 이메일"
+                            required={isUnder14}
+                          />
+                        </Field>
+                        <label className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+                          <input
+                            type="checkbox"
+                            checked={form.agreeLegalGuardian}
+                            onChange={(e) => setForm((prev) => ({ ...prev, agreeLegalGuardian: e.target.checked }))}
+                            className="h-4 w-4 rounded border-amber-300 text-[var(--color-dre-blue)] focus:ring-blue-200"
+                          />
+                          [필수] 법정대리인 동의를 받았습니다.
+                        </label>
+                      </div>
+                    </div>
+                  )}
 
-            {debugVerifyUrl && (
-              <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                <p className="font-semibold mb-1">개발 모드 인증 링크</p>
-                <a href={debugVerifyUrl} className="underline break-all">
-                  {debugVerifyUrl}
-                </a>
-              </div>
-            )}
+                  <div className="rounded-2xl flex items-center justify-between border border-blue-100 bg-blue-50/60 px-4 py-3.5 transition-colors hover:bg-blue-50/80">
+                    <label className="flex items-center gap-2.5 text-blue-900 cursor-pointer w-full">
+                      <input
+                        type="checkbox"
+                        checked={isAllAgreed}
+                        onChange={(e) => handleAgreeAll(e.target.checked)}
+                        className="h-5 w-5 rounded border-blue-300 text-[var(--color-dre-blue)] focus:ring-blue-200 transition-colors"
+                      />
+                      <span className="font-extrabold text-[15px]">필수, 선택 약관에 모두 동의합니다.</span>
+                    </label>
+                  </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="group mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-dre-blue)] py-3.5 text-[15px] font-bold tracking-wide text-white shadow-[0_12px_24px_-12px_rgba(37,99,235,0.52)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--color-dre-blue-dark)] hover:shadow-[0_16px_28px_-12px_rgba(37,99,235,0.58)] disabled:cursor-not-allowed disabled:opacity-70 disabled:transform-none"
-            >
-              <span>{loading ? '가입 중...' : '회원가입'}</span>
-              {!loading && <ChevronRight size={18} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />}
-            </button>
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                    <p className="mb-2 text-xs font-bold tracking-wide text-gray-500">필수 동의</p>
+                    <div className="space-y-2">
+                      <AgreementCheck
+                        checked={form.agreeTerms}
+                        onChange={(checked) => setForm((prev) => ({ ...prev, agreeTerms: checked }))}
+                        label="이용약관 동의"
+                        href="/policy/terms"
+                      />
+                      <AgreementCheck
+                        checked={form.agreePrivacy}
+                        onChange={(checked) => setForm((prev) => ({ ...prev, agreePrivacy: checked }))}
+                        label="개인정보처리방침 동의"
+                        href="/policy/privacy"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                    <p className="mb-2 text-xs font-bold tracking-wide text-gray-500">선택 동의</p>
+                    <div className="space-y-2">
+                      <AgreementCheck
+                        checked={form.agreeMarketing}
+                        onChange={(checked) => setForm((prev) => ({ ...prev, agreeMarketing: checked }))}
+                        label="혜택/이벤트 정보 수신 동의"
+                        href="/policy/privacy"
+                        type="선택"
+                      />
+                      <p className="ml-6 text-xs font-medium text-gray-500">
+                        마케팅 수신 동의 시 연락처(휴대전화) 입력이 필요합니다.
+                      </p>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                      {error}
+                    </div>
+                  )}
+
+                  {success && (
+                    <div className="flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                      <CheckCircle2 size={16} className="shrink-0" />
+                      {success}
+                    </div>
+                  )}
+
+                  {debugVerifyUrl && (
+                    <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                      <p className="font-semibold mb-1">개발 모드 인증 링크</p>
+                      <a href={debugVerifyUrl} className="underline break-all">
+                        {debugVerifyUrl}
+                      </a>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="group mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-dre-blue)] py-3.5 text-[15px] font-bold tracking-wide text-white shadow-[0_12px_24px_-12px_rgba(37,99,235,0.52)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--color-dre-blue-dark)] hover:shadow-[0_16px_28px_-12px_rgba(37,99,235,0.58)] disabled:cursor-not-allowed disabled:opacity-70 disabled:transform-none"
+                  >
+                    <span>{loading ? '가입 중...' : '회원가입'}</span>
+                    {!loading && <ChevronRight size={18} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />}
+                  </button>
                 </form>
 
                 <div className="mt-6 text-center text-sm text-gray-500">
