@@ -222,10 +222,10 @@ export default function LoginForm({ session }: LoginFormProps) {
               >
                 {verifyMessage && (
                   <div className={`rounded-2xl px-4 py-3 text-sm font-semibold ${verifyMessage.tone === 'success'
-                      ? 'border border-emerald-100 bg-emerald-50 text-emerald-700'
-                      : verifyMessage.tone === 'warning'
-                        ? 'border border-amber-100 bg-amber-50 text-amber-700'
-                        : 'border border-red-100 bg-red-50 text-red-600'
+                    ? 'border border-emerald-100 bg-emerald-50 text-emerald-700'
+                    : verifyMessage.tone === 'warning'
+                      ? 'border border-amber-100 bg-amber-50 text-amber-700'
+                      : 'border border-red-100 bg-red-50 text-red-600'
                     }`}>
                     {verifyMessage.text}
                   </div>
@@ -318,13 +318,12 @@ export default function LoginForm({ session }: LoginFormProps) {
                   {!loading && <ChevronRight size={18} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />}
                 </button>
 
-                <div className="pt-1 text-center">
-                  <span className="text-sm text-gray-500">처음이신가요? </span>
-                  <Link href="/m/signup" className="text-sm font-bold text-blue-600 hover:text-blue-700">
+                <div className="pt-1 flex items-center justify-center gap-3">
+                  <Link href="/m/signup" className="text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
                     회원가입
                   </Link>
-                  <span className="mx-2 text-gray-300">|</span>
-                  <Link href="/m/forgot-password" className="text-sm font-bold text-gray-500 hover:text-gray-700">
+                  <span className="text-sm font-medium text-gray-300">|</span>
+                  <Link href="/m/forgot-password" className="text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">
                     비밀번호 찾기
                   </Link>
                 </div>
