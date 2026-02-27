@@ -11,6 +11,8 @@ export interface IUser extends Document {
   emailVerified: boolean;
   verifyTokenHash?: string | null;
   verifyTokenExpires?: Date | null;
+  resetTokenHash?: string | null;
+  resetTokenExpires?: Date | null;
   birthDate?: Date | null;
   isUnder14AtSignup?: boolean;
   legalGuardianConsent?: {
@@ -58,15 +60,17 @@ const legalGuardianConsentSchema = new Schema(
 );
 
 const userSchema = new Schema<IUser>({
-  email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   username: { type: String, required: true, trim: true },
   phone: { type: String, default: null, trim: true },
   password: { type: String, required: true },
-  role:     { type: String, enum: ['admin', 'teacher', 'student'], default: 'student' },
+  role: { type: String, enum: ['admin', 'teacher', 'student'], default: 'student' },
   teacherApprovalStatus: { type: String, enum: ['approved', 'pending'], default: 'pending' },
   emailVerified: { type: Boolean, default: true },
   verifyTokenHash: { type: String, default: null },
   verifyTokenExpires: { type: Date, default: null },
+  resetTokenHash: { type: String, default: null },
+  resetTokenExpires: { type: Date, default: null },
   birthDate: { type: Date, default: null },
   isUnder14AtSignup: { type: Boolean, default: false },
   legalGuardianConsent: { type: legalGuardianConsentSchema, default: null },
@@ -75,7 +79,7 @@ const userSchema = new Schema<IUser>({
     privacy: { type: consentSchema, default: null },
     marketing: { type: consentSchema, default: null },
   },
-  createdAt:{ type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now },
 });
 
 userSchema.pre('save', async function () {

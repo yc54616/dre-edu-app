@@ -221,13 +221,12 @@ export default function LoginForm({ session }: LoginFormProps) {
                 transition={{ delay: 0.45, duration: 0.45 }}
               >
                 {verifyMessage && (
-                  <div className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
-                    verifyMessage.tone === 'success'
+                  <div className={`rounded-2xl px-4 py-3 text-sm font-semibold ${verifyMessage.tone === 'success'
                       ? 'border border-emerald-100 bg-emerald-50 text-emerald-700'
                       : verifyMessage.tone === 'warning'
                         ? 'border border-amber-100 bg-amber-50 text-amber-700'
                         : 'border border-red-100 bg-red-50 text-red-600'
-                  }`}>
+                    }`}>
                     {verifyMessage.text}
                   </div>
                 )}
@@ -323,6 +322,10 @@ export default function LoginForm({ session }: LoginFormProps) {
                   <span className="text-sm text-gray-500">처음이신가요? </span>
                   <Link href="/m/signup" className="text-sm font-bold text-blue-600 hover:text-blue-700">
                     회원가입
+                  </Link>
+                  <span className="mx-2 text-gray-300">|</span>
+                  <Link href="/m/forgot-password" className="text-sm font-bold text-gray-500 hover:text-gray-700">
+                    비밀번호 찾기
                   </Link>
                 </div>
               </motion.form>
