@@ -41,17 +41,17 @@ if [ ! -d uploads-backup ] || [ -z "$(ls -A uploads-backup 2>/dev/null)" ]; then
   exit 1
 fi
 
-if ! docker compose ps mongo --format '{{.State}}' 2>/dev/null | grep -q running; then
-  echo "[ERROR] Docker MongoDB가 실행 중이 아닙니다."
-  echo "  docker compose up -d 로 먼저 실행하세요."
-  exit 1
-fi
+# if ! docker compose ps mongo --format '{{.State}}' 2>/dev/null | grep -q running; then
+#   echo "[ERROR] Docker MongoDB가 실행 중이 아닙니다."
+#   echo "  docker compose up -d 로 먼저 실행하세요."
+#   exit 1
+# fi
 
-if ! docker compose ps app --format '{{.State}}' 2>/dev/null | grep -q running; then
-  echo "[ERROR] Docker app 컨테이너가 실행 중이 아닙니다."
-  echo "  docker compose up -d 로 먼저 실행하세요."
-  exit 1
-fi
+# if ! docker compose ps app --format '{{.State}}' 2>/dev/null | grep -q running; then
+#   echo "[ERROR] Docker app 컨테이너가 실행 중이 아닙니다."
+#   echo "  docker compose up -d 로 먼저 실행하세요."
+#   exit 1
+# fi
 
 echo "[OK] materials.archive 확인"
 echo "[OK] uploads-backup/ 확인 ($(ls uploads-backup | wc -l)개 파일)"
