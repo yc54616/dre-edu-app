@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         user.resetTokenExpires = expires;
         await user.save();
 
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
         const resetUrl = `${baseUrl}/m/reset-password?token=${token}&email=${encodeURIComponent(user.email)}`;
 
         const { ok, reason } = await sendPasswordResetEmail({
