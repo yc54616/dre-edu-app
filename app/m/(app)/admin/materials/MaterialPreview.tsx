@@ -208,17 +208,23 @@ export default function MaterialPreview({ data }: { data: FormData }) {
               </button>
             ) : (
               <>
-                <div className="mb-3.5">
+                <div className="mb-3.5 space-y-2">
                   {data.priceProblem > 0 && (
-                    <div className="flex justify-between items-center py-1.5">
-                      <span className="text-sm text-gray-600">{data.hasAnswerInProblem ? '문제지 (정답 포함)' : '문제지'}</span>
-                      <span className="text-base font-bold text-gray-900">{data.priceProblem.toLocaleString()}원</span>
+                    <div className="flex justify-between items-start gap-3 py-1.5">
+                      <span className="text-sm text-gray-600 leading-snug">
+                        {data.hasAnswerInProblem ? '문제지 (정답 포함)' : '문제지'}
+                      </span>
+                      <span className="text-base font-bold text-gray-900 shrink-0 mt-[-1px]">
+                        {data.priceProblem.toLocaleString()}원
+                      </span>
                     </div>
                   )}
                   {data.priceEtc > 0 && (
-                    <div className="flex justify-between items-center py-1.5 border-t border-gray-100">
-                      <span className="text-sm text-gray-600">기타(답지 등)</span>
-                      <span className="text-base font-bold text-gray-900">{data.priceEtc.toLocaleString()}원</span>
+                    <div className="flex justify-between items-start gap-3 py-1.5 border-t border-gray-100">
+                      <span className="text-sm text-gray-600 leading-snug">기타(답지 등)</span>
+                      <span className="text-base font-bold text-gray-900 shrink-0 mt-[-1px]">
+                        {data.priceEtc.toLocaleString()}원
+                      </span>
                     </div>
                   )}
                   {data.priceProblem === 0 && data.priceEtc === 0 && (

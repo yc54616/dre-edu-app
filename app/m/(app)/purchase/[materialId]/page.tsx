@@ -75,6 +75,7 @@ export default async function PurchasePage({
           priceEtc={material.priceEtc || 0}
           hasProblemFile={!!material.problemFile}
           hasEtcFile={!!material.etcFile}
+          hasAnswerInProblem={!!material.hasAnswerInProblem}
           isTeacherMaterial={isTeacherMaterial}
           tossClientKey={TOSS_CLIENT_KEY}
           userId={user.id || ''}

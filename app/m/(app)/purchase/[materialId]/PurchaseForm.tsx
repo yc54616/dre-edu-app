@@ -10,6 +10,7 @@ interface PurchaseFormProps {
   priceEtc: number;
   hasProblemFile?: boolean;
   hasEtcFile?: boolean;
+  hasAnswerInProblem?: boolean;
   isTeacherMaterial?: boolean;
   tossClientKey: string;
   userId: string;
@@ -41,6 +42,7 @@ interface PaymentWidgetInstance {
 export default function PurchaseForm({
   materialId, materialTitle, priceProblem, priceEtc,
   hasProblemFile = false, hasEtcFile = false,
+  hasAnswerInProblem = false,
   isTeacherMaterial = false,
   tossClientKey, userId, userEmail, userName,
   initialFileTypes,
@@ -220,8 +222,7 @@ export default function PurchaseForm({
                   type="button"
                   disabled={!canBuyProblem}
                   onClick={() => toggleFileType('problem')}
-                  className={`flex w-full items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${
-                    !canBuyProblem
+                  className={`flex w-full items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${!canBuyProblem
                       ? 'border-gray-100 bg-gray-50/90 cursor-not-allowed opacity-80'
                       : fileTypes.includes('problem')
                         ? 'border-blue-300 bg-blue-50/80 shadow-sm'
@@ -229,8 +230,7 @@ export default function PurchaseForm({
                     }`}
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                      !canBuyProblem
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${!canBuyProblem
                         ? 'border-blue-200 bg-blue-100'
                         : fileTypes.includes('problem')
                           ? 'border-blue-400 bg-blue-400'
@@ -241,7 +241,7 @@ export default function PurchaseForm({
                         : fileTypes.includes('problem') && <Check size={12} className="text-white" />
                       }
                     </div>
-                    <span className="text-sm font-bold text-gray-800 sm:text-[15px]">문제지</span>
+                    <span className="text-sm font-bold text-gray-800 sm:text-[15px]">{hasAnswerInProblem ? '문제지 (정답 포함)' : '문제지'}</span>
                   </div>
                   {!canBuyProblem
                     ? <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">구매완료</span>
@@ -256,8 +256,7 @@ export default function PurchaseForm({
                   type="button"
                   disabled={!canBuyEtc}
                   onClick={() => toggleFileType('etc')}
-                  className={`flex w-full items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${
-                    !canBuyEtc
+                  className={`flex w-full items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${!canBuyEtc
                       ? 'border-gray-100 bg-gray-50/90 cursor-not-allowed opacity-80'
                       : fileTypes.includes('etc')
                         ? 'border-blue-300 bg-blue-50/80 shadow-sm'
@@ -265,8 +264,7 @@ export default function PurchaseForm({
                     }`}
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                      !canBuyEtc
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${!canBuyEtc
                         ? 'border-blue-200 bg-blue-100'
                         : fileTypes.includes('etc')
                           ? 'border-blue-400 bg-blue-400'
@@ -315,7 +313,7 @@ export default function PurchaseForm({
           ) : (
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">문제지</span>
+                <span className="text-gray-500">{hasAnswerInProblem ? '문제지 (정답 포함)' : '문제지'}</span>
                 <span className="font-semibold text-gray-900">
                   {!showProblem
                     ? '-'

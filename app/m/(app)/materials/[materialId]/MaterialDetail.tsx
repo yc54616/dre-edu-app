@@ -859,8 +859,8 @@ export default function MaterialDetail({
                         type="button"
                         onClick={() => setActivePreview(index)}
                         className={`relative h-16 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activePreview
-                            ? 'border-blue-300 shadow-sm shadow-blue-200/40'
-                            : 'border-white/20 opacity-70 hover:opacity-100'
+                          ? 'border-blue-300 shadow-sm shadow-blue-200/40'
+                          : 'border-white/20 opacity-70 hover:opacity-100'
                           }`}
                       >
                         <Image
@@ -897,8 +897,8 @@ export default function MaterialDetail({
                   type="button"
                   onClick={() => setRelatedViewMode('grid')}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${relatedViewMode === 'grid'
-                      ? 'bg-blue-100 text-blue-600 border border-blue-100'
-                      : 'text-gray-500 hover:text-blue-500'
+                    ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                    : 'text-gray-500 hover:text-blue-500'
                     }`}
                 >
                   <LayoutGrid size={14} />
@@ -908,8 +908,8 @@ export default function MaterialDetail({
                   type="button"
                   onClick={() => setRelatedViewMode('list')}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${relatedViewMode === 'list'
-                      ? 'bg-blue-100 text-blue-600 border border-blue-100'
-                      : 'text-gray-500 hover:text-blue-500'
+                    ? 'bg-blue-100 text-blue-600 border border-blue-100'
+                    : 'text-gray-500 hover:text-blue-500'
                     }`}
                 >
                   <List size={14} />

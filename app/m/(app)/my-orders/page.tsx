@@ -59,6 +59,7 @@ interface OrderMaterialMeta {
   semester?: number;
   publisher?: string;
   bookTitle?: string;
+  hasAnswerInProblem?: boolean;
 }
 
 const paymentMethodLabel = (method: string) => {
@@ -101,10 +102,10 @@ const parseDateParam = (value: string, endOfDay = false) => {
   return date;
 };
 
-const orderFileLabel = (fileTypes: string[]) => (
+const orderFileLabel = (fileTypes: string[], hasAnswerInProblem: boolean = false) => (
   (fileTypes.includes('problem') && fileTypes.includes('etc'))
     ? '전체 자료'
-    : fileTypes.map((t: string) => t === 'problem' ? '문제지' : '답지/기타').join(' + ')
+    : fileTypes.map((t: string) => t === 'problem' ? (hasAnswerInProblem ? '문제지 (정답 포함)' : '문제지') : '답지/기타').join(' + ')
 );
 
 const getRangeStart = (range: DateRange, now: Date) => {
@@ -215,22 +216,23 @@ export default async function MyOrdersPage({
   const materialIds = Array.from(new Set(orders.map((order) => order.materialId)));
   const materialDocs = materialIds.length > 0
     ? await Material.find(
-        { materialId: { $in: materialIds } },
-        {
-          materialId: 1,
-          sourceCategory: 1,
-          type: 1,
-          subject: 1,
-          topic: 1,
-          schoolName: 1,
-          schoolLevel: 1,
-          gradeNumber: 1,
-          year: 1,
-          semester: 1,
-          publisher: 1,
-          bookTitle: 1,
-        }
-      ).lean() as OrderMaterialMeta[]
+      { materialId: { $in: materialIds } },
+      {
+        materialId: 1,
+        sourceCategory: 1,
+        type: 1,
+        subject: 1,
+        topic: 1,
+        schoolName: 1,
+        schoolLevel: 1,
+        gradeNumber: 1,
+        year: 1,
+        semester: 1,
+        publisher: 1,
+        bookTitle: 1,
+        hasAnswerInProblem: 1,
+      }
+    ).lean() as OrderMaterialMeta[]
     : [];
   const materialMap = new Map(materialDocs.map((doc) => [doc.materialId, doc]));
   const mobileFilterSummary = hasCustomDate
@@ -350,11 +352,10 @@ export default async function MyOrdersPage({
                       key={value}
                       href={buildUrl({ range: value, from: '', to: '', page: '1' })}
                       scroll={false}
-                      className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all ${
-                        !hasCustomDate && dateRange === value
+                      className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all ${!hasCustomDate && dateRange === value
                           ? 'bg-blue-100 text-blue-600 border border-blue-100'
                           : 'bg-white text-gray-600 border border-blue-100 hover:border-blue-200 hover:text-blue-500'
-                      }`}
+                        }`}
                     >
                       {rangeLabel[value]}
                     </Link>
@@ -367,11 +368,10 @@ export default async function MyOrdersPage({
                       key={value}
                       href={buildUrl({ status: value, page: '1' })}
                       scroll={false}
-                      className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all ${
-                        status === value
+                      className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all ${status === value
                           ? 'bg-blue-100 text-blue-600 border border-blue-100'
                           : 'bg-white text-gray-600 border border-blue-100 hover:border-blue-200 hover:text-blue-500'
-                      }`}
+                        }`}
                     >
                       {statusLabel[value]}
                     </Link>
@@ -419,11 +419,10 @@ export default async function MyOrdersPage({
                 key={value}
                 href={buildUrl({ range: value, from: '', to: '', page: '1' })}
                 scroll={false}
-                className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all ${
-                  !hasCustomDate && dateRange === value
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-all ${!hasCustomDate && dateRange === value
                     ? 'bg-blue-100 text-blue-600 border border-blue-100'
                     : 'bg-white text-gray-600 border border-blue-100 hover:border-blue-200 hover:text-blue-500'
-                }`}
+                  }`}
               >
                 {rangeLabel[value]}
               </Link>
@@ -437,11 +436,10 @@ export default async function MyOrdersPage({
                   key={value}
                   href={buildUrl({ status: value, page: '1' })}
                   scroll={false}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${
-                    status === value
+                  className={`rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${status === value
                       ? 'bg-white text-blue-600 shadow-sm'
                       : 'text-gray-500 hover:text-blue-500'
-                  }`}
+                    }`}
                 >
                   {statusLabel[value]}
                 </Link>
@@ -462,11 +460,10 @@ export default async function MyOrdersPage({
                   key={opt}
                   href={buildUrl({ sort: opt, page: '1' })}
                   scroll={false}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${
-                    sort === opt
+                  className={`rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${sort === opt
                       ? 'bg-white text-blue-600 shadow-sm'
                       : 'text-gray-500 hover:text-blue-500'
-                  }`}
+                    }`}
                 >
                   {sortLabel[opt]}
                 </Link>
@@ -502,80 +499,80 @@ export default async function MyOrdersPage({
                   const resolvedSourceCategory = meta ? resolveSourceCategory(meta) : null;
                   const sourceLabel = resolvedSourceCategory ? MATERIAL_SOURCE_CATEGORY_LABEL[resolvedSourceCategory] : '';
                   const materialSubline = meta ? buildMaterialSubline(meta) : '';
-                  const selectedFiles = orderFileLabel(order.fileTypes);
+                  const selectedFiles = orderFileLabel(order.fileTypes, meta?.hasAnswerInProblem || false);
 
                   return (
-                <div
-                  key={order.orderId}
-                  className="m-detail-card p-5 transition-all duration-200 hover:border-blue-200 hover:shadow-sm sm:p-7"
-                >
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    <div className="min-w-0">
-                      <p className="text-xs text-gray-500 font-mono mb-1.5 opacity-80">#{order.orderId}</p>
-                      <p className="text-[17px] font-extrabold text-gray-900 truncate tracking-tight">{order.materialTitle}</p>
-                      {(sourceLabel || meta?.type) && (
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          {sourceLabel && (
-                            <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-600">
-                              {sourceLabel}
-                            </span>
+                    <div
+                      key={order.orderId}
+                      className="m-detail-card p-5 transition-all duration-200 hover:border-blue-200 hover:shadow-sm sm:p-7"
+                    >
+                      <div className="flex items-start justify-between gap-4 mb-4">
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500 font-mono mb-1.5 opacity-80">#{order.orderId}</p>
+                          <p className="text-[17px] font-extrabold text-gray-900 truncate tracking-tight">{order.materialTitle}</p>
+                          {(sourceLabel || meta?.type) && (
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              {sourceLabel && (
+                                <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-600">
+                                  {sourceLabel}
+                                </span>
+                              )}
+                              {meta?.type && (
+                                <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-600">
+                                  {meta.type}
+                                </span>
+                              )}
+                            </div>
                           )}
-                          {meta?.type && (
-                            <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-600">
-                              {meta.type}
+                          <p className="text-sm text-gray-500 mt-2 font-medium">
+                            {materialSubline || '자료 정보가 곧 반영됩니다.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div className="m-detail-soft flex items-center justify-between px-3.5 py-2.5">
+                          <span className="text-xs font-semibold text-gray-500">구매 구성</span>
+                          <span className="text-sm font-bold text-slate-700">{selectedFiles}</span>
+                        </div>
+                        <div className="m-detail-soft flex items-center justify-between px-3.5 py-2.5">
+                          <span className="text-xs font-semibold text-gray-500">결제 수단</span>
+                          <span className="text-sm font-bold text-slate-700">{paymentMethodLabel(order.paymentMethod)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="text-[18px] font-extrabold text-blue-500">{order.amount.toLocaleString()}원</span>
+                        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+                          <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
+                            {new Date(order.createdAt).toLocaleString('ko-KR', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {order.status === 'paid' && (
+                            <>
+                              <Link
+                                href={`/m/materials/${order.materialId}`}
+                                className="m-detail-btn-secondary px-4 py-2 text-sm border-blue-100 text-blue-500 hover:bg-blue-50 hover:text-blue-600"
+                              >
+                                <Download size={14} />
+                                자료 열람
+                              </Link>
+                              <RefundRequestButton orderId={order.orderId} />
+                            </>
+                          )}
+                          {order.status === 'cancelled' && (
+                            <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-500">
+                              환불 완료
                             </span>
                           )}
                         </div>
-                      )}
-                      <p className="text-sm text-gray-500 mt-2 font-medium">
-                        {materialSubline || '자료 정보가 곧 반영됩니다.'}
-                      </p>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <div className="m-detail-soft flex items-center justify-between px-3.5 py-2.5">
-                      <span className="text-xs font-semibold text-gray-500">구매 구성</span>
-                      <span className="text-sm font-bold text-slate-700">{selectedFiles}</span>
-                    </div>
-                    <div className="m-detail-soft flex items-center justify-between px-3.5 py-2.5">
-                      <span className="text-xs font-semibold text-gray-500">결제 수단</span>
-                      <span className="text-sm font-bold text-slate-700">{paymentMethodLabel(order.paymentMethod)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-[18px] font-extrabold text-blue-500">{order.amount.toLocaleString()}원</span>
-                    <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-                      <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
-                        {new Date(order.createdAt).toLocaleString('ko-KR', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                      {order.status === 'paid' && (
-                        <>
-                          <Link
-                            href={`/m/materials/${order.materialId}`}
-                            className="m-detail-btn-secondary px-4 py-2 text-sm border-blue-100 text-blue-500 hover:bg-blue-50 hover:text-blue-600"
-                          >
-                            <Download size={14} />
-                            자료 열람
-                          </Link>
-                          <RefundRequestButton orderId={order.orderId} />
-                        </>
-                      )}
-                      {order.status === 'cancelled' && (
-                        <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-500">
-                          환불 완료
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
                   );
                 })()
               ))}
@@ -599,11 +596,10 @@ export default async function MyOrdersPage({
                       key={p}
                       href={buildUrl({ page: String(p) })}
                       scroll={false}
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
-                        p === page
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${p === page
                           ? 'bg-blue-100 text-blue-600 border border-blue-100'
                           : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
-                      }`}
+                        }`}
                     >
                       {p}
                     </Link>

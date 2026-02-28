@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
 import Order from '@/lib/models/Order';
+import Material from '@/lib/models/Material';
 import Link from 'next/link';
 import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import OrderFilters from './OrderFilters';
@@ -141,10 +142,19 @@ export default async function AdminOrdersPage({
 
   const sortObj = SORT_MAP[sort] ?? SORT_MAP.newest;
 
-  const [orders, total] = await Promise.all([
+  const [ordersRaw, total] = await Promise.all([
     Order.find(filter).sort(sortObj).skip((page - 1) * limit).limit(limit).lean(),
     Order.countDocuments(filter),
   ]);
+
+  // @ts-ignore
+  const orders = ordersRaw as any[];
+
+  const materialIds = Array.from(new Set(orders.map((o) => o.materialId)));
+  const materials = materialIds.length > 0
+    ? await Material.find({ materialId: { $in: materialIds } }, { materialId: 1, hasAnswerInProblem: 1 }).lean()
+    : [];
+  const materialMap = new Map(materials.map((m: any) => [m.materialId, !!m.hasAnswerInProblem]));
 
   const totalPage = Math.ceil(total / limit);
 
@@ -239,7 +249,7 @@ export default async function AdminOrdersPage({
                     <p className="mt-1 text-xs text-gray-400">
                       {(order.fileTypes.includes('problem') && order.fileTypes.includes('etc'))
                         ? '전체 자료'
-                        : order.fileTypes.map((t: string) => t === 'problem' ? '문제지' : '답지/기타').join(' + ')}
+                        : order.fileTypes.map((t: string) => t === 'problem' ? (materialMap.get(order.materialId) ? '문제지 (정답 포함)' : '문제지') : '답지/기타').join(' + ')}
                     </p>
                   </div>
 
@@ -285,7 +295,7 @@ export default async function AdminOrdersPage({
                             <p className="text-xs text-gray-400 mt-0.5">
                               {(order.fileTypes.includes('problem') && order.fileTypes.includes('etc'))
                                 ? '전체 자료'
-                                : order.fileTypes.map((t: string) => t === 'problem' ? '문제지' : '답지/기타').join(' + ')}
+                                : order.fileTypes.map((t: string) => t === 'problem' ? (materialMap.get(order.materialId) ? '문제지 (정답 포함)' : '문제지') : '답지/기타').join(' + ')}
                             </p>
                           </td>
 
@@ -338,11 +348,10 @@ export default async function AdminOrdersPage({
                         : <Link
                           key={p}
                           href={buildUrl({ page: String(p) })}
-                          className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
-                            p === page
+                          className={`w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${p === page
                               ? 'bg-blue-100 text-blue-600 border border-blue-100'
                               : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
-                          }`}
+                            }`}
                         >
                           {p}
                         </Link>

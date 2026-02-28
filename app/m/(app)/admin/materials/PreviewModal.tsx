@@ -18,26 +18,27 @@ import { buildMaterialTitle, resolveSourceCategory } from '@/lib/material-displa
 import { getDifficultyBadgeClass } from '@/lib/material-difficulty-style';
 
 interface MaterialPreview {
-  materialId:     string;
+  materialId: string;
   sourceCategory: MaterialSourceCategory;
-  type:           string;
-  publisher:      string;
-  bookTitle:      string;
+  type: string;
+  publisher: string;
+  bookTitle: string;
   ebookDescription?: string;
-  ebookToc?:       string[];
-  subject:        string;
-  topic:          string;
-  schoolLevel:    string;
-  gradeNumber:    number;
-  year:           number;
-  semester:       number;
-  schoolName:     string;
-  difficulty:     number;
-  isFree:         boolean;
-  priceProblem:   number;
-  priceEtc:       number;
-  previewImages:  string[];
-  fileType:       string;
+  ebookToc?: string[];
+  subject: string;
+  topic: string;
+  schoolLevel: string;
+  gradeNumber: number;
+  year: number;
+  semester: number;
+  schoolName: string;
+  difficulty: number;
+  isFree: boolean;
+  priceProblem: number;
+  priceEtc: number;
+  hasAnswerInProblem?: boolean;
+  previewImages: string[];
+  fileType: string;
   targetAudience: string;
 }
 
@@ -46,7 +47,7 @@ interface Props {
 }
 
 export default function PreviewModal({ material }: Props) {
-  const [open,  setOpen]  = useState(false);
+  const [open, setOpen] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
   const resolvedSourceCategory = resolveSourceCategory(material);
   const isSchoolExam = resolvedSourceCategory === 'school_exam';
@@ -159,9 +160,8 @@ export default function PreviewModal({ material }: Props) {
                           <button
                             key={i}
                             onClick={() => setImgIdx(i)}
-                            className={`relative w-10 h-12 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
-                              i === imgIdx ? 'border-[var(--color-dre-blue)]' : 'border-gray-100 hover:border-gray-300'
-                            }`}
+                            className={`relative w-10 h-12 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${i === imgIdx ? 'border-[var(--color-dre-blue)]' : 'border-gray-100 hover:border-gray-300'
+                              }`}
                           >
                             <Image
                               src={`/uploads/previews/${img}`}
@@ -188,12 +188,10 @@ export default function PreviewModal({ material }: Props) {
                       <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">
                         {MATERIAL_SOURCE_CATEGORY_LABEL[resolvedSourceCategory] || '내신기출'}
                       </span>
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                        material.fileType === 'hwp' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
-                      }`}>{FILE_TYPE_LABEL[material.fileType] || 'PDF'}</span>
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                        material.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
-                      }`}>{TARGET_AUDIENCE_LABEL[material.targetAudience] || '학생용'}</span>
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${material.fileType === 'hwp' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
+                        }`}>{FILE_TYPE_LABEL[material.fileType] || 'PDF'}</span>
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${material.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
+                        }`}>{TARGET_AUDIENCE_LABEL[material.targetAudience] || '학생용'}</span>
                     </div>
 
                     <h2 className="text-base font-bold text-gray-900 mb-4 leading-snug">{title || material.bookTitle || material.subject}</h2>
@@ -203,25 +201,25 @@ export default function PreviewModal({ material }: Props) {
                         { key: 'type', label: '유형', value: material.type || '-' },
                         ...(isSchoolExam
                           ? [
-                              { key: 'subject', label: '과목', value: material.subject || '-' },
-                              { key: 'school', label: '학교', value: material.schoolName || '-' },
-                              { key: 'exam', label: '시험', value: [material.year ? `${material.year}년` : '', material.semester ? `${material.semester}학기` : ''].filter(Boolean).join(' ') || '-' },
-                            ]
+                            { key: 'subject', label: '과목', value: material.subject || '-' },
+                            { key: 'school', label: '학교', value: material.schoolName || '-' },
+                            { key: 'exam', label: '시험', value: [material.year ? `${material.year}년` : '', material.semester ? `${material.semester}학기` : ''].filter(Boolean).join(' ') || '-' },
+                          ]
                           : isEbook
                             ? [
-                                { key: 'publisher', label: '출판사', value: material.publisher || '-' },
-                                { key: 'bookTitle', label: '도서명', value: material.bookTitle || '-' },
-                                { key: 'year', label: '연도', value: material.year ? `${material.year}년` : '-' },
-                                { key: 'topic', label: '주제/키워드', value: material.topic || '-' },
-                              ]
+                              { key: 'publisher', label: '출판사', value: material.publisher || '-' },
+                              { key: 'bookTitle', label: '도서명', value: material.bookTitle || '-' },
+                              { key: 'year', label: '연도', value: material.year ? `${material.year}년` : '-' },
+                              { key: 'topic', label: '주제/키워드', value: material.topic || '-' },
+                            ]
                             : [
-                                { key: 'subject', label: '과목', value: material.subject || '-' },
-                                { key: 'publisher', label: '출판사', value: material.publisher || '-' },
-                                { key: 'bookTitle', label: '교재명', value: material.bookTitle || '-' },
-                                { key: 'target', label: '대상', value: [material.schoolLevel || '', material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-' },
-                                { key: 'year', label: '연도', value: material.year ? `${material.year}년` : '-' },
-                                { key: 'topic', label: '단원/주제', value: material.topic || '-' },
-                              ]),
+                              { key: 'subject', label: '과목', value: material.subject || '-' },
+                              { key: 'publisher', label: '출판사', value: material.publisher || '-' },
+                              { key: 'bookTitle', label: '교재명', value: material.bookTitle || '-' },
+                              { key: 'target', label: '대상', value: [material.schoolLevel || '', material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-' },
+                              { key: 'year', label: '연도', value: material.year ? `${material.year}년` : '-' },
+                              { key: 'topic', label: '단원/주제', value: material.topic || '-' },
+                            ]),
                       ].map(({ key, label, value }) => (
                         <div key={key} className="flex justify-between py-1.5 border-b border-gray-50">
                           <span className="text-gray-400">{label}</span>
@@ -262,17 +260,23 @@ export default function PreviewModal({ material }: Props) {
                       </button>
                     ) : (
                       <>
-                        <div className="mb-4">
+                        <div className="mb-4 space-y-2">
                           {material.priceProblem > 0 && (
-                            <div className="flex justify-between items-center py-2">
-                              <span className="text-sm text-gray-600">문제지</span>
-                              <span className="font-bold text-gray-900">{material.priceProblem.toLocaleString()}원</span>
+                            <div className="flex justify-between items-start gap-3 py-2">
+                              <span className="text-sm text-gray-600 leading-snug">
+                                {material.hasAnswerInProblem ? '문제지 (정답 포함)' : '문제지'}
+                              </span>
+                              <span className="font-bold text-gray-900 shrink-0 mt-[-1px]">
+                                {material.priceProblem.toLocaleString()}원
+                              </span>
                             </div>
                           )}
                           {material.priceEtc > 0 && (
-                            <div className="flex justify-between items-center py-2 border-t border-gray-50">
-                              <span className="text-sm text-gray-600">기타(답지 등)</span>
-                              <span className="font-bold text-gray-900">{material.priceEtc.toLocaleString()}원</span>
+                            <div className="flex justify-between items-start gap-3 py-2 border-t border-gray-50">
+                              <span className="text-sm text-gray-600 leading-snug">기타(답지 등)</span>
+                              <span className="font-bold text-gray-900 shrink-0 mt-[-1px]">
+                                {material.priceEtc.toLocaleString()}원
+                              </span>
                             </div>
                           )}
                         </div>

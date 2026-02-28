@@ -42,17 +42,17 @@ const legacyOnlySubjectHints = LEGACY_ONLY_MATERIAL_SUBJECTS as readonly string[
 const buildCurriculumQuery = (curriculum: 'legacy' | 'revised_2022'): Record<string, unknown> => (
   curriculum === 'legacy'
     ? {
-        $or: [
-          { curriculum: 'legacy' },
-          { curriculum: { $exists: false }, subject: { $in: legacyOnlySubjectHints } },
-        ],
-      }
+      $or: [
+        { curriculum: 'legacy' },
+        { curriculum: { $exists: false }, subject: { $in: legacyOnlySubjectHints } },
+      ],
+    }
     : {
-        $or: [
-          { curriculum: 'revised_2022' },
-          { curriculum: { $exists: false }, subject: { $nin: legacyOnlySubjectHints } },
-        ],
-      }
+      $or: [
+        { curriculum: 'revised_2022' },
+        { curriculum: { $exists: false }, subject: { $nin: legacyOnlySubjectHints } },
+      ],
+    }
 );
 
 export default async function TeacherMaterialsPage({
@@ -415,7 +415,7 @@ export default async function TeacherMaterialsPage({
                           topic: m.topic, schoolLevel: m.schoolLevel, gradeNumber: m.gradeNumber,
                           year: m.year, semester: m.semester, schoolName: m.schoolName,
                           difficulty: m.difficulty, isFree: m.isFree, priceProblem: m.priceProblem,
-                          priceEtc: m.priceEtc, previewImages: m.previewImages || [],
+                          priceEtc: m.priceEtc, hasAnswerInProblem: !!m.hasAnswerInProblem, previewImages: m.previewImages || [],
                           fileType: m.fileType, targetAudience: m.targetAudience,
                         }} />
                         <Link href={`/m/admin/materials/${m.materialId}/edit`} className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-500">
@@ -500,12 +500,10 @@ export default async function TeacherMaterialsPage({
                           </td>
                           <td className="px-5 py-4">
                             <div className="flex flex-col gap-1.5">
-                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${
-                                m.fileType === 'hwp' ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'
-                              }`}>{ftLabel}</span>
-                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${
-                                m.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
-                              }`}>{taLabel}</span>
+                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${m.fileType === 'hwp' ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'
+                                }`}>{ftLabel}</span>
+                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${m.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
+                                }`}>{taLabel}</span>
                             </div>
                           </td>
                           <td className="px-5 py-4 text-center">
@@ -535,7 +533,7 @@ export default async function TeacherMaterialsPage({
                                   topic: m.topic, schoolLevel: m.schoolLevel, gradeNumber: m.gradeNumber,
                                   year: m.year, semester: m.semester, schoolName: m.schoolName,
                                   difficulty: m.difficulty, isFree: m.isFree, priceProblem: m.priceProblem,
-                                  priceEtc: m.priceEtc, previewImages: m.previewImages || [],
+                                  priceEtc: m.priceEtc, hasAnswerInProblem: !!m.hasAnswerInProblem, previewImages: m.previewImages || [],
                                   fileType: m.fileType, targetAudience: m.targetAudience,
                                 }} />
                                 <Link href={`/m/admin/materials/${m.materialId}/edit`} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-colors">
@@ -561,11 +559,10 @@ export default async function TeacherMaterialsPage({
                     <Link
                       key={p}
                       href={buildUrl({ page: String(p) })}
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${
-                        p === page
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${p === page
                           ? 'bg-blue-100 text-blue-600 border border-blue-100'
                           : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
-                      }`}
+                        }`}
                     >
                       {p}
                     </Link>
