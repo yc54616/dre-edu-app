@@ -151,6 +151,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const normalizedPriceProblem = Math.max(0, parseInt(body.priceProblem) || 0);
     const normalizedPriceEtc = Math.max(0, parseInt(body.priceEtc) || 0);
     const normalizedIsFree = !!body.isFree && normalizedPriceProblem === 0 && normalizedPriceEtc === 0;
+    const normalizedHasAnswerInProblem = typeof body.hasAnswerInProblem !== 'undefined'
+      ? !!body.hasAnswerInProblem
+      : undefined;
 
     if (!normalizedType) {
       return NextResponse.json({ error: '유형은 필수입니다.' }, { status: 400 });
@@ -193,38 +196,39 @@ export async function PUT(req: NextRequest, { params }: Params) {
       { materialId },
       {
         $set: {
-          curriculum:   normalizedCurriculum,
+          curriculum: normalizedCurriculum,
           sourceCategory: normalizedSourceCategory,
-          type:         normalizedType,
-          publisher:    normalizedPublisher,
-          bookTitle:    normalizedBookTitle,
+          type: normalizedType,
+          publisher: normalizedPublisher,
+          bookTitle: normalizedBookTitle,
           ebookDescription: normalizedEbookDescription,
-          ebookToc:     normalizedEbookToc,
-          subject:      normalizedSubject,
-          topic:        normalizedTopic,
-          schoolLevel:  normalizedSourceCategory === 'ebook' ? '' : (body.schoolLevel || '고등학교'),
-          gradeNumber:  normalizedSourceCategory === 'ebook' ? 0 : (parseInt(body.gradeNumber) || 2),
-          year:         parseInt(body.year) || new Date().getFullYear(),
-          semester:     normalizedSourceCategory === 'ebook' ? 0 : (parseInt(body.semester) || 1),
-          period:       normalizedSourceCategory === 'ebook' ? '' : (body.period || ''),
-          schoolName:   normalizedSourceCategory === 'school_exam' ? (body.schoolName || '') : '',
-          regionSido:   normalizedSourceCategory === 'school_exam' ? (body.regionSido || '') : '',
-          regionGugun:  normalizedSourceCategory === 'school_exam' ? (body.regionGugun || '') : '',
-          difficulty:      diff,
-          difficultyRating:diffRating,
-          fileType:        normalizedFileType,
-          targetAudience:  normalizedTargetAudience,
+          ebookToc: normalizedEbookToc,
+          subject: normalizedSubject,
+          topic: normalizedTopic,
+          schoolLevel: normalizedSourceCategory === 'ebook' ? '' : (body.schoolLevel || '고등학교'),
+          gradeNumber: normalizedSourceCategory === 'ebook' ? 0 : (parseInt(body.gradeNumber) || 2),
+          year: parseInt(body.year) || new Date().getFullYear(),
+          semester: normalizedSourceCategory === 'ebook' ? 0 : (parseInt(body.semester) || 1),
+          period: normalizedSourceCategory === 'ebook' ? '' : (body.period || ''),
+          schoolName: normalizedSourceCategory === 'school_exam' ? (body.schoolName || '') : '',
+          regionSido: normalizedSourceCategory === 'school_exam' ? (body.regionSido || '') : '',
+          regionGugun: normalizedSourceCategory === 'school_exam' ? (body.regionGugun || '') : '',
+          difficulty: diff,
+          difficultyRating: diffRating,
+          fileType: normalizedFileType,
+          targetAudience: normalizedTargetAudience,
           teacherProductType: '',
           teacherClassPrepType: '',
-          isFree:          normalizedIsFree,
+          isFree: normalizedIsFree,
           priceProblem: normalizedPriceProblem,
-          priceEtc:     normalizedPriceEtc,
+          priceEtc: normalizedPriceEtc,
+          ...(typeof normalizedHasAnswerInProblem !== 'undefined' && { hasAnswerInProblem: normalizedHasAnswerInProblem }),
           ...(typeof body.problemFile !== 'undefined' && { problemFile: normalizedProblemFile }),
-          ...(typeof body.etcFile     !== 'undefined' && { etcFile: normalizedEtcFile }),
+          ...(typeof body.etcFile !== 'undefined' && { etcFile: normalizedEtcFile }),
           ...(shouldRefreshPageCount && { pageCount: normalizedPageCount ?? 0 }),
           ...(typeof normalizedPreviewImages !== 'undefined' && { previewImages: normalizedPreviewImages }),
-          isActive:     body.isActive !== false,
-          updatedAt:    new Date(),
+          isActive: body.isActive !== false,
+          updatedAt: new Date(),
         },
       }
     );
@@ -255,7 +259,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
 
   // 연결된 파일 삭제
   if (material) {
-    const tryRemove = (path: string) => unlink(path).catch(() => {});
+    const tryRemove = (path: string) => unlink(path).catch(() => { });
 
     if (material.problemFile) {
       await tryRemove(join(process.cwd(), 'uploads', 'files', material.problemFile));

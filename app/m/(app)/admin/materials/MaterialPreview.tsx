@@ -13,26 +13,27 @@ import { buildMaterialTitle, resolveSourceCategory } from '@/lib/material-displa
 import { getDifficultyBadgeClass } from '@/lib/material-difficulty-style';
 
 interface FormData {
-  sourceCategory:  MaterialSourceCategory;
-  type:            string;
-  publisher:       string;
-  bookTitle:       string;
-  ebookDescription:string;
-  ebookToc:        string;
-  subject:         string;
-  topic:           string;
-  schoolLevel:     string;
-  gradeNumber:     number;
-  year:            number;
-  semester:        number;
-  schoolName:      string;
-  difficulty:      number;
-  fileType:        string;
-  targetAudience:  string;
-  isFree:          boolean;
-  priceProblem:    number;
-  priceEtc:        number;
-  previewImages?:  string[];
+  sourceCategory: MaterialSourceCategory;
+  type: string;
+  publisher: string;
+  bookTitle: string;
+  ebookDescription: string;
+  ebookToc: string;
+  subject: string;
+  topic: string;
+  schoolLevel: string;
+  gradeNumber: number;
+  year: number;
+  semester: number;
+  schoolName: string;
+  difficulty: number;
+  fileType: string;
+  targetAudience: string;
+  isFree: boolean;
+  priceProblem: number;
+  priceEtc: number;
+  hasAnswerInProblem?: boolean;
+  previewImages?: string[];
 }
 
 export default function MaterialPreview({ data }: { data: FormData }) {
@@ -97,9 +98,8 @@ export default function MaterialPreview({ data }: { data: FormData }) {
                     key={i}
                     type="button"
                     onClick={() => setActivePreview(i)}
-                    className={`relative w-14 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
-                      i === activePreview ? 'border-[var(--color-dre-blue)] shadow-sm' : 'border-transparent hover:border-gray-200'
-                    }`}
+                    className={`relative w-14 h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${i === activePreview ? 'border-[var(--color-dre-blue)] shadow-sm' : 'border-transparent hover:border-gray-200'
+                      }`}
                   >
                     <Image
                       src={`/uploads/previews/${img}`}
@@ -130,14 +130,12 @@ export default function MaterialPreview({ data }: { data: FormData }) {
                 {MATERIAL_SOURCE_CATEGORY_LABEL[resolvedSourceCategory] || '내신기출'}
               </span>
               {data.fileType && (
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                  data.fileType === 'hwp' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
-                }`}>{FILE_TYPE_LABEL[data.fileType] || 'PDF'}</span>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${data.fileType === 'hwp' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'
+                  }`}>{FILE_TYPE_LABEL[data.fileType] || 'PDF'}</span>
               )}
               {data.targetAudience && (
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                  data.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
-                }`}>{TARGET_AUDIENCE_LABEL[data.targetAudience] || '학생용'}</span>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${data.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
+                  }`}>{TARGET_AUDIENCE_LABEL[data.targetAudience] || '학생용'}</span>
               )}
             </div>
 
@@ -146,29 +144,29 @@ export default function MaterialPreview({ data }: { data: FormData }) {
             </h2>
 
             <div className="space-y-1.5 text-sm">
-                {[
-                  { key: 'type', label: '유형', value: data.type || '-' },
-                  ...(isSchoolExam
-                    ? [
-                        { key: 'subject', label: '과목', value: data.subject || '-' },
-                        { key: 'school', label: '학교', value: data.schoolName || '-' },
-                      { key: 'exam', label: '시험', value: [data.year ? `${data.year}년` : '', data.semester ? `${data.semester}학기` : ''].filter(Boolean).join(' ') || '-' },
-                    ]
+              {[
+                { key: 'type', label: '유형', value: data.type || '-' },
+                ...(isSchoolExam
+                  ? [
+                    { key: 'subject', label: '과목', value: data.subject || '-' },
+                    { key: 'school', label: '학교', value: data.schoolName || '-' },
+                    { key: 'exam', label: '시험', value: [data.year ? `${data.year}년` : '', data.semester ? `${data.semester}학기` : ''].filter(Boolean).join(' ') || '-' },
+                  ]
                   : isEbook
                     ? [
-                        { key: 'publisher', label: '출판사', value: data.publisher || '-' },
-                        { key: 'bookTitle', label: '도서명', value: data.bookTitle || '-' },
-                        { key: 'year', label: '연도', value: data.year ? `${data.year}년` : '-' },
-                        { key: 'topic', label: '주제/키워드', value: data.topic || '-' },
-                      ]
+                      { key: 'publisher', label: '출판사', value: data.publisher || '-' },
+                      { key: 'bookTitle', label: '도서명', value: data.bookTitle || '-' },
+                      { key: 'year', label: '연도', value: data.year ? `${data.year}년` : '-' },
+                      { key: 'topic', label: '주제/키워드', value: data.topic || '-' },
+                    ]
                     : [
-                        { key: 'subject', label: '과목', value: data.subject || '-' },
-                        { key: 'publisher', label: '출판사', value: data.publisher || '-' },
-                        { key: 'bookTitle', label: '교재명', value: data.bookTitle || '-' },
-                        { key: 'target', label: '대상', value: [data.schoolLevel || '', data.gradeNumber ? `${data.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-' },
-                        { key: 'year', label: '연도', value: data.year ? `${data.year}년` : '-' },
-                        { key: 'topic', label: '단원/주제', value: data.topic || '-' },
-                      ]),
+                      { key: 'subject', label: '과목', value: data.subject || '-' },
+                      { key: 'publisher', label: '출판사', value: data.publisher || '-' },
+                      { key: 'bookTitle', label: '교재명', value: data.bookTitle || '-' },
+                      { key: 'target', label: '대상', value: [data.schoolLevel || '', data.gradeNumber ? `${data.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-' },
+                      { key: 'year', label: '연도', value: data.year ? `${data.year}년` : '-' },
+                      { key: 'topic', label: '단원/주제', value: data.topic || '-' },
+                    ]),
               ].map(({ key, label, value }) => (
                 <div key={key} className="flex justify-between gap-4 py-1.5 border-b border-gray-100">
                   <span className="text-gray-400">{label}</span>
@@ -213,7 +211,7 @@ export default function MaterialPreview({ data }: { data: FormData }) {
                 <div className="mb-3.5">
                   {data.priceProblem > 0 && (
                     <div className="flex justify-between items-center py-1.5">
-                      <span className="text-sm text-gray-600">문제지</span>
+                      <span className="text-sm text-gray-600">{data.hasAnswerInProblem ? '문제지 (정답 포함)' : '문제지'}</span>
                       <span className="text-base font-bold text-gray-900">{data.priceProblem.toLocaleString()}원</span>
                     </div>
                   )}

@@ -70,17 +70,17 @@ const legacyOnlySubjectHints = LEGACY_ONLY_MATERIAL_SUBJECTS as readonly string[
 const buildCurriculumQuery = (curriculum: MaterialCurriculum): Record<string, unknown> => (
   curriculum === 'legacy'
     ? {
-        $or: [
-          { curriculum: 'legacy' },
-          { curriculum: { $exists: false }, subject: { $in: legacyOnlySubjectHints } },
-        ],
-      }
+      $or: [
+        { curriculum: 'legacy' },
+        { curriculum: { $exists: false }, subject: { $in: legacyOnlySubjectHints } },
+      ],
+    }
     : {
-        $or: [
-          { curriculum: 'revised_2022' },
-          { curriculum: { $exists: false }, subject: { $nin: legacyOnlySubjectHints } },
-        ],
-      }
+      $or: [
+        { curriculum: 'revised_2022' },
+        { curriculum: { $exists: false }, subject: { $nin: legacyOnlySubjectHints } },
+      ],
+    }
 );
 
 
@@ -107,17 +107,17 @@ export async function GET(req: NextRequest) {
   await connectMongo();
   const { searchParams } = new URL(req.url);
 
-  const subject    = searchParams.get('subject')    || '';
+  const subject = searchParams.get('subject') || '';
   const curriculum = searchParams.get('curriculum') || '';
   const sourceCategory = searchParams.get('sourceCategory') || '';
-  const topic      = searchParams.get('topic')      || '';
-  const type       = searchParams.get('type')       || '';
+  const topic = searchParams.get('topic') || '';
+  const type = searchParams.get('type') || '';
   const difficulty = searchParams.get('difficulty') || '';
   const schoolLevel = searchParams.get('schoolLevel') || '';
   const gradeNumberParam = searchParams.get('gradeNumber') || searchParams.get('grade') || '';
-  const sort       = searchParams.get('sort')       || 'latest';
-  const page       = Math.max(1, parseInt(searchParams.get('page') || '1'));
-  const limit      = 20;
+  const sort = searchParams.get('sort') || 'latest';
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+  const limit = 20;
 
   const filter: Record<string, unknown> = { isActive: true };
   const andFilters: Record<string, unknown>[] = [];
@@ -132,18 +132,18 @@ export async function GET(req: NextRequest) {
     if (sourceCategory === 'ebook') {
       andFilters.push({
         $or: [
-        { sourceCategory: 'ebook' },
-        { type: '전자책' },
-        { subject: '전자책' },
-      ],
+          { sourceCategory: 'ebook' },
+          { type: '전자책' },
+          { subject: '전자책' },
+        ],
       });
     } else {
       filter.sourceCategory = sourceCategory;
     }
   }
-  if (topic)      filter.topic        = topic;
-  if (type)       filter.type         = type;
-  if (difficulty) filter.difficulty   = Number(difficulty);
+  if (topic) filter.topic = topic;
+  if (type) filter.type = type;
+  if (difficulty) filter.difficulty = Number(difficulty);
   if (schoolLevel) filter.schoolLevel = schoolLevel;
   if (gradeNumberParam) {
     const parsedGradeNumber = Number.parseInt(gradeNumberParam, 10);
@@ -154,11 +154,11 @@ export async function GET(req: NextRequest) {
   if (andFilters.length > 0) filter.$and = andFilters;
 
   const sortMap: Record<string, Record<string, SortOrder>> = {
-    latest:   { createdAt: -1 },
-    popular:  { downloadCount: -1 },
-    view:     { viewCount: -1 },
+    latest: { createdAt: -1 },
+    popular: { downloadCount: -1 },
+    view: { viewCount: -1 },
     diff_asc: { difficultyRating: 1 },
-    diff_desc:{ difficultyRating: -1 },
+    diff_desc: { difficultyRating: -1 },
   };
 
   const [materials, total] = await Promise.all([
@@ -181,8 +181,8 @@ export async function POST(req: NextRequest) {
     await connectMongo();
     const body = await req.json();
     const { sourceCategory, type, publisher, bookTitle, subject, topic, schoolLevel, gradeNumber, year, semester, period,
-            schoolName, regionSido, regionGugun, difficulty,
-            fileType, targetAudience, isFree, priceProblem, priceEtc } = body;
+      schoolName, regionSido, regionGugun, difficulty,
+      fileType, targetAudience, isFree, priceProblem, priceEtc, hasAnswerInProblem } = body;
     const normalizedSourceCategory = normalizeSourceCategoryWithHint(sourceCategory, type, subject);
     const normalizedType = normalizeText(type);
     const normalizedPublisher = normalizeText(publisher);
@@ -241,38 +241,39 @@ export async function POST(req: NextRequest) {
       : [];
 
     const material = await Material.create({
-      uploaderId:     (session.user as { id?: string }).id || 'admin',
-      curriculum:     normalizedCurriculum,
+      uploaderId: (session.user as { id?: string }).id || 'admin',
+      curriculum: normalizedCurriculum,
       sourceCategory: normalizedSourceCategory,
-      type:           normalizedType,
-      subject:        normalizedSubject,
-      topic:          normalizedTopic,
-      publisher:      normalizedPublisher,
-      bookTitle:      normalizedBookTitle,
+      type: normalizedType,
+      subject: normalizedSubject,
+      topic: normalizedTopic,
+      publisher: normalizedPublisher,
+      bookTitle: normalizedBookTitle,
       ebookDescription: normalizedEbookDescription,
-      ebookToc:       normalizedEbookToc,
-      schoolLevel:    normalizedSourceCategory === 'ebook' ? '' : (schoolLevel || '고등학교'),
-      gradeNumber:    normalizedSourceCategory === 'ebook' ? 0 : (parseInt(gradeNumber) || 2),
-      year:           parseInt(year) || new Date().getFullYear(),
-      semester:       normalizedSourceCategory === 'ebook' ? 0 : (parseInt(semester) || 1),
-      period:         normalizedSourceCategory === 'ebook' ? '' : (period || ''),
-      schoolName:     normalizedSourceCategory === 'school_exam' ? (schoolName || '') : '',
-      regionSido:     normalizedSourceCategory === 'school_exam' ? (regionSido || '') : '',
-      regionGugun:    normalizedSourceCategory === 'school_exam' ? (regionGugun || '') : '',
-      difficulty:     diff,
+      ebookToc: normalizedEbookToc,
+      schoolLevel: normalizedSourceCategory === 'ebook' ? '' : (schoolLevel || '고등학교'),
+      gradeNumber: normalizedSourceCategory === 'ebook' ? 0 : (parseInt(gradeNumber) || 2),
+      year: parseInt(year) || new Date().getFullYear(),
+      semester: normalizedSourceCategory === 'ebook' ? 0 : (parseInt(semester) || 1),
+      period: normalizedSourceCategory === 'ebook' ? '' : (period || ''),
+      schoolName: normalizedSourceCategory === 'school_exam' ? (schoolName || '') : '',
+      regionSido: normalizedSourceCategory === 'school_exam' ? (regionSido || '') : '',
+      regionGugun: normalizedSourceCategory === 'school_exam' ? (regionGugun || '') : '',
+      difficulty: diff,
       difficultyRating: diffRating,
-      fileType:       normalizedFileType,
+      fileType: normalizedFileType,
       targetAudience: normalizedTargetAudience,
       teacherProductType: '',
       teacherClassPrepType: '',
-      isFree:         normalizedIsFree,
-      priceProblem:   normalizedPriceProblem,
-      priceEtc:       normalizedPriceEtc,
-      problemFile:    normalizedProblemFile,
-      etcFile:        normalizedEtcFile,
-      pageCount:      normalizedPageCount ?? 0,
-      previewImages:  normalizedPreviewImages,
-      isActive:       true,
+      isFree: normalizedIsFree,
+      priceProblem: normalizedPriceProblem,
+      priceEtc: normalizedPriceEtc,
+      problemFile: normalizedProblemFile,
+      hasAnswerInProblem: !!hasAnswerInProblem,
+      etcFile: normalizedEtcFile,
+      pageCount: normalizedPageCount ?? 0,
+      previewImages: normalizedPreviewImages,
+      isActive: true,
     });
 
     return NextResponse.json({ material }, { status: 201 });

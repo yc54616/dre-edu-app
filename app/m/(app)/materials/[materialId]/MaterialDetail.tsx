@@ -46,6 +46,7 @@ interface MaterialData {
   viewCount: number;
   downloadCount: number;
   problemFile?: string | null;
+  hasAnswerInProblem?: boolean;
   etcFile?: string | null;
 }
 
@@ -235,7 +236,7 @@ export default function MaterialDetail({
   const fileFormatParts: string[] = [];
   const problemFileExt = toFileExtLabel(material.problemFile);
   const etcFileExt = toFileExtLabel(material.etcFile);
-  if (problemFileExt) fileFormatParts.push(`문제 ${problemFileExt}`);
+  if (problemFileExt) fileFormatParts.push(`${material.hasAnswerInProblem ? '문제+정답' : '문제'} ${problemFileExt}`);
   if (etcFileExt) fileFormatParts.push(`${isTeacherMaterial ? '부가' : '기타'} ${etcFileExt}`);
   const fallbackFileFormat = material.fileType === 'hwp'
     ? 'HWP'
@@ -251,42 +252,42 @@ export default function MaterialDetail({
     { key: 'fileFormat', icon: <FileText size={15} />, label: '파일 형식', value: fileFormatValue },
     ...(!isEbook
       ? [
-          { key: 'subject', icon: <FileText size={15} />, label: '과목', value: material.subject || '-' },
-          { key: 'type', icon: <BookOpen size={15} />, label: '유형', value: material.type || '-' },
-        ]
+        { key: 'subject', icon: <FileText size={15} />, label: '과목', value: material.subject || '-' },
+        { key: 'type', icon: <BookOpen size={15} />, label: '유형', value: material.type || '-' },
+      ]
       : []),
     ...(isSchoolExam
       ? [
-          {
-            key: 'school',
-            icon: <School size={15} />,
-            label: '학교',
-            value: [material.schoolName, material.schoolLevel, material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-',
-          },
-          {
-            key: 'exam',
-            icon: <Calendar size={15} />,
-            label: '시험',
-            value: [material.year ? `${material.year}년` : '', material.semester ? `${material.semester}학기` : ''].filter(Boolean).join(' ') || '-',
-          },
-        ]
+        {
+          key: 'school',
+          icon: <School size={15} />,
+          label: '학교',
+          value: [material.schoolName, material.schoolLevel, material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-',
+        },
+        {
+          key: 'exam',
+          icon: <Calendar size={15} />,
+          label: '시험',
+          value: [material.year ? `${material.year}년` : '', material.semester ? `${material.semester}학기` : ''].filter(Boolean).join(' ') || '-',
+        },
+      ]
       : isEbook
         ? [
-            { key: 'publisher', icon: <School size={15} />, label: '출판사', value: material.publisher || '-' },
-            { key: 'bookTitle', icon: <BookOpen size={15} />, label: '도서명', value: material.bookTitle || '-' },
-            { key: 'year', icon: <Calendar size={15} />, label: '연도', value: material.year ? `${material.year}년` : '-' },
-          ]
+          { key: 'publisher', icon: <School size={15} />, label: '출판사', value: material.publisher || '-' },
+          { key: 'bookTitle', icon: <BookOpen size={15} />, label: '도서명', value: material.bookTitle || '-' },
+          { key: 'year', icon: <Calendar size={15} />, label: '연도', value: material.year ? `${material.year}년` : '-' },
+        ]
         : [
-            { key: 'publisher', icon: <School size={15} />, label: '출판사', value: material.publisher || '-' },
-            { key: 'bookTitle', icon: <BookOpen size={15} />, label: '교재명', value: material.bookTitle || '-' },
-            {
-              key: 'target',
-              icon: <Calendar size={15} />,
-              label: '대상',
-              value: [material.schoolLevel, material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-',
-            },
-            { key: 'year', icon: <Calendar size={15} />, label: '연도', value: material.year ? `${material.year}년` : '-' },
-          ]),
+          { key: 'publisher', icon: <School size={15} />, label: '출판사', value: material.publisher || '-' },
+          { key: 'bookTitle', icon: <BookOpen size={15} />, label: '교재명', value: material.bookTitle || '-' },
+          {
+            key: 'target',
+            icon: <Calendar size={15} />,
+            label: '대상',
+            value: [material.schoolLevel, material.gradeNumber ? `${material.gradeNumber}학년` : ''].filter(Boolean).join(' · ') || '-',
+          },
+          { key: 'year', icon: <Calendar size={15} />, label: '연도', value: material.year ? `${material.year}년` : '-' },
+        ]),
     { key: 'topic', icon: <BookOpen size={15} />, label: isEbook ? '주제/키워드' : '단원/주제', value: material.topic || '-' },
   ];
 
@@ -395,9 +396,8 @@ export default function MaterialDetail({
               </div>
               <div className="p-3 sm:p-4">
                 <div
-                  className={`relative aspect-[3/4] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 ${
-                    material.previewImages.length > 0 ? 'cursor-zoom-in' : ''
-                  }`}
+                  className={`relative aspect-[3/4] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 ${material.previewImages.length > 0 ? 'cursor-zoom-in' : ''
+                    }`}
                   onClick={openPreviewModal}
                 >
                   {material.previewImages.length > 0 ? (
@@ -449,8 +449,8 @@ export default function MaterialDetail({
                         key={i}
                         onClick={() => setActivePreview(i)}
                         className={`relative w-[4.5rem] h-[6rem] rounded-xl overflow-hidden border-[3px] shrink-0 transition-all duration-200 ${i === activePreview
-                            ? 'border-blue-300 shadow-sm shadow-blue-100'
-                            : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'
+                          ? 'border-blue-300 shadow-sm shadow-blue-100'
+                          : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'
                           }`}
                       >
                         <Image
@@ -552,172 +552,172 @@ export default function MaterialDetail({
                     </div>
                   )}
 
-                {material.isFree ? (
-                  /* ── 무료 자료 ── */
-                  <div className="space-y-3">
-                    <p className="text-base text-gray-400 text-center font-medium">무료로 제공되는 자료입니다</p>
-                    {material.problemFile && (
-                      <button
-                        onClick={() => handleDownload('problem')}
-                        disabled={downloading === 'problem'}
-                        className="m-detail-btn-primary w-full py-4 text-base rounded-2xl disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
-                      >
-                        {downloading === 'problem'
-                          ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />다운로드 중...</>
-                          : <><Download size={18} />{isTeacherMaterial ? '자료 다운로드' : '문제지 다운로드'}</>
-                        }
-                      </button>
-                    )}
-                    {material.etcFile && (
-                      <button
-                        onClick={() => handleDownload('etc')}
-                        disabled={downloading === 'etc'}
-                        className="m-detail-btn-secondary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {downloading === 'etc'
-                          ? <><span className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />다운로드 중...</>
-                          : <><Download size={16} />{isTeacherMaterial ? '부가 자료 다운로드' : '답지 / 기타 다운로드'}</>
-                        }
-                      </button>
-                    )}
-                    {!material.problemFile && !material.etcFile && (
-                      <p className="text-center text-sm text-gray-400 py-2">파일 준비 중입니다</p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {hasAnyPurchased && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 size={18} className="text-blue-400" />
-                          <p className="text-base font-semibold text-blue-600">
-                            {isTeacherMaterial ? '구매 완료' : (hasBuyableOption ? '일부 파일 구매 완료' : '구매 완료')}
-                          </p>
-                        </div>
-                        {hasPurchasedProblem && material.problemFile && (
-                          <button
-                            onClick={() => handleDownload('problem')}
-                            disabled={downloading === 'problem'}
-                            className="m-detail-btn-primary w-full py-4 text-base rounded-2xl disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
-                          >
-                            {downloading === 'problem'
-                              ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />다운로드 중...</>
-                              : <><Download size={18} />{isTeacherMaterial ? '자료 다운로드' : '문제지 다운로드'}</>
-                            }
-                          </button>
-                        )}
-                        {hasPurchasedEtc && material.etcFile && (
-                          <button
-                            onClick={() => handleDownload('etc')}
-                            disabled={downloading === 'etc'}
-                            className="m-detail-btn-secondary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
-                          >
-                            {downloading === 'etc'
-                              ? <><span className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />다운로드 중...</>
-                              : <><Download size={16} />{isTeacherMaterial ? '부가 자료 다운로드' : '답지 / 기타 다운로드'}</>
-                            }
-                          </button>
-                        )}
-                        {((hasPurchasedProblem && !material.problemFile) || (hasPurchasedEtc && !material.etcFile)) && (
-                          <p className="text-center text-sm text-gray-400 py-2">일부 파일은 준비 중입니다</p>
-                        )}
-                      </div>
-                    )}
-
-                    {hasBuyableOption ? (
-                      isTeacherMaterial ? (
-                        <>
-                          <div className="m-detail-soft p-4 sm:p-5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-bold text-gray-700">교사용 자료 패키지</span>
-                              <span className="font-extrabold text-gray-900">{selectedAmount.toLocaleString()}원</span>
-                            </div>
-                            <p className="mt-2 text-xs text-gray-500">
-                              현재 자료의 본문/부가 파일을 묶음으로 구매합니다.
+                  {material.isFree ? (
+                    /* ── 무료 자료 ── */
+                    <div className="space-y-3">
+                      <p className="text-base text-gray-400 text-center font-medium">무료로 제공되는 자료입니다</p>
+                      {material.problemFile && (
+                        <button
+                          onClick={() => handleDownload('problem')}
+                          disabled={downloading === 'problem'}
+                          className="m-detail-btn-primary w-full py-4 text-base rounded-2xl disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
+                        >
+                          {downloading === 'problem'
+                            ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />다운로드 중...</>
+                            : <><Download size={18} />{isTeacherMaterial ? '자료 다운로드' : (material.hasAnswerInProblem ? '문제+정답 다운로드' : '문제지 다운로드')}</>
+                          }
+                        </button>
+                      )}
+                      {material.etcFile && (
+                        <button
+                          onClick={() => handleDownload('etc')}
+                          disabled={downloading === 'etc'}
+                          className="m-detail-btn-secondary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {downloading === 'etc'
+                            ? <><span className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />다운로드 중...</>
+                            : <><Download size={16} />{isTeacherMaterial ? '부가 자료 다운로드' : '답지 / 기타 다운로드'}</>
+                          }
+                        </button>
+                      )}
+                      {!material.problemFile && !material.etcFile && (
+                        <p className="text-center text-sm text-gray-400 py-2">파일 준비 중입니다</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {hasAnyPurchased && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 size={18} className="text-blue-400" />
+                            <p className="text-base font-semibold text-blue-600">
+                              {isTeacherMaterial ? '구매 완료' : (hasBuyableOption ? '일부 파일 구매 완료' : '구매 완료')}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={handlePurchaseClick}
-                            className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl relative z-10"
-                          >
-                            <ShoppingCart size={20} />
-                            <span>결제하고 다운로드</span>
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <div className="space-y-3 mb-1 relative z-10">
-                            {canBuyProblem && (
-                              <button
-                                type="button"
-                                onClick={() => toggleFileSelection('problem')}
-                                className={`w-full flex items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${selectedFiles.includes('problem')
-                                  ? 'border-blue-300 bg-blue-50/70'
-                                  : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50/40'
-                                }`}>
-                                <div className="flex items-center gap-3.5">
-                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('problem') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
-                                    }`}>
-                                    {selectedFiles.includes('problem') && <Check size={12} className="text-white" />}
-                                  </div>
-                                  <span className="text-sm font-bold text-gray-800 sm:text-[15px]">문제지</span>
-                                </div>
-                                {material.priceProblem > 0
-                                  ? <span className="font-extrabold text-gray-900">{material.priceProblem.toLocaleString()}원</span>
-                                  : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
-                                }
-                              </button>
-                            )}
-                            {canBuyEtc && (
-                              <button
-                                type="button"
-                                onClick={() => toggleFileSelection('etc')}
-                                className={`w-full flex items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${selectedFiles.includes('etc')
-                                  ? 'border-blue-300 bg-blue-50/70'
-                                  : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50/40'
-                                }`}>
-                                <div className="flex items-center gap-3.5">
-                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('etc') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
-                                    }`}>
-                                    {selectedFiles.includes('etc') && <Check size={12} className="text-white" />}
-                                  </div>
-                                  <span className="text-sm font-bold text-gray-800 sm:text-[15px]">답지 / 기타</span>
-                                </div>
-                                {material.priceEtc > 0
-                                  ? <span className="font-extrabold text-gray-900">{material.priceEtc.toLocaleString()}원</span>
-                                  : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
-                                }
-                              </button>
-                            )}
-                            {selectedFiles.length === 0 && (
-                              <p className="text-[13px] font-semibold text-red-500">구매할 파일을 1개 이상 선택해 주세요.</p>
-                            )}
-                            {selectedAmount > 0 && (
-                              <div className="flex justify-between items-center pt-5 pb-2 border-t border-gray-100 mt-2">
-                                <span className="text-[15px] font-extrabold text-gray-500">총 결제금액</span>
-                                <span className="font-extrabold text-blue-500 text-[1.45rem] tracking-tight sm:text-[1.75rem]">
-                                  {selectedAmount.toLocaleString()}<span className="ml-1 text-base text-gray-600 sm:text-lg">원</span>
-                                </span>
+                          {hasPurchasedProblem && material.problemFile && (
+                            <button
+                              onClick={() => handleDownload('problem')}
+                              disabled={downloading === 'problem'}
+                              className="m-detail-btn-primary w-full py-4 text-base rounded-2xl disabled:opacity-60 disabled:translate-y-0 disabled:cursor-not-allowed"
+                            >
+                              {downloading === 'problem'
+                                ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />다운로드 중...</>
+                                : <><Download size={18} />{isTeacherMaterial ? '자료 다운로드' : (material.hasAnswerInProblem ? '문제+정답 다운로드' : '문제지 다운로드')}</>
+                              }
+                            </button>
+                          )}
+                          {hasPurchasedEtc && material.etcFile && (
+                            <button
+                              onClick={() => handleDownload('etc')}
+                              disabled={downloading === 'etc'}
+                              className="m-detail-btn-secondary w-full py-3.5 text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {downloading === 'etc'
+                                ? <><span className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />다운로드 중...</>
+                                : <><Download size={16} />{isTeacherMaterial ? '부가 자료 다운로드' : '답지 / 기타 다운로드'}</>
+                              }
+                            </button>
+                          )}
+                          {((hasPurchasedProblem && !material.problemFile) || (hasPurchasedEtc && !material.etcFile)) && (
+                            <p className="text-center text-sm text-gray-400 py-2">일부 파일은 준비 중입니다</p>
+                          )}
+                        </div>
+                      )}
+
+                      {hasBuyableOption ? (
+                        isTeacherMaterial ? (
+                          <>
+                            <div className="m-detail-soft p-4 sm:p-5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-bold text-gray-700">교사용 자료 패키지</span>
+                                <span className="font-extrabold text-gray-900">{selectedAmount.toLocaleString()}원</span>
                               </div>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handlePurchaseClick}
-                            disabled={selectedFiles.length === 0}
-                            className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl relative z-10 disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed"
-                          >
-                            <ShoppingCart size={20} />
-                            <span>{hasAnyPurchased ? '남은 파일 결제하기' : '결제하고 다운로드'}</span>
-                          </button>
-                        </>
-                      )
-                    ) : (
-                      !hasAnyPurchased && <p className="text-center text-sm text-gray-400 py-2">파일 준비 중입니다</p>
-                    )}
-                  </div>
-                )}
+                              <p className="mt-2 text-xs text-gray-500">
+                                현재 자료의 본문/부가 파일을 묶음으로 구매합니다.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handlePurchaseClick}
+                              className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl relative z-10"
+                            >
+                              <ShoppingCart size={20} />
+                              <span>결제하고 다운로드</span>
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="space-y-3 mb-1 relative z-10">
+                              {canBuyProblem && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleFileSelection('problem')}
+                                  className={`w-full flex items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${selectedFiles.includes('problem')
+                                    ? 'border-blue-300 bg-blue-50/70'
+                                    : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50/40'
+                                    }`}>
+                                  <div className="flex items-center gap-3.5">
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('problem') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
+                                      }`}>
+                                      {selectedFiles.includes('problem') && <Check size={12} className="text-white" />}
+                                    </div>
+                                    <span className="text-sm font-bold text-gray-800 sm:text-[15px]">{material.hasAnswerInProblem ? '문제지 (정답 포함)' : '문제지'}</span>
+                                  </div>
+                                  {material.priceProblem > 0
+                                    ? <span className="font-extrabold text-gray-900">{material.priceProblem.toLocaleString()}원</span>
+                                    : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
+                                  }
+                                </button>
+                              )}
+                              {canBuyEtc && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleFileSelection('etc')}
+                                  className={`w-full flex items-center justify-between rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 sm:px-5 sm:py-4 ${selectedFiles.includes('etc')
+                                    ? 'border-blue-300 bg-blue-50/70'
+                                    : 'border-gray-100 hover:border-blue-200 hover:bg-blue-50/40'
+                                    }`}>
+                                  <div className="flex items-center gap-3.5">
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedFiles.includes('etc') ? 'border-blue-400 bg-blue-400' : 'border-gray-300'
+                                      }`}>
+                                      {selectedFiles.includes('etc') && <Check size={12} className="text-white" />}
+                                    </div>
+                                    <span className="text-sm font-bold text-gray-800 sm:text-[15px]">답지 / 기타</span>
+                                  </div>
+                                  {material.priceEtc > 0
+                                    ? <span className="font-extrabold text-gray-900">{material.priceEtc.toLocaleString()}원</span>
+                                    : <span className="text-[13px] font-semibold text-blue-500 bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-lg">포함됨</span>
+                                  }
+                                </button>
+                              )}
+                              {selectedFiles.length === 0 && (
+                                <p className="text-[13px] font-semibold text-red-500">구매할 파일을 1개 이상 선택해 주세요.</p>
+                              )}
+                              {selectedAmount > 0 && (
+                                <div className="flex justify-between items-center pt-5 pb-2 border-t border-gray-100 mt-2">
+                                  <span className="text-[15px] font-extrabold text-gray-500">총 결제금액</span>
+                                  <span className="font-extrabold text-blue-500 text-[1.45rem] tracking-tight sm:text-[1.75rem]">
+                                    {selectedAmount.toLocaleString()}<span className="ml-1 text-base text-gray-600 sm:text-lg">원</span>
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handlePurchaseClick}
+                              disabled={selectedFiles.length === 0}
+                              className="m-detail-btn-primary w-full py-4 text-[16px] rounded-2xl relative z-10 disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed"
+                            >
+                              <ShoppingCart size={20} />
+                              <span>{hasAnyPurchased ? '남은 파일 결제하기' : '결제하고 다운로드'}</span>
+                            </button>
+                          </>
+                        )
+                      ) : (
+                        !hasAnyPurchased && <p className="text-center text-sm text-gray-400 py-2">파일 준비 중입니다</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -858,11 +858,10 @@ export default function MaterialDetail({
                         key={`${img}-${index}`}
                         type="button"
                         onClick={() => setActivePreview(index)}
-                        className={`relative h-16 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
-                          index === activePreview
+                        className={`relative h-16 w-12 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${index === activePreview
                             ? 'border-blue-300 shadow-sm shadow-blue-200/40'
                             : 'border-white/20 opacity-70 hover:opacity-100'
-                        }`}
+                          }`}
                       >
                         <Image
                           src={`/uploads/previews/${img}`}
@@ -897,11 +896,10 @@ export default function MaterialDetail({
                 <button
                   type="button"
                   onClick={() => setRelatedViewMode('grid')}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${
-                    relatedViewMode === 'grid'
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${relatedViewMode === 'grid'
                       ? 'bg-blue-100 text-blue-600 border border-blue-100'
                       : 'text-gray-500 hover:text-blue-500'
-                  }`}
+                    }`}
                 >
                   <LayoutGrid size={14} />
                   카드
@@ -909,11 +907,10 @@ export default function MaterialDetail({
                 <button
                   type="button"
                   onClick={() => setRelatedViewMode('list')}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${
-                    relatedViewMode === 'list'
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold transition-all ${relatedViewMode === 'list'
                       ? 'bg-blue-100 text-blue-600 border border-blue-100'
                       : 'text-gray-500 hover:text-blue-500'
-                  }`}
+                    }`}
                 >
                   <List size={14} />
                   리스트

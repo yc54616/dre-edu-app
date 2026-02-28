@@ -10,65 +10,67 @@ import {
 } from '@/lib/constants/material';
 
 interface MaterialFormData {
-  materialId?:     string;
-  curriculum:      MaterialCurriculum;
-  sourceCategory:  MaterialSourceCategory;
-  type:            string;
-  publisher:       string;
-  bookTitle:       string;
-  ebookDescription:string;
-  ebookToc:        string;
-  subject:         string;
-  topic:           string;
-  schoolLevel:     string;
-  gradeNumber:     number;
-  year:            number;
-  semester:        number;
-  period:          string;
-  schoolName:      string;
-  regionSido:      string;
-  regionGugun:     string;
-  difficulty:      number;
-  difficultyRating:number;
-  fileType:        string;
-  targetAudience:  string;
+  materialId?: string;
+  curriculum: MaterialCurriculum;
+  sourceCategory: MaterialSourceCategory;
+  type: string;
+  publisher: string;
+  bookTitle: string;
+  ebookDescription: string;
+  ebookToc: string;
+  subject: string;
+  topic: string;
+  schoolLevel: string;
+  gradeNumber: number;
+  year: number;
+  semester: number;
+  period: string;
+  schoolName: string;
+  regionSido: string;
+  regionGugun: string;
+  difficulty: number;
+  difficultyRating: number;
+  fileType: string;
+  targetAudience: string;
   teacherProductType: string;
   teacherClassPrepType: string;
-  isFree:          boolean;
-  priceProblem:    number;
-  priceEtc:        number;
-  isActive?:       boolean;
-  previewImages?:  string[];
+  isFree: boolean;
+  priceProblem: number;
+  priceEtc: number;
+  hasAnswerInProblem?: boolean;
+  isActive?: boolean;
+  previewImages?: string[];
 }
 
 const defaultForm: MaterialFormData = {
-  curriculum:     'revised_2022',
+  curriculum: 'revised_2022',
   sourceCategory: 'school_exam',
-  type:           MATERIAL_TYPES_BY_SOURCE.school_exam[0],
-  publisher:      '',
-  bookTitle:      '',
-  ebookDescription:'',
-  ebookToc:       '',
-  subject:        '',
-  topic:          '',
-  schoolLevel:    '고등학교',
-  gradeNumber:    2,
-  year:           new Date().getFullYear(),
-  semester:       1,
-  period:         '',
-  schoolName:     '',
-  regionSido:     '',
-  regionGugun:    '',
-  difficulty:      3,
-  difficultyRating:1000,
-  fileType:        'pdf',
+  type: MATERIAL_TYPES_BY_SOURCE.school_exam[0],
+  publisher: '',
+  bookTitle: '',
+  ebookDescription: '',
+  ebookToc: '',
+  subject: '',
+  topic: '',
+  schoolLevel: '고등학교',
+  gradeNumber: 2,
+  year: new Date().getFullYear(),
+  semester: 1,
+  period: '',
+  schoolName: '',
+  regionSido: '',
+  regionGugun: '',
+  difficulty: 3,
+  difficultyRating: 1000,
+  fileType: 'pdf',
   targetAudience: 'student',
   teacherProductType: '',
   teacherClassPrepType: '',
-  isFree:         false,
-  priceProblem:   0,
-  priceEtc:       0,
-  isActive:       true,
+  isFree: false,
+  priceProblem: 0,
+  priceEtc: 0,
+  hasAnswerInProblem: false,
+  isActive: true,
 };
 
 export default function MaterialFormWithPreview({

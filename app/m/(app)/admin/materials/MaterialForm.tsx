@@ -26,70 +26,72 @@ import {
 import { Save, Loader2, Upload, X, FileText, Image as ImageIcon, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface MaterialFormData {
-  materialId?:     string;
-  curriculum:      MaterialCurriculum;
-  sourceCategory:  MaterialSourceCategory;
-  type:            string;
-  publisher:       string;
-  bookTitle:       string;
-  ebookDescription:string;
-  ebookToc:        string;
-  subject:         string;
-  topic:           string;
-  schoolLevel:     string;
-  gradeNumber:     number;
-  year:            number;
-  semester:        number;
-  period:          string;
-  schoolName:      string;
-  regionSido:      string;
-  regionGugun:     string;
-  difficulty:      number;
-  difficultyRating:number;
-  fileType:        string;
-  targetAudience:  string;
+  materialId?: string;
+  curriculum: MaterialCurriculum;
+  sourceCategory: MaterialSourceCategory;
+  type: string;
+  publisher: string;
+  bookTitle: string;
+  ebookDescription: string;
+  ebookToc: string;
+  subject: string;
+  topic: string;
+  schoolLevel: string;
+  gradeNumber: number;
+  year: number;
+  semester: number;
+  period: string;
+  schoolName: string;
+  regionSido: string;
+  regionGugun: string;
+  difficulty: number;
+  difficultyRating: number;
+  fileType: string;
+  targetAudience: string;
   teacherProductType: string;
   teacherClassPrepType: string;
-  isFree:          boolean;
-  priceProblem:    number;
-  priceEtc:        number;
-  isActive?:       boolean;
-  problemFile?:    string | null;
-  etcFile?:        string | null;
-  previewImages?:  string[];
+  isFree: boolean;
+  priceProblem: number;
+  priceEtc: number;
+  isActive?: boolean;
+  problemFile?: string | null;
+  hasAnswerInProblem?: boolean;
+  etcFile?: string | null;
+  previewImages?: string[];
 }
 
 const defaultForm: MaterialFormData = {
-  curriculum:     'revised_2022',
+  curriculum: 'revised_2022',
   sourceCategory: 'school_exam',
-  type:           MATERIAL_TYPES_BY_SOURCE.school_exam[0],
-  publisher:      '',
-  bookTitle:      '',
-  ebookDescription:'',
-  ebookToc:       '',
-  subject:        '',
-  topic:          '',
-  schoolLevel:    '고등학교',
-  gradeNumber:    2,
-  year:           new Date().getFullYear(),
-  semester:       1,
-  period:         '',
-  schoolName:     '',
-  regionSido:     '',
-  regionGugun:    '',
-  difficulty:     3,
+  type: MATERIAL_TYPES_BY_SOURCE.school_exam[0],
+  publisher: '',
+  bookTitle: '',
+  ebookDescription: '',
+  ebookToc: '',
+  subject: '',
+  topic: '',
+  schoolLevel: '고등학교',
+  gradeNumber: 2,
+  year: new Date().getFullYear(),
+  semester: 1,
+  period: '',
+  schoolName: '',
+  regionSido: '',
+  regionGugun: '',
+  difficulty: 3,
   difficultyRating: 1000,
-  fileType:       'pdf',
+  fileType: 'pdf',
   targetAudience: 'student',
   teacherProductType: '',
   teacherClassPrepType: '',
-  isFree:         false,
-  priceProblem:   0,
-  priceEtc:       0,
-  isActive:       true,
-  problemFile:    null,
-  etcFile:        null,
-  previewImages:  [],
+  isFree: false,
+  priceProblem: 0,
+  priceEtc: 0,
+  isActive: true,
+  problemFile: null,
+  hasAnswerInProblem: false,
+  etcFile: null,
+  previewImages: [],
 };
 
 const SOURCE_OPTIONS = [
@@ -118,12 +120,12 @@ export default function MaterialForm({
 }) {
   const router = useRouter();
   const [form, setForm] = useState<MaterialFormData>(initialData || defaultForm);
-  const [saving,           setSaving]           = useState(false);
-  const [error,            setError]            = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [uploadingProblem, setUploadingProblem] = useState(false);
-  const [uploadingEtc,     setUploadingEtc]     = useState(false);
+  const [uploadingEtc, setUploadingEtc] = useState(false);
   const [uploadingPreview, setUploadingPreview] = useState(false);
-  const [previewNotice,    setPreviewNotice]    = useState<string>('');
+  const [previewNotice, setPreviewNotice] = useState<string>('');
   const [previewNoticeTone, setPreviewNoticeTone] = useState<'success' | 'warning'>('success');
 
   const parseJsonSafely = <T,>(raw: string): T | null => {
@@ -139,7 +141,7 @@ export default function MaterialForm({
     const fd = new FormData();
     fd.append('file', file);
     fd.append('fileRole', fileRole);
-    const res  = await fetch('/api/m/admin/upload', { method: 'POST', body: fd });
+    const res = await fetch('/api/m/admin/upload', { method: 'POST', body: fd });
     const data = await res.json() as { filename: string; previews?: string[]; previewWarning?: string };
     if (!res.ok) throw new Error((data as unknown as { error: string }).error || '업로드 실패');
     return data;
@@ -187,8 +189,8 @@ export default function MaterialForm({
       } else {
         if (fileRole === 'problem') setUploadingProblem(true);
         else setUploadingEtc(true);
-        const res  = await uploadFile(fileArray[0], fileRole);
-        let next   = { ...form, [fileRole === 'problem' ? 'problemFile' : 'etcFile']: res.filename };
+        const res = await uploadFile(fileArray[0], fileRole);
+        let next = { ...form, [fileRole === 'problem' ? 'problemFile' : 'etcFile']: res.filename };
 
         // 자동 생성된 미리보기가 있고 현재 미리보기가 없을 때 자동 적용
         if (res.previews && res.previews.length > 0 && (form.previewImages || []).length === 0) {
@@ -369,19 +371,20 @@ export default function MaterialForm({
     setSaving(true);
     setError('');
 
-    const url    = mode === 'create' ? '/api/m/materials' : `/api/m/materials/${form.materialId}`;
+    const url = mode === 'create' ? '/api/m/materials' : `/api/m/materials/${form.materialId}`;
     const method = mode === 'create' ? 'POST' : 'PUT';
 
     try {
-      const res  = await fetch(url, {
+      const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           teacherProductType: '',
           teacherClassPrepType: '',
-          problemFile:   form.problemFile   ?? null,
-          etcFile:       form.etcFile       ?? null,
+          problemFile: form.problemFile ?? null,
+          hasAnswerInProblem: form.hasAnswerInProblem ?? false,
+          etcFile: form.etcFile ?? null,
           previewImages: (form.previewImages ?? []).slice(0, MAX_PREVIEW_IMAGES),
         }),
       });
@@ -453,11 +456,10 @@ export default function MaterialForm({
                   key={opt.value}
                   type="button"
                   onClick={() => set('sourceCategory', opt.value)}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
-                    form.sourceCategory === opt.value
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${form.sourceCategory === opt.value
                       ? 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
                       : 'border-gray-200 text-gray-400 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   {opt.label}
                 </button>
@@ -480,11 +482,10 @@ export default function MaterialForm({
                     key={curriculum}
                     type="button"
                     onClick={() => set('curriculum', curriculum)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
-                      form.curriculum === curriculum
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${form.curriculum === curriculum
                         ? 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
                         : 'border-gray-200 text-gray-400 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     {MATERIAL_CURRICULUM_LABEL[curriculum]}
                   </button>
@@ -558,13 +559,12 @@ export default function MaterialForm({
                   key={ft}
                   type="button"
                   onClick={() => setFileType(ft)}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
-                    form.fileType === ft
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${form.fileType === ft
                       ? ft === 'hwp'
                         ? 'border-orange-400 bg-orange-50 text-orange-600'
                         : 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
                       : 'border-gray-200 text-gray-400 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   {FILE_TYPE_LABEL[ft]}
                 </button>
@@ -580,8 +580,7 @@ export default function MaterialForm({
                   type="button"
                   onClick={() => setTargetAudience(ta)}
                   disabled={ta === 'student' && form.fileType === 'hwp'}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${
-                    ta === 'student' && form.fileType === 'hwp'
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${ta === 'student' && form.fileType === 'hwp'
                       ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-300'
                       : form.targetAudience === ta
                         ? ta === 'teacher'
@@ -590,7 +589,7 @@ export default function MaterialForm({
                             ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
                             : 'border-violet-400 bg-violet-50 text-violet-700'
                         : 'border-gray-200 text-gray-400 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   {TARGET_AUDIENCE_LABEL[ta]}
                 </button>
@@ -599,11 +598,10 @@ export default function MaterialForm({
           </FormField>
         </div>
 
-        <div className={`text-xs px-3 py-2 rounded-lg ${
-          form.fileType === 'hwp' || form.targetAudience === 'teacher'
+        <div className={`text-xs px-3 py-2 rounded-lg ${form.fileType === 'hwp' || form.targetAudience === 'teacher'
             ? 'bg-orange-50 text-orange-600'
             : 'bg-blue-50 text-[var(--color-dre-blue)]'
-        }`}>
+          }`}>
           {audienceGuideText}
         </div>
       </section>
@@ -825,6 +823,21 @@ export default function MaterialForm({
               <input type="file" accept=".pdf,.hwp,.hwpx" className="hidden" disabled={uploadingProblem} onChange={(e) => handleFileChange(e, 'problem')} />
             </label>
           )}
+          {/* 정답 포함 토글 */}
+          <div className="mt-3 flex items-center justify-between bg-gray-50/80 border border-gray-100/80 rounded-xl px-4 py-3">
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-gray-700">정답/해설 포함 자료</span>
+              <span className="text-[11px] text-gray-500 mt-0.5">문제 파일 내에 정답이나 해설이 함께 들어있는 경우 체크해 주세요.</span>
+            </div>
+            <label className="flex items-center cursor-pointer ml-3">
+              <div
+                onClick={() => set('hasAnswerInProblem', !form.hasAnswerInProblem)}
+                className={`w-11 h-6 rounded-full transition-colors relative ${form.hasAnswerInProblem ? 'bg-[var(--color-dre-blue)]' : 'bg-gray-200'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow-sm ${form.hasAnswerInProblem ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* 기타 파일 (답지 등) */}
@@ -873,11 +886,10 @@ export default function MaterialForm({
 
           {/* 자동 생성 알림 */}
           {previewNotice && (
-            <div className={`flex items-center gap-2 rounded-xl px-3 py-2.5 mb-3 ${
-              previewNoticeTone === 'success'
+            <div className={`flex items-center gap-2 rounded-xl px-3 py-2.5 mb-3 ${previewNoticeTone === 'success'
                 ? 'bg-emerald-50 border border-emerald-100'
                 : 'bg-amber-50 border border-amber-100'
-            }`}>
+              }`}>
               {previewNoticeTone === 'success' ? (
                 <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
               ) : (
@@ -907,13 +919,12 @@ export default function MaterialForm({
                 </button>
               </div>
             ))}
-            <label className={`w-20 h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-all ${
-              uploadingPreview
+            <label className={`w-20 h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-all ${uploadingPreview
                 ? 'border-emerald-300 bg-emerald-50 cursor-wait'
                 : (form.previewImages || []).length >= MAX_PREVIEW_IMAGES
                   ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
                   : 'cursor-pointer border-gray-200 hover:border-[var(--color-dre-blue)]/50 hover:bg-gray-50'
-            }`}>
+              }`}>
               {uploadingPreview ? <Loader2 size={16} className="text-emerald-500 animate-spin" /> : <ImageIcon size={16} className="text-gray-400" />}
               <span className="text-[10px] text-gray-400 font-medium text-center leading-tight px-1">
                 {uploadingPreview ? '업로드 중' : (form.previewImages || []).length >= MAX_PREVIEW_IMAGES ? '최대\n2장' : '이미지\n추가'}
@@ -976,5 +987,5 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-const inputClass  = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-[15px] text-gray-900 focus:border-[var(--color-dre-blue)] focus:ring-4 focus:ring-blue-500/15 outline-none transition-all bg-white';
+const inputClass = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-[15px] text-gray-900 focus:border-[var(--color-dre-blue)] focus:ring-4 focus:ring-blue-500/15 outline-none transition-all bg-white';
 const selectClass = `${inputClass} cursor-pointer`;
