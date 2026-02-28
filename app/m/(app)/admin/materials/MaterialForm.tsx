@@ -457,8 +457,8 @@ export default function MaterialForm({
                   type="button"
                   onClick={() => set('sourceCategory', opt.value)}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${form.sourceCategory === opt.value
-                      ? 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
-                      : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                    ? 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
+                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
                     }`}
                 >
                   {opt.label}
@@ -483,8 +483,8 @@ export default function MaterialForm({
                     type="button"
                     onClick={() => set('curriculum', curriculum)}
                     className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${form.curriculum === curriculum
-                        ? 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
-                        : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                      ? 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
+                      : 'border-gray-200 text-gray-400 hover:border-gray-300'
                       }`}
                   >
                     {MATERIAL_CURRICULUM_LABEL[curriculum]}
@@ -560,10 +560,10 @@ export default function MaterialForm({
                   type="button"
                   onClick={() => setFileType(ft)}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${form.fileType === ft
-                      ? ft === 'hwp'
-                        ? 'border-orange-400 bg-orange-50 text-orange-600'
-                        : 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
-                      : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                    ? ft === 'hwp'
+                      ? 'border-orange-400 bg-orange-50 text-orange-600'
+                      : 'border-[var(--color-dre-blue)] bg-blue-50 text-[var(--color-dre-blue)]'
+                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
                     }`}
                 >
                   {FILE_TYPE_LABEL[ft]}
@@ -581,14 +581,14 @@ export default function MaterialForm({
                   onClick={() => setTargetAudience(ta)}
                   disabled={ta === 'student' && form.fileType === 'hwp'}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all ${ta === 'student' && form.fileType === 'hwp'
-                      ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-300'
-                      : form.targetAudience === ta
-                        ? ta === 'teacher'
-                          ? 'border-amber-400 bg-amber-50 text-amber-700'
-                          : ta === 'student'
-                            ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                            : 'border-violet-400 bg-violet-50 text-violet-700'
-                        : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                    ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-300'
+                    : form.targetAudience === ta
+                      ? ta === 'teacher'
+                        ? 'border-amber-400 bg-amber-50 text-amber-700'
+                        : ta === 'student'
+                          ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                          : 'border-violet-400 bg-violet-50 text-violet-700'
+                      : 'border-gray-200 text-gray-400 hover:border-gray-300'
                     }`}
                 >
                   {TARGET_AUDIENCE_LABEL[ta]}
@@ -599,8 +599,8 @@ export default function MaterialForm({
         </div>
 
         <div className={`text-xs px-3 py-2 rounded-lg ${form.fileType === 'hwp' || form.targetAudience === 'teacher'
-            ? 'bg-orange-50 text-orange-600'
-            : 'bg-blue-50 text-[var(--color-dre-blue)]'
+          ? 'bg-orange-50 text-orange-600'
+          : 'bg-blue-50 text-[var(--color-dre-blue)]'
           }`}>
           {audienceGuideText}
         </div>
@@ -823,6 +823,7 @@ export default function MaterialForm({
               <input type="file" accept=".pdf,.hwp,.hwpx" className="hidden" disabled={uploadingProblem} onChange={(e) => handleFileChange(e, 'problem')} />
             </label>
           )}
+
           {/* 정답 포함 토글 */}
           <div className="mt-3 flex items-center justify-between bg-gray-50/80 border border-gray-100/80 rounded-xl px-4 py-3">
             <div className="flex flex-col">
@@ -887,8 +888,8 @@ export default function MaterialForm({
           {/* 자동 생성 알림 */}
           {previewNotice && (
             <div className={`flex items-center gap-2 rounded-xl px-3 py-2.5 mb-3 ${previewNoticeTone === 'success'
-                ? 'bg-emerald-50 border border-emerald-100'
-                : 'bg-amber-50 border border-amber-100'
+              ? 'bg-emerald-50 border border-emerald-100'
+              : 'bg-amber-50 border border-amber-100'
               }`}>
               {previewNoticeTone === 'success' ? (
                 <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
@@ -920,10 +921,10 @@ export default function MaterialForm({
               </div>
             ))}
             <label className={`w-20 h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5 transition-all ${uploadingPreview
-                ? 'border-emerald-300 bg-emerald-50 cursor-wait'
-                : (form.previewImages || []).length >= MAX_PREVIEW_IMAGES
-                  ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
-                  : 'cursor-pointer border-gray-200 hover:border-[var(--color-dre-blue)]/50 hover:bg-gray-50'
+              ? 'border-emerald-300 bg-emerald-50 cursor-wait'
+              : (form.previewImages || []).length >= MAX_PREVIEW_IMAGES
+                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                : 'cursor-pointer border-gray-200 hover:border-[var(--color-dre-blue)]/50 hover:bg-gray-50'
               }`}>
               {uploadingPreview ? <Loader2 size={16} className="text-emerald-500 animate-spin" /> : <ImageIcon size={16} className="text-gray-400" />}
               <span className="text-[10px] text-gray-400 font-medium text-center leading-tight px-1">
