@@ -34,12 +34,12 @@ export default async function MaterialPage({ params }: { params: Promise<{ mater
     existingPageCount > 0 ? existingPageCount : await getMaterialFilePageCount(previewSourceFile);
 
   if (resolvedPageCount && resolvedPageCount > 0 && existingPageCount !== resolvedPageCount) {
-    await Material.updateOne({ _id: material._id }, { $set: { pageCount: resolvedPageCount } }).catch(() => {});
+    await Material.updateOne({ _id: material._id }, { $set: { pageCount: resolvedPageCount } }).catch(() => { });
   }
 
   const session = await auth();
-  const user    = session?.user as { id?: string; role?: string } | undefined;
-  const userId  = user?.id ?? null;
+  const user = session?.user as { id?: string; role?: string } | undefined;
+  const userId = user?.id ?? null;
 
   // 구매 여부 조회 (유료 자료 + 로그인 상태)
   let purchasedFileTypes: string[] = [];
@@ -65,15 +65,15 @@ export default async function MaterialPage({ params }: { params: Promise<{ mater
   let existingFeedback: { difficulty: string; ratingChange: number; newRating: number } | null = null;
   if (userId) {
     const conn = await connectMongo();
-    const col  = conn.connection.db!.collection('userskills');
-    const doc  = await col.findOne({ userId: new mongoose.Types.ObjectId(userId) });
+    const col = conn.connection.db!.collection('userskills');
+    const doc = await col.findOne({ userId: new mongoose.Types.ObjectId(userId) });
     const feedbackHistory = (doc?.feedbackHistory ?? {}) as Record<string, { difficulty: string; ratingChange: number; newRating: number }>;
     const record = feedbackHistory[materialId] ?? null;
     if (record) {
       existingFeedback = {
-        difficulty:   record.difficulty,
+        difficulty: record.difficulty,
         ratingChange: record.ratingChange,
-        newRating:    record.newRating,
+        newRating: record.newRating,
       };
     }
   }
@@ -83,20 +83,20 @@ export default async function MaterialPage({ params }: { params: Promise<{ mater
   if (related.length === 0) {
     const fallbackFilter = resolvedSourceCategory === 'ebook'
       ? {
-          $or: [
-            { sourceCategory: 'ebook' },
-            { type: '전자책' },
-            { subject: '전자책' },
-          ],
-          isActive: true,
-          materialId: { $ne: material.materialId },
-        }
+        $or: [
+          { sourceCategory: 'ebook' },
+          { type: '전자책' },
+          { subject: '전자책' },
+        ],
+        isActive: true,
+        materialId: { $ne: material.materialId },
+      }
       : {
-          isActive: true,
-          subject: material.subject,
-          materialId: { $ne: material.materialId },
-          difficulty: { $gte: material.difficulty - 1, $lte: material.difficulty + 1 },
-        };
+        isActive: true,
+        subject: material.subject,
+        materialId: { $ne: material.materialId },
+        difficulty: { $gte: material.difficulty - 1, $lte: material.difficulty + 1 },
+      };
 
     related = await Material.find(fallbackFilter)
       .sort({ downloadCount: -1 })
@@ -107,61 +107,62 @@ export default async function MaterialPage({ params }: { params: Promise<{ mater
   return (
     <MaterialDetail
       material={{
-        materialId:      material.materialId,
-        sourceCategory:  resolvedSourceCategory,
-        type:            material.type,
-        publisher:       material.publisher || '',
-        bookTitle:       material.bookTitle || '',
+        materialId: material.materialId,
+        sourceCategory: resolvedSourceCategory,
+        type: material.type,
+        publisher: material.publisher || '',
+        bookTitle: material.bookTitle || '',
         ebookDescription: material.ebookDescription || '',
-        ebookToc:        Array.isArray(material.ebookToc) ? material.ebookToc : [],
-        subject:         material.subject,
-        topic:           material.topic,
-        schoolLevel:     material.schoolLevel,
-        gradeNumber:     material.gradeNumber,
-        year:            material.year,
-        semester:        material.semester,
-        period:          material.period,
-        schoolName:      material.schoolName,
-        difficulty:      material.difficulty,
+        ebookToc: Array.isArray(material.ebookToc) ? material.ebookToc : [],
+        subject: material.subject,
+        topic: material.topic,
+        schoolLevel: material.schoolLevel,
+        gradeNumber: material.gradeNumber,
+        year: material.year,
+        semester: material.semester,
+        period: material.period,
+        schoolName: material.schoolName,
+        difficulty: material.difficulty,
         difficultyLabel: DIFFICULTY_LABEL[material.difficulty] || '표준',
         difficultyColor: DIFFICULTY_COLOR[material.difficulty] || 'blue',
-        fileType:        material.fileType || 'pdf',
-        targetAudience:  material.targetAudience || 'student',
-        isFree:          material.isFree,
-        priceProblem:    material.priceProblem,
-        priceEtc:        material.priceEtc,
-        previewImages:   material.previewImages,
-        pageCount:       resolvedPageCount ?? 0,
-        viewCount:       material.viewCount,
-        downloadCount:   material.downloadCount,
-        problemFile:     material.problemFile  || null,
-        etcFile:         material.etcFile      || null,
+        fileType: material.fileType || 'pdf',
+        targetAudience: material.targetAudience || 'student',
+        isFree: material.isFree,
+        priceProblem: material.priceProblem,
+        priceEtc: material.priceEtc,
+        previewImages: material.previewImages,
+        pageCount: resolvedPageCount ?? 0,
+        viewCount: material.viewCount,
+        downloadCount: material.downloadCount,
+        problemFile: material.problemFile || null,
+        etcFile: material.etcFile || null,
+        hasAnswerInProblem: !!material.hasAnswerInProblem,
       }}
       isLoggedIn={!!userId}
       purchasedFileTypes={purchasedFileTypes}
       existingFeedback={existingFeedback}
       defaultRelatedViewMode={isMobileDevice ? 'list' : 'grid'}
       relatedMaterials={related.map((r) => ({
-        materialId:      r.materialId,
-        sourceCategory:  resolveSourceCategory(r),
-        subject:         r.subject,
-        topic:           r.topic,
-        type:            r.type,
-        publisher:       r.publisher || '',
-        bookTitle:       r.bookTitle || '',
-        schoolName:      r.schoolName,
-        year:            r.year,
-        gradeNumber:     r.gradeNumber,
-        semester:        r.semester,
-        difficulty:      r.difficulty,
+        materialId: r.materialId,
+        sourceCategory: resolveSourceCategory(r),
+        subject: r.subject,
+        topic: r.topic,
+        type: r.type,
+        publisher: r.publisher || '',
+        bookTitle: r.bookTitle || '',
+        schoolName: r.schoolName,
+        year: r.year,
+        gradeNumber: r.gradeNumber,
+        semester: r.semester,
+        difficulty: r.difficulty,
         difficultyLabel: DIFFICULTY_LABEL[r.difficulty] || '표준',
         difficultyColor: DIFFICULTY_COLOR[r.difficulty] || 'blue',
-        isFree:          r.isFree,
-        priceProblem:    r.priceProblem,
-        priceEtc:        r.priceEtc,
-        targetAudience:  r.targetAudience || 'student',
-        previewImages:   r.previewImages || [],
-        downloadCount:   r.downloadCount,
+        isFree: r.isFree,
+        priceProblem: r.priceProblem,
+        priceEtc: r.priceEtc,
+        targetAudience: r.targetAudience || 'student',
+        previewImages: r.previewImages || [],
+        downloadCount: r.downloadCount,
       }))}
     />
   );
