@@ -430,21 +430,21 @@ export default async function TeacherMaterialsPage({
             </div>
 
             <div className="hidden md:block">
-              <div className="m-detail-card overflow-hidden overflow-x-auto">
-                <table className="w-full text-sm min-w-[720px]">
+              <div className="m-detail-card overflow-hidden overflow-x-auto bg-white">
+                <table className="w-full min-w-[980px] text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="text-left px-7 py-4 text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">자료</th>
-                      <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">유형 / 난이도</th>
-                      <th className="text-left px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">형식 / 대상</th>
-                      <th className="text-center px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">조회 / 다운</th>
-                      <th className="text-center px-5 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">상태</th>
+                      <th className="w-[44%] text-left px-7 py-4 text-[11px] font-extrabold text-gray-500 uppercase tracking-widest">자료</th>
+                      <th className="w-[22%] whitespace-nowrap text-left px-5 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">유형 / 난이도</th>
+                      <th className="w-[14%] whitespace-nowrap text-left px-5 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">형식 / 대상</th>
+                      <th className="w-[10%] whitespace-nowrap text-center px-5 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">조회 / 다운</th>
+                      <th className="w-[10%] whitespace-nowrap text-center px-5 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">상태</th>
                       {isAdmin && (
-                        <th className="text-right px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">관리</th>
+                        <th className="whitespace-nowrap text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">관리</th>
                       )}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-gray-100">
                     {materials.map((m) => {
                       const dc = DIFFICULTY_COLOR[m.difficulty] || 'blue';
                       const title = buildMaterialTitle(m);
@@ -460,17 +460,17 @@ export default async function TeacherMaterialsPage({
                       const taLabel = TARGET_AUDIENCE_LABEL[m.targetAudience] || m.targetAudience || '학생용';
 
                       return (
-                        <tr key={m.materialId} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4">
+                        <tr key={m.materialId} className="align-top transition-colors hover:bg-slate-50/70">
+                          <td className="px-6 py-3.5">
                             <div className="flex items-center gap-4">
-                              <div className="w-11 rounded-xl bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center" style={{ height: '52px' }}>
+                              <div className="w-12 rounded-xl bg-gray-100 overflow-hidden shrink-0 flex items-center justify-center" style={{ height: '56px' }}>
                                 {m.previewImages?.[0] ? (
                                   <Image
                                     src={`/uploads/previews/${m.previewImages[0]}`}
                                     alt=""
-                                    width={44}
-                                    height={52}
-                                    className="h-full w-full object-cover"
+                                    width={48}
+                                    height={56}
+                                    className="h-full w-full object-contain bg-white"
                                   />
                                 ) : (
                                   <span className={`text-[9px] font-extrabold ${m.fileType === 'hwp' ? 'text-amber-400' : 'text-blue-500'}`}>
@@ -479,40 +479,42 @@ export default async function TeacherMaterialsPage({
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="font-bold text-gray-900 truncate max-w-[220px] text-base">{title || m.subject}</p>
-                                <p className="text-sm text-gray-400 mt-0.5">{subline || '-'}</p>
+                                <p className="max-w-[420px] truncate text-[15px] font-extrabold text-gray-900">{title || m.subject}</p>
+                                <p className="mt-0.5 max-w-[420px] text-[13px] text-gray-500">{subline || '-'}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-5 py-4">
-                            <div className="flex flex-col gap-1.5">
-                              <span className="text-sm text-gray-600 font-medium">{m.type}</span>
-                              <span className="text-xs font-bold px-2.5 py-1 rounded-full w-fit bg-gray-100 text-gray-600">
+                          <td className="px-5 py-3.5">
+                            <div className="flex max-w-[240px] flex-wrap gap-1.5">
+                              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
+                                {m.type}
+                              </span>
+                              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600">
                                 {sourceLabel}
                               </span>
-                              <span className="text-xs font-bold px-2.5 py-1 rounded-full w-fit bg-blue-50 text-blue-600">
+                              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600">
                                 {curriculumLabel}
                               </span>
-                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${getDifficultyBadgeClass(dc, 'mixedTint')}`}>
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${getDifficultyBadgeClass(dc, 'mixedTint')}`}>
                                 {DIFFICULTY_LABEL[m.difficulty]}
                               </span>
                             </div>
                           </td>
-                          <td className="px-5 py-4">
-                            <div className="flex flex-col gap-1.5">
-                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${m.fileType === 'hwp' ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'
+                          <td className="px-5 py-3.5">
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${m.fileType === 'hwp' ? 'bg-amber-100 text-amber-600' : 'bg-sky-100 text-sky-600'
                                 }`}>{ftLabel}</span>
-                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full w-fit ${m.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${m.targetAudience === 'teacher' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-600'
                                 }`}>{taLabel}</span>
                             </div>
                           </td>
-                          <td className="px-5 py-4 text-center">
-                            <div className="flex items-center justify-center gap-3 text-sm text-gray-400 font-medium">
-                              <span className="flex items-center gap-1"><Eye size={13} />{m.viewCount}</span>
-                              <span className="flex items-center gap-1"><Download size={13} />{m.downloadCount}</span>
+                          <td className="px-5 py-3.5 text-center">
+                            <div className="flex items-center justify-center gap-3 text-sm font-semibold text-gray-500">
+                              <span className="inline-flex items-center gap-1"><Eye size={13} />{m.viewCount}</span>
+                              <span className="inline-flex items-center gap-1"><Download size={13} />{m.downloadCount}</span>
                             </div>
                           </td>
-                          <td className="px-5 py-4 text-center">
+                          <td className="px-5 py-3.5 text-center">
                             {m.isActive ? (
                               <span className="inline-flex items-center gap-1.5 text-[12px] font-extrabold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">
                                 <ToggleRight size={15} />공개
@@ -524,7 +526,7 @@ export default async function TeacherMaterialsPage({
                             )}
                           </td>
                           {isAdmin && (
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-3.5">
                               <div className="flex items-center justify-end gap-2">
                                 <PreviewModal material={{
                                   materialId: m.materialId, sourceCategory: resolvedSourceCategory, type: m.type,
