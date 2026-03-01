@@ -923,7 +923,7 @@ export default function MaterialDetail({
                     }}
                   >
                     <div
-                      className="relative overflow-hidden rounded-xl border border-white/20 shadow-2xl"
+                      className="relative shrink-0 overflow-hidden rounded-xl border border-white/20 shadow-2xl"
                       style={{
                         width: `${previewRenderWidth}px`,
                         height: `${previewRenderHeight}px`,
