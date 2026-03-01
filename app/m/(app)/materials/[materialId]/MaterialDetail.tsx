@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -307,8 +307,10 @@ export default function MaterialDetail({
   const isMobilePreviewViewport = previewViewportSize.width < 640;
   const shouldCenterPreviewX = previewRenderWidth <= availableViewportWidth;
   const shouldCenterPreviewY = !isMobilePreviewViewport && previewRenderHeight <= availableViewportHeight;
-  const clampPreviewZoom = (value: number) => Math.min(3, Math.max(1, Math.round(value * 100) / 100));
-  const stepPreviewZoom = (delta: number) => setPreviewZoom((prev) => clampPreviewZoom(prev + delta));
+  const clampPreviewZoom = useCallback((value: number) => Math.min(3, Math.max(1, Math.round(value * 100) / 100)), []);
+  const stepPreviewZoom = useCallback((delta: number) => {
+    setPreviewZoom((prev) => clampPreviewZoom(prev + delta));
+  }, [clampPreviewZoom]);
 
   useEffect(() => {
     if (!previewModalOpen) return;
@@ -330,12 +332,12 @@ export default function MaterialDetail({
       }
 
       if (event.key === '+' || event.key === '=') {
-        setPreviewZoom((prev) => Math.min(3, Math.max(1, Math.round((prev + 0.25) * 100) / 100)));
+        stepPreviewZoom(0.25);
         return;
       }
 
       if (event.key === '-' || event.key === '_') {
-        setPreviewZoom((prev) => Math.min(3, Math.max(1, Math.round((prev - 0.25) * 100) / 100)));
+        stepPreviewZoom(-0.25);
         return;
       }
 
@@ -352,7 +354,7 @@ export default function MaterialDetail({
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [previewModalOpen, material.previewImages.length]);
+  }, [previewModalOpen, material.previewImages.length, stepPreviewZoom]);
 
   useEffect(() => {
     if (!previewModalOpen) return;

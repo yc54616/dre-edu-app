@@ -45,7 +45,7 @@ export async function PATCH(req: NextRequest) {
     let body;
     try {
         body = await req.json();
-    } catch (err) {
+    } catch {
         return NextResponse.json({ error: '요청 형식이 올바르지 않습니다.' }, { status: 400 });
     }
 
@@ -98,8 +98,7 @@ export async function PATCH(req: NextRequest) {
             };
         }
     } else {
-        // @ts-ignore
-        user.consents.marketing = undefined;
+        user.consents.marketing = null;
     }
 
     if (user.isUnder14AtSignup) {

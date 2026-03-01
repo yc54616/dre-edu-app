@@ -116,7 +116,7 @@ export default function PreviewModal({ material }: Props) {
                             alt={`미리보기 ${imgIdx + 1}`}
                             fill
                             sizes="(max-width: 1024px) 100vw, 55vw"
-                            className="object-cover"
+                            className="object-contain bg-white"
                           />
                           {!material.isFree && (
                             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/90" />

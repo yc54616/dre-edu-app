@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -54,16 +54,18 @@ export default function TopNav({
   pendingScheduleCount = 0,
 }: Props) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileOpenPath, setMobileOpenPath] = useState<string | null>(null);
+  const [userMenuOpenPath, setUserMenuOpenPath] = useState<string | null>(null);
+  const [moreOpenPath, setMoreOpenPath] = useState<string | null>(null);
+  const mobileOpen = mobileOpenPath === pathname;
+  const userMenuOpen = userMenuOpenPath === pathname;
+  const moreOpen = moreOpenPath === pathname;
   const showDesktopPolicyLinks = !isAdmin;
-
-  useEffect(() => {
-    setMobileOpen(false);
-    setUserMenuOpen(false);
-    setMoreOpen(false);
-  }, [pathname]);
+  const openMobileMenu = () => setMobileOpenPath(pathname);
+  const closeMobileMenu = () => setMobileOpenPath(null);
+  const toggleUserMenu = () => setUserMenuOpenPath((prev) => (prev === pathname ? null : pathname));
+  const closeUserMenu = () => setUserMenuOpenPath(null);
+  const toggleMoreMenu = () => setMoreOpenPath((prev) => (prev === pathname ? null : pathname));
 
   const navItems = useMemo<NavItem[]>(
     () => (isAdmin
@@ -144,7 +146,7 @@ export default function TopNav({
             {/* Left: Logo */}
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setMobileOpen(true)}
+                onClick={openMobileMenu}
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-[var(--color-dre-blue)] focus:outline-none lg:hidden"
                 aria-label="메뉴 열기"
               >
@@ -171,7 +173,7 @@ export default function TopNav({
                 {/* 더보기 토글 버튼 */}
                 {hasSecondary && (
                   <button
-                    onClick={() => setMoreOpen((v) => !v)}
+                    onClick={toggleMoreMenu}
                     className={`shrink-0 flex items-center gap-1 whitespace-nowrap rounded-md px-2.5 py-2.5 text-[13px] font-bold transition-colors xl:px-3 xl:text-sm ${moreOpen || secondaryHasActive
                       ? 'text-[var(--color-dre-blue)]'
                       : 'text-gray-700 hover:text-[var(--color-dre-blue)]'
@@ -193,7 +195,7 @@ export default function TopNav({
               {/* User menu */}
               <div className="relative">
                 <button
-                  onClick={() => setUserMenuOpen((v) => !v)}
+                  onClick={toggleUserMenu}
                   className="flex max-w-[128px] items-center gap-2 rounded-full bg-[var(--color-dre-blue)] px-3 py-2 text-sm font-bold text-white shadow-md transition-all hover:scale-105 hover:bg-blue-800 hover:shadow-lg"
                 >
                   <span className="truncate">{userName}</span>
@@ -208,7 +210,7 @@ export default function TopNav({
                     <div className="py-2">
                       <Link
                         href="/"
-                        onClick={() => setUserMenuOpen(false)}
+                        onClick={closeUserMenu}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
                       >
                         <Home size={15} />
@@ -216,7 +218,7 @@ export default function TopNav({
                       </Link>
                       <Link
                         href="/m/profile"
-                        onClick={() => setUserMenuOpen(false)}
+                        onClick={closeUserMenu}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
                       >
                         <UserCog size={15} />
@@ -238,7 +240,7 @@ export default function TopNav({
             {/* Mobile user button */}
             <div className="flex items-center lg:hidden">
               <button
-                onClick={() => setUserMenuOpen((v) => !v)}
+                onClick={toggleUserMenu}
                 className="bg-[var(--color-dre-blue)] text-white font-bold px-3 py-1.5 rounded-full text-sm hover:bg-blue-800 transition-all shadow-md"
               >
                 {userName.charAt(0)}
@@ -248,7 +250,7 @@ export default function TopNav({
                   <div className="py-2">
                     <Link
                       href="/"
-                      onClick={() => setUserMenuOpen(false)}
+                      onClick={closeUserMenu}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]"
                     >
                       <Home size={15} />
@@ -256,7 +258,7 @@ export default function TopNav({
                     </Link>
                     <Link
                       href="/m/profile"
-                      onClick={() => setUserMenuOpen(false)}
+                      onClick={closeUserMenu}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]"
                     >
                       <UserCog size={15} />
@@ -301,7 +303,7 @@ export default function TopNav({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-              onClick={() => setMobileOpen(false)}
+              onClick={closeMobileMenu}
             />
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -316,7 +318,7 @@ export default function TopNav({
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setMobileOpen(false)}
+                      onClick={closeMobileMenu}
                       className={`flex items-center gap-3 px-3 py-2 rounded-md text-base font-bold transition-colors ${active
                         ? 'text-[var(--color-dre-blue)] bg-blue-50'
                         : 'text-gray-800 hover:text-[var(--color-dre-blue)] hover:bg-gray-50'
@@ -339,7 +341,7 @@ export default function TopNav({
                   </div>
                   <Link
                     href="/"
-                    onClick={() => setMobileOpen(false)}
+                    onClick={closeMobileMenu}
                     className="block w-full text-center bg-[var(--color-dre-blue)] text-white px-4 py-3 rounded-md text-base font-medium hover:bg-[var(--color-dre-blue-dark)]"
                   >
                     DRE 메인 사이트

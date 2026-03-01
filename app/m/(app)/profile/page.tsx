@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Lock, ChevronRight, CheckCircle2, ShieldCheck, Tag } from 'lucide-react';
+import { User, Phone, Lock, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface ProfileData {
     username: string;
@@ -44,7 +44,7 @@ export default function ProfilePage() {
             } else {
                 setError('프로필 정보를 불러오는데 실패했습니다.');
             }
-        } catch (err) {
+        } catch {
             setError('서버 오류가 발생했습니다.');
         } finally {
             setLoading(false);
@@ -90,7 +90,7 @@ export default function ProfilePage() {
             } else {
                 setError(data.error || '정보 업데이트에 실패했습니다.');
             }
-        } catch (err) {
+        } catch {
             setError('네트워크 오류가 발생했습니다.');
         } finally {
             setSaving(false);
@@ -131,7 +131,7 @@ export default function ProfilePage() {
             } else {
                 setPwdError(data.error || '비밀번호 변경에 실패했습니다.');
             }
-        } catch (err) {
+        } catch {
             setPwdError('네트워크 오류가 발생했습니다.');
         } finally {
             setPwdSaving(false);

@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import connectMongo from '@/lib/mongoose';
-import Order from '@/lib/models/Order';
-import Material from '@/lib/models/Material';
+import Order, { type IOrder } from '@/lib/models/Order';
+import Material, { type IMaterial } from '@/lib/models/Material';
 import Link from 'next/link';
 import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import OrderFilters from './OrderFilters';
@@ -51,6 +51,8 @@ const SORT_MAP: Record<string, Record<string, 1 | -1>> = {
 
 type QuickRange = 'all' | '7d' | '30d' | '90d' | '180d' | '1y';
 type StatusFilter = 'all' | 'paid' | 'cancelled';
+type OrderRow = Pick<IOrder, 'orderId' | 'userName' | 'userEmail' | 'materialId' | 'materialTitle' | 'fileTypes' | 'paymentMethod' | 'paidAt' | 'createdAt' | 'amount' | 'status'>;
+type MaterialFlagRow = Pick<IMaterial, 'materialId' | 'hasAnswerInProblem'>;
 
 const isDateInput = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
 
@@ -85,6 +87,17 @@ const getRangeStart = (range: QuickRange, now: Date) => {
     return start;
   }
   return null;
+};
+
+const formatOrderFileTypes = (order: OrderRow, materialMap: Map<string, boolean>) => {
+  if (order.fileTypes.includes('problem') && order.fileTypes.includes('etc')) {
+    return '전체 자료';
+  }
+  return order.fileTypes
+    .map((fileType) => (fileType === 'problem'
+      ? (materialMap.get(order.materialId) ? '문제지 (정답 포함)' : '문제지')
+      : '답지/기타'))
+    .join(' + ');
 };
 
 export default async function AdminOrdersPage({
@@ -142,19 +155,16 @@ export default async function AdminOrdersPage({
 
   const sortObj = SORT_MAP[sort] ?? SORT_MAP.newest;
 
-  const [ordersRaw, total] = await Promise.all([
-    Order.find(filter).sort(sortObj).skip((page - 1) * limit).limit(limit).lean(),
+  const [orders, total] = await Promise.all([
+    Order.find(filter).sort(sortObj).skip((page - 1) * limit).limit(limit).lean<OrderRow[]>(),
     Order.countDocuments(filter),
   ]);
 
-  // @ts-ignore
-  const orders = ordersRaw as any[];
-
   const materialIds = Array.from(new Set(orders.map((o) => o.materialId)));
   const materials = materialIds.length > 0
-    ? await Material.find({ materialId: { $in: materialIds } }, { materialId: 1, hasAnswerInProblem: 1 }).lean()
+    ? await Material.find({ materialId: { $in: materialIds } }, { materialId: 1, hasAnswerInProblem: 1 }).lean<MaterialFlagRow[]>()
     : [];
-  const materialMap = new Map(materials.map((m: any) => [m.materialId, !!m.hasAnswerInProblem]));
+  const materialMap = new Map(materials.map((m) => [m.materialId, !!m.hasAnswerInProblem]));
 
   const totalPage = Math.ceil(total / limit);
 
@@ -247,9 +257,7 @@ export default async function AdminOrdersPage({
                   <div className="border-t border-gray-100 pt-3">
                     <p className="text-sm font-semibold leading-snug text-gray-800">{order.materialTitle || '(자료명 없음)'}</p>
                     <p className="mt-1 text-xs text-gray-400">
-                      {(order.fileTypes.includes('problem') && order.fileTypes.includes('etc'))
-                        ? '전체 자료'
-                        : order.fileTypes.map((t: string) => t === 'problem' ? (materialMap.get(order.materialId) ? '문제지 (정답 포함)' : '문제지') : '답지/기타').join(' + ')}
+                      {formatOrderFileTypes(order, materialMap)}
                     </p>
                   </div>
 
@@ -293,9 +301,7 @@ export default async function AdminOrdersPage({
                           <td className="px-5 py-4">
                             <p className="font-semibold text-gray-800 text-sm leading-snug">{order.materialTitle || '(자료명 없음)'}</p>
                             <p className="text-xs text-gray-400 mt-0.5">
-                              {(order.fileTypes.includes('problem') && order.fileTypes.includes('etc'))
-                                ? '전체 자료'
-                                : order.fileTypes.map((t: string) => t === 'problem' ? (materialMap.get(order.materialId) ? '문제지 (정답 포함)' : '문제지') : '답지/기타').join(' + ')}
+                              {formatOrderFileTypes(order, materialMap)}
                             </p>
                           </td>
 

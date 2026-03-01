@@ -4,7 +4,6 @@ const normalizeSourceCategory = (value) => (
     ? value
     : 'school_exam'
 );
-const SCHOOL_EXAM_TYPES = ['내신기출', '내신', '중간고사', '기말고사', '학력평가', '수능기출', '모의고사', '개념', '심화', '킬러', '실전'];
 const TEXTBOOK_TYPES = ['교과서 개념', '본문 분석', '단원평가', '서술형', '내신 변형'];
 const REFERENCE_TYPES = ['개념서', '유형서', '심화서', '실전서', '오답정리'];
 

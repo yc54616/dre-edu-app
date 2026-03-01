@@ -70,7 +70,7 @@ export default function MaterialPreview({ data }: { data: FormData }) {
                     alt={`미리보기 ${activePreview + 1}`}
                     fill
                     sizes="(max-width: 1536px) 100vw, 50vw"
-                    className="object-cover"
+                    className="object-contain bg-white"
                   />
                   {!data.isFree && (
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent from-50% to-white" />
