@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -129,6 +129,10 @@ export default function MaterialDetail({
   const [relatedViewMode, setRelatedViewMode] = useState<RelatedViewMode>(defaultRelatedViewMode);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewZoom, setPreviewZoom] = useState(1);
+  const [previewNaturalSizes, setPreviewNaturalSizes] = useState<Record<string, { width: number; height: number }>>({});
+  const [previewViewportSize, setPreviewViewportSize] = useState({ width: 1400, height: 2000 });
+  const previewViewportRef = useRef<HTMLDivElement | null>(null);
+  const previewScrollRef = useRef<HTMLDivElement | null>(null);
 
   const handleDownload = async (type: 'problem' | 'etc') => {
     setDownloading(type);
@@ -290,6 +294,19 @@ export default function MaterialDetail({
         ]),
     { key: 'topic', icon: <BookOpen size={15} />, label: isEbook ? '주제/키워드' : '단원/주제', value: material.topic || '-' },
   ];
+  const activePreviewName = material.previewImages[activePreview] || '';
+  const activePreviewNaturalSize = previewNaturalSizes[activePreviewName] || { width: 1400, height: 2000 };
+  const availableViewportWidth = Math.max(previewViewportSize.width - 24, 1);
+  const availableViewportHeight = Math.max(previewViewportSize.height - 24, 1);
+  const fitScale = Math.min(
+    availableViewportWidth / activePreviewNaturalSize.width,
+    availableViewportHeight / activePreviewNaturalSize.height
+  );
+  const effectiveFitScale = Number.isFinite(fitScale) && fitScale > 0 ? fitScale : 1;
+  const previewRenderWidth = Math.max(1, Math.round(activePreviewNaturalSize.width * effectiveFitScale * previewZoom));
+  const previewRenderHeight = Math.max(1, Math.round(activePreviewNaturalSize.height * effectiveFitScale * previewZoom));
+  const clampPreviewZoom = (value: number) => Math.min(3, Math.max(1, Math.round(value * 100) / 100));
+  const stepPreviewZoom = (delta: number) => setPreviewZoom((prev) => clampPreviewZoom(prev + delta));
 
   useEffect(() => {
     if (!previewModalOpen) return;
@@ -311,12 +328,17 @@ export default function MaterialDetail({
       }
 
       if (event.key === '+' || event.key === '=') {
-        setPreviewZoom((prev) => Math.min(3, Math.round((prev + 0.25) * 100) / 100));
+        setPreviewZoom((prev) => Math.min(3, Math.max(1, Math.round((prev + 0.25) * 100) / 100)));
         return;
       }
 
       if (event.key === '-' || event.key === '_') {
-        setPreviewZoom((prev) => Math.max(1, Math.round((prev - 0.25) * 100) / 100));
+        setPreviewZoom((prev) => Math.min(3, Math.max(1, Math.round((prev - 0.25) * 100) / 100)));
+        return;
+      }
+
+      if (event.key === '0') {
+        setPreviewZoom(1);
       }
     };
 
@@ -329,6 +351,50 @@ export default function MaterialDetail({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [previewModalOpen, material.previewImages.length]);
+
+  useEffect(() => {
+    if (!previewModalOpen) return;
+
+    const node = previewViewportRef.current;
+    if (!node) return;
+
+    const updateViewportSize = () => {
+      setPreviewViewportSize({
+        width: node.clientWidth,
+        height: node.clientHeight,
+      });
+    };
+
+    updateViewportSize();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateViewportSize);
+      return () => window.removeEventListener('resize', updateViewportSize);
+    }
+
+    const observer = new ResizeObserver(updateViewportSize);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [previewModalOpen]);
+
+  useEffect(() => {
+    if (!previewModalOpen) return;
+    setPreviewZoom(1);
+  }, [activePreview, previewModalOpen]);
+
+  useEffect(() => {
+    if (!previewModalOpen) return;
+
+    const scrollNode = previewScrollRef.current;
+    if (!scrollNode) return;
+
+    const rafId = requestAnimationFrame(() => {
+      scrollNode.scrollLeft = Math.max(0, (scrollNode.scrollWidth - scrollNode.clientWidth) / 2);
+      scrollNode.scrollTop = Math.max(0, (scrollNode.scrollHeight - scrollNode.clientHeight) / 2);
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [previewModalOpen, activePreview]);
 
   const openPreviewModal = () => {
     if (material.previewImages.length === 0) return;
@@ -807,7 +873,7 @@ export default function MaterialDetail({
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => setPreviewZoom((prev) => Math.max(1, Math.round((prev - 0.25) * 100) / 100))}
+                      onClick={() => stepPreviewZoom(-0.25)}
                       disabled={previewZoom <= 1}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 text-white/90 transition-colors hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
                     >
@@ -818,7 +884,15 @@ export default function MaterialDetail({
                     </span>
                     <button
                       type="button"
-                      onClick={() => setPreviewZoom((prev) => Math.min(3, Math.round((prev + 0.25) * 100) / 100))}
+                      onClick={() => setPreviewZoom(1)}
+                      disabled={previewZoom === 1}
+                      className="inline-flex h-8 items-center justify-center rounded-lg border border-white/20 px-2 text-[11px] font-semibold text-white/90 transition-colors hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
+                    >
+                      100%
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => stepPreviewZoom(0.25)}
                       disabled={previewZoom >= 3}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/20 text-white/90 transition-colors hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
                     >
@@ -834,20 +908,39 @@ export default function MaterialDetail({
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto p-3 sm:p-5">
-                  <div className="flex min-h-full min-w-full items-center justify-center">
-                    <Image
-                      src={`/uploads/previews/${material.previewImages[activePreview]}`}
-                      alt={`미리보기 확대 ${activePreview + 1}`}
-                      width={1400}
-                      height={2000}
-                      sizes="90vw"
-                      className="max-w-none rounded-xl border border-white/20 shadow-2xl transition-transform duration-200"
+                <div ref={previewScrollRef} className="flex-1 overflow-auto p-3 sm:p-5" style={{ touchAction: 'pan-x pan-y' }}>
+                  <div ref={previewViewportRef} className="flex min-h-full min-w-full items-center justify-center">
+                    <div
+                      className="relative shrink-0 overflow-hidden rounded-xl border border-white/20 shadow-2xl"
                       style={{
-                        transform: `scale(${previewZoom})`,
-                        transformOrigin: 'center center',
+                        width: `${previewRenderWidth}px`,
+                        height: `${previewRenderHeight}px`,
                       }}
-                    />
+                    >
+                      <Image
+                        src={`/uploads/previews/${material.previewImages[activePreview]}`}
+                        alt={`미리보기 확대 ${activePreview + 1}`}
+                        fill
+                        sizes="100vw"
+                        className="object-contain bg-white"
+                        onLoadingComplete={(img) => {
+                          const nextWidth = img.naturalWidth || 1400;
+                          const nextHeight = img.naturalHeight || 2000;
+                          const key = material.previewImages[activePreview];
+                          if (!key) return;
+                          setPreviewNaturalSizes((prev) => {
+                            const existing = prev[key];
+                            if (existing?.width === nextWidth && existing?.height === nextHeight) {
+                              return prev;
+                            }
+                            return {
+                              ...prev,
+                              [key]: { width: nextWidth, height: nextHeight },
+                            };
+                          });
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
