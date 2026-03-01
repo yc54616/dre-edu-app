@@ -304,8 +304,9 @@ export default function MaterialDetail({
   const effectiveFitScale = Number.isFinite(fitScale) && fitScale > 0 ? fitScale : 1;
   const previewRenderWidth = Math.max(1, Math.round(activePreviewNaturalSize.width * effectiveFitScale * previewZoom));
   const previewRenderHeight = Math.max(1, Math.round(activePreviewNaturalSize.height * effectiveFitScale * previewZoom));
+  const isMobilePreviewViewport = previewViewportSize.width < 640;
   const shouldCenterPreviewX = previewRenderWidth <= availableViewportWidth;
-  const shouldCenterPreviewY = previewRenderHeight <= availableViewportHeight;
+  const shouldCenterPreviewY = !isMobilePreviewViewport && previewRenderHeight <= availableViewportHeight;
   const clampPreviewZoom = (value: number) => Math.min(3, Math.max(1, Math.round(value * 100) / 100));
   const stepPreviewZoom = (delta: number) => setPreviewZoom((prev) => clampPreviewZoom(prev + delta));
 
@@ -909,7 +910,11 @@ export default function MaterialDetail({
                   </div>
                 </div>
 
-                <div ref={previewScrollRef} className="flex-1 overflow-auto" style={{ touchAction: 'pan-x pan-y' }}>
+                <div
+                  ref={previewScrollRef}
+                  className="flex-1 overflow-auto"
+                  style={{ touchAction: 'pan-x pan-y', WebkitOverflowScrolling: 'touch' }}
+                >
                   <div
                     className="flex min-h-full min-w-full"
                     style={{
