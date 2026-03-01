@@ -131,7 +131,6 @@ export default function MaterialDetail({
   const [previewZoom, setPreviewZoom] = useState(1);
   const [previewNaturalSizes, setPreviewNaturalSizes] = useState<Record<string, { width: number; height: number }>>({});
   const [previewViewportSize, setPreviewViewportSize] = useState({ width: 1400, height: 2000 });
-  const previewViewportRef = useRef<HTMLDivElement | null>(null);
   const previewScrollRef = useRef<HTMLDivElement | null>(null);
 
   const handleDownload = async (type: 'problem' | 'etc') => {
@@ -305,8 +304,8 @@ export default function MaterialDetail({
   const effectiveFitScale = Number.isFinite(fitScale) && fitScale > 0 ? fitScale : 1;
   const previewRenderWidth = Math.max(1, Math.round(activePreviewNaturalSize.width * effectiveFitScale * previewZoom));
   const previewRenderHeight = Math.max(1, Math.round(activePreviewNaturalSize.height * effectiveFitScale * previewZoom));
-  const previewHorizontalPad = Math.max((previewViewportSize.width - previewRenderWidth) / 2, 0);
-  const previewVerticalPad = Math.max((previewViewportSize.height - previewRenderHeight) / 2, 0);
+  const shouldCenterPreviewX = previewRenderWidth <= availableViewportWidth;
+  const shouldCenterPreviewY = previewRenderHeight <= availableViewportHeight;
   const clampPreviewZoom = (value: number) => Math.min(3, Math.max(1, Math.round(value * 100) / 100));
   const stepPreviewZoom = (delta: number) => setPreviewZoom((prev) => clampPreviewZoom(prev + delta));
 
@@ -357,7 +356,7 @@ export default function MaterialDetail({
   useEffect(() => {
     if (!previewModalOpen) return;
 
-    const node = previewViewportRef.current;
+    const node = previewScrollRef.current;
     if (!node) return;
 
     const updateViewportSize = () => {
@@ -910,15 +909,12 @@ export default function MaterialDetail({
                   </div>
                 </div>
 
-                <div ref={previewScrollRef} className="flex-1 overflow-auto p-3 sm:p-5" style={{ touchAction: 'pan-x pan-y' }}>
+                <div ref={previewScrollRef} className="flex-1 overflow-auto" style={{ touchAction: 'pan-x pan-y' }}>
                   <div
-                    ref={previewViewportRef}
-                    className="min-h-full min-w-full"
+                    className="flex min-h-full min-w-full"
                     style={{
-                      paddingLeft: `${previewHorizontalPad}px`,
-                      paddingRight: `${previewHorizontalPad}px`,
-                      paddingTop: `${previewVerticalPad}px`,
-                      paddingBottom: `${previewVerticalPad}px`,
+                      justifyContent: shouldCenterPreviewX ? 'center' : 'flex-start',
+                      alignItems: shouldCenterPreviewY ? 'center' : 'flex-start',
                     }}
                   >
                     <div
@@ -926,6 +922,7 @@ export default function MaterialDetail({
                       style={{
                         width: `${previewRenderWidth}px`,
                         height: `${previewRenderHeight}px`,
+                        margin: '12px',
                       }}
                     >
                       <Image
