@@ -305,6 +305,8 @@ export default function MaterialDetail({
   const effectiveFitScale = Number.isFinite(fitScale) && fitScale > 0 ? fitScale : 1;
   const previewRenderWidth = Math.max(1, Math.round(activePreviewNaturalSize.width * effectiveFitScale * previewZoom));
   const previewRenderHeight = Math.max(1, Math.round(activePreviewNaturalSize.height * effectiveFitScale * previewZoom));
+  const previewHorizontalPad = Math.max((previewViewportSize.width - previewRenderWidth) / 2, 0);
+  const previewVerticalPad = Math.max((previewViewportSize.height - previewRenderHeight) / 2, 0);
   const clampPreviewZoom = (value: number) => Math.min(3, Math.max(1, Math.round(value * 100) / 100));
   const stepPreviewZoom = (delta: number) => setPreviewZoom((prev) => clampPreviewZoom(prev + delta));
 
@@ -389,8 +391,8 @@ export default function MaterialDetail({
     if (!scrollNode) return;
 
     const rafId = requestAnimationFrame(() => {
-      scrollNode.scrollLeft = Math.max(0, (scrollNode.scrollWidth - scrollNode.clientWidth) / 2);
-      scrollNode.scrollTop = Math.max(0, (scrollNode.scrollHeight - scrollNode.clientHeight) / 2);
+      scrollNode.scrollLeft = 0;
+      scrollNode.scrollTop = 0;
     });
 
     return () => cancelAnimationFrame(rafId);
@@ -909,9 +911,18 @@ export default function MaterialDetail({
                 </div>
 
                 <div ref={previewScrollRef} className="flex-1 overflow-auto p-3 sm:p-5" style={{ touchAction: 'pan-x pan-y' }}>
-                  <div ref={previewViewportRef} className="flex min-h-full min-w-full items-center justify-center">
+                  <div
+                    ref={previewViewportRef}
+                    className="min-h-full min-w-full"
+                    style={{
+                      paddingLeft: `${previewHorizontalPad}px`,
+                      paddingRight: `${previewHorizontalPad}px`,
+                      paddingTop: `${previewVerticalPad}px`,
+                      paddingBottom: `${previewVerticalPad}px`,
+                    }}
+                  >
                     <div
-                      className="relative shrink-0 overflow-hidden rounded-xl border border-white/20 shadow-2xl"
+                      className="relative overflow-hidden rounded-xl border border-white/20 shadow-2xl"
                       style={{
                         width: `${previewRenderWidth}px`,
                         height: `${previewRenderHeight}px`,
