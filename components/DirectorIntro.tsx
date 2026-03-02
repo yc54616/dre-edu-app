@@ -84,7 +84,7 @@ export default function DirectorIntro() {
                             <ul className="space-y-3 mb-6">
                                 {[
                                     "전) 고등학교 3학년 부장 & 입시 총괄 역임",
-                                    "전) 고3 담임 6년 연속 역임 (입시 지도 베테랑)",
+                                    "전) 고3 담임 6년 (입시 지도 베테랑)",
                                     "교육과정 및 특성화 프로그램 설계 총괄 전문가",
                                     "학기 초 최하위반 → 학기 말 1등반 성적 향상 신화",
                                     "서울대, 의대, 카이스트, 연/고대 다수 합격 배출"
@@ -98,7 +98,7 @@ export default function DirectorIntro() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                                 <span className="flex items-center"><span className="w-1.5 h-1.5 bg-[var(--color-dre-blue)] rounded-full mr-2"></span>중등 1정 정교사 자격</span>
-                                <span className="flex items-center"><span className="w-1.5 h-1.5 bg-[var(--color-dre-blue)] rounded-full mr-2"></span>고3 담임 6년 / 교직 15년</span>
+                                <span className="flex items-center"><span className="w-1.5 h-1.5 bg-[var(--color-dre-blue)] rounded-full mr-2"></span>고3 담임 6년 / 교직 22년</span>
                                 <span className="flex items-center"><span className="w-1.5 h-1.5 bg-[var(--color-dre-blue)] rounded-full mr-2"></span>대입 자기주도전형 위원</span>
                             </div>
                         </div>

@@ -1,11 +1,43 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { cookies } from 'next/headers';
+import { unstable_cache } from 'next/cache';
 import connectMongo from '@/lib/mongoose';
 import User from '@/lib/models/User';
 import Consultation from '@/lib/models/Consultation';
 import TopNav from './TopNav';
 import './m-theme.css';
+
+type AdminPendingCounts = {
+  pendingTeacherCount: number;
+  pendingConsultationCount: number;
+  pendingScheduleCount: number;
+};
+
+const getAdminPendingCounts = unstable_cache(
+  async (): Promise<AdminPendingCounts> => {
+    await connectMongo();
+    const [teacherCount, consultationCount, scheduleCount] = await Promise.all([
+      User.countDocuments({ role: 'teacher', teacherApprovalStatus: 'pending' }),
+      Consultation.countDocuments({ status: 'pending' }),
+      Consultation.countDocuments({
+        status: { $nin: ['cancelled', 'completed'] },
+        $or: [
+          { status: { $in: ['pending', 'contacted'] } },
+          { scheduleChangeRequest: { $exists: true, $ne: '' } },
+        ],
+      }),
+    ]);
+
+    return {
+      pendingTeacherCount: teacherCount,
+      pendingConsultationCount: consultationCount,
+      pendingScheduleCount: scheduleCount,
+    };
+  },
+  ['m-app-layout-admin-pending-counts'],
+  { revalidate: 30 }
+);
 
 export default async function MAppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -20,21 +52,10 @@ export default async function MAppLayout({ children }: { children: React.ReactNo
 
   if (isAdmin) {
     try {
-      await connectMongo();
-      const [teacherCount, consultationCount, scheduleCount] = await Promise.all([
-        User.countDocuments({ role: 'teacher', teacherApprovalStatus: 'pending' }),
-        Consultation.countDocuments({ status: 'pending' }),
-        Consultation.countDocuments({
-          status: { $nin: ['cancelled', 'completed'] },
-          $or: [
-            { status: { $in: ['pending', 'contacted'] } },
-            { scheduleChangeRequest: { $exists: true, $ne: '' } },
-          ],
-        }),
-      ]);
-      pendingTeacherCount = teacherCount;
-      pendingConsultationCount = consultationCount;
-      pendingScheduleCount = scheduleCount;
+      const counts = await getAdminPendingCounts();
+      pendingTeacherCount = counts.pendingTeacherCount;
+      pendingConsultationCount = counts.pendingConsultationCount;
+      pendingScheduleCount = counts.pendingScheduleCount;
     } catch (error) {
       console.error('[MAppLayout] pending count load failed', error);
     }

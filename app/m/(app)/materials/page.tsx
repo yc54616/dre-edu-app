@@ -104,6 +104,35 @@ const sortMap: Record<string, Record<string, SortOrder>> = {
   hard: { difficulty: -1 },
 };
 
+const MATERIAL_LIST_PROJECTION = {
+  materialId: 1,
+  sourceCategory: 1,
+  type: 1,
+  publisher: 1,
+  bookTitle: 1,
+  subject: 1,
+  topic: 1,
+  schoolLevel: 1,
+  gradeNumber: 1,
+  year: 1,
+  semester: 1,
+  schoolName: 1,
+  difficulty: 1,
+  fileType: 1,
+  isFree: 1,
+  priceProblem: 1,
+  priceEtc: 1,
+  previewImages: 1,
+  problemFile: 1,
+  etcFile: 1,
+  downloadCount: 1,
+  createdAt: 1,
+} as const;
+
+const NEW_BADGE_PROJECTION = {
+  materialId: 1,
+} as const;
+
 function toFileExtLabel(fileName?: string | null): string | null {
   if (!fileName) return null;
   const ext = fileName.split('.').pop()?.toLowerCase() || '';
@@ -433,11 +462,18 @@ export default async function MaterialsPage({
 
   const [materials, total, newMaterials] =
     await Promise.all([
-      Material.find(filter).sort(sortQuery).skip((page - 1) * limit).limit(limit).lean() as Promise<MaterialListItem[]>,
+      Material.find(filter, MATERIAL_LIST_PROJECTION)
+        .sort(sortQuery)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean() as Promise<MaterialListItem[]>,
       Material.countDocuments(filter),
       isSearching
         ? Promise.resolve([] as MaterialListItem[])
-        : (Material.find(baseFilter).sort({ createdAt: -1 }).limit(8).lean() as Promise<MaterialListItem[]>),
+        : (Material.find(baseFilter, NEW_BADGE_PROJECTION)
+          .sort({ createdAt: -1 })
+          .limit(8)
+          .lean() as Promise<MaterialListItem[]>),
     ]);
 
   const totalPage = Math.ceil(total / limit);

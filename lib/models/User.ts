@@ -96,6 +96,8 @@ userSchema.statics.findByEmail = function (email: string) {
   return this.findOne({ email });
 };
 
+userSchema.index({ role: 1, teacherApprovalStatus: 1 });
+
 const User: IUserModel =
   (mongoose.models.User as IUserModel) ||
   mongoose.model<IUser, IUserModel>('User', userSchema);

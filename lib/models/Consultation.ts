@@ -73,6 +73,8 @@ const consultationSchema = new Schema<IConsultation>({
 });
 
 consultationSchema.index({ createdAt: -1 });
+consultationSchema.index({ status: 1, createdAt: -1 });
+consultationSchema.index({ status: 1, scheduleChangeRequest: 1, updatedAt: -1, createdAt: -1 });
 
 if (mongoose.models.Consultation && process.env.NODE_ENV !== 'production') {
   delete mongoose.models.Consultation;
