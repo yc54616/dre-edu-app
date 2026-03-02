@@ -60,7 +60,10 @@ export const authConfig: NextAuthConfig = {
   pages: {
     signIn: '/m',
   },
-  session: { strategy: 'jwt' },
+  session: {
+    strategy: 'jwt',
+    maxAge: 4 * 60 * 60, // 4 hours
+  },
 };
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
