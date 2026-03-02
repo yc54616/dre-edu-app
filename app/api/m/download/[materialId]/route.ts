@@ -79,7 +79,8 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   // 유료 주문 다운로드 이력 기록(1회라도 다운로드 시 환불 불가 정책에 사용)
   if (paidOrder) {
-    const updateResult = await Order.updateOne(
+    // Use native collection update so this works even if an older cached Mongoose schema is loaded.
+    const updateResult = await Order.collection.updateOne(
       { orderId: paidOrder.orderId, status: 'paid' },
       {
         $set: {

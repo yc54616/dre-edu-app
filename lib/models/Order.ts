@@ -44,6 +44,10 @@ const orderSchema = new Schema<IOrder>({
 orderSchema.index({ userId: 1, materialId: 1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 
+if (mongoose.models.Order && process.env.NODE_ENV !== 'production') {
+  delete mongoose.models.Order;
+}
+
 const Order: Model<IOrder> =
   mongoose.models.Order || mongoose.model<IOrder>('Order', orderSchema);
 

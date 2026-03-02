@@ -37,10 +37,10 @@ export async function processRefund(
 ): Promise<ProcessRefundResult | ProcessRefundError> {
   await connectMongo();
 
-  const order = await Order.findOne(
+  const order = await Order.collection.findOne(
     { orderId },
-    { orderId: 1, userId: 1, status: 1, paymentKey: 1, hasDownloaded: 1, downloadedAt: 1 },
-  ).lean() as RefundOrderDoc | null;
+    { projection: { orderId: 1, userId: 1, status: 1, paymentKey: 1, hasDownloaded: 1, downloadedAt: 1 } },
+  ) as RefundOrderDoc | null;
 
   if (!order) {
     return { success: false, error: '주문을 찾을 수 없습니다.', status: 404 };
@@ -94,7 +94,7 @@ export async function processRefund(
     };
   }
 
-  const updateResult = await Order.updateOne(
+  const updateResult = await Order.collection.updateOne(
     { orderId: order.orderId, status: 'paid' },
     {
       $set: {
