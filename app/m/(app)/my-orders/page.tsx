@@ -43,6 +43,8 @@ interface OrderListItem {
   amount: number;
   status: 'pending' | 'paid' | 'cancelled';
   paymentMethod: string;
+  hasDownloaded?: boolean;
+  downloadedAt?: Date | string | null;
   createdAt: Date | string;
 }
 
@@ -500,6 +502,7 @@ export default async function MyOrdersPage({
                   const sourceLabel = resolvedSourceCategory ? MATERIAL_SOURCE_CATEGORY_LABEL[resolvedSourceCategory] : '';
                   const materialSubline = meta ? buildMaterialSubline(meta) : '';
                   const selectedFiles = orderFileLabel(order.fileTypes, meta?.hasAnswerInProblem || false);
+                  const refundBlocked = Boolean(order.hasDownloaded || order.downloadedAt);
 
                   return (
                     <div
@@ -562,7 +565,13 @@ export default async function MyOrdersPage({
                                 <Download size={14} />
                                 자료 열람
                               </Link>
-                              <RefundRequestButton orderId={order.orderId} />
+                              {refundBlocked ? (
+                                <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-500">
+                                  다운로드 완료 · 환불 불가
+                                </span>
+                              ) : (
+                                <RefundRequestButton orderId={order.orderId} />
+                              )}
                             </>
                           )}
                           {order.status === 'cancelled' && (

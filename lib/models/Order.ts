@@ -15,6 +15,9 @@ export interface IOrder extends Document {
   paymentNote:   string;
   paymentKey:    string | null;  // 토스페이먼츠 paymentKey
   paidAt:        Date | null;
+  hasDownloaded: boolean;
+  downloadedAt:  Date | null;
+  downloadedFileTypes: string[];
   createdAt:     Date;
 }
 
@@ -32,6 +35,9 @@ const orderSchema = new Schema<IOrder>({
   paymentNote:   { type: String, default: '' },
   paymentKey:    { type: String, default: null },
   paidAt:        { type: Date, default: null },
+  hasDownloaded: { type: Boolean, default: false },
+  downloadedAt:  { type: Date, default: null },
+  downloadedFileTypes: { type: [String], default: [] },
   createdAt:     { type: Date, default: Date.now },
 });
 

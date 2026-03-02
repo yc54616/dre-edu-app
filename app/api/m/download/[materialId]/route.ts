@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 
   const { materialId } = await params;
-  const fileType = req.nextUrl.searchParams.get('type') || 'problem'; // 'problem' | 'etc'
+  const fileType: 'problem' | 'etc' = req.nextUrl.searchParams.get('type') === 'etc' ? 'etc' : 'problem';
 
   await connectMongo();
   const material = await Material.findOne({ materialId, isActive: true }).lean();
@@ -36,21 +36,31 @@ export async function GET(req: NextRequest, { params }: Params) {
   // 유료 자료: 관리자가 아닌 경우 구매 확인
   const user = session.user as { id?: string; role?: string };
   const role = user.role || 'student';
+  let paidOrder: { orderId: string } | null = null;
   if (!material.isFree && role !== 'admin') {
     const isTeacherMaterial = material.targetAudience === 'teacher';
-    const order = isTeacherMaterial
-      ? await Order.findOne({
-        userId: user.id,
-        materialId,
-        status: 'paid',
-      }).lean()
-      : await Order.findOne({
-        userId:     user.id,
-        materialId,
-        status:     'paid',
-        fileTypes:  fileType,
-      }).lean();
-    if (!order) {
+    paidOrder = (
+      isTeacherMaterial
+        ? await Order.findOne(
+          {
+            userId: user.id,
+            materialId,
+            status: 'paid',
+          },
+          { orderId: 1 }
+        ).sort({ createdAt: -1 }).lean()
+        : await Order.findOne(
+          {
+            userId: user.id,
+            materialId,
+            status: 'paid',
+            fileTypes: fileType,
+          },
+          { orderId: 1 }
+        ).sort({ createdAt: -1 }).lean()
+    ) as { orderId: string } | null;
+
+    if (!paidOrder) {
       return NextResponse.json({ error: '구매 후 다운로드할 수 있습니다.' }, { status: 403 });
     }
   }
@@ -65,6 +75,25 @@ export async function GET(req: NextRequest, { params }: Params) {
     fileBuffer = await readFile(filePath);
   } catch {
     return NextResponse.json({ error: '파일 읽기 실패' }, { status: 500 });
+  }
+
+  // 유료 주문 다운로드 이력 기록(1회라도 다운로드 시 환불 불가 정책에 사용)
+  if (paidOrder) {
+    const updateResult = await Order.updateOne(
+      { orderId: paidOrder.orderId, status: 'paid' },
+      {
+        $set: {
+          hasDownloaded: true,
+          downloadedAt: new Date(),
+        },
+        $addToSet: {
+          downloadedFileTypes: fileType,
+        },
+      }
+    );
+    if (updateResult.matchedCount === 0) {
+      return NextResponse.json({ error: '주문 상태가 변경되어 다운로드할 수 없습니다.' }, { status: 409 });
+    }
   }
 
   // 다운로드 수 증가

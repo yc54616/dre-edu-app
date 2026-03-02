@@ -6,6 +6,8 @@ export interface RefundOrderDoc {
   userId: string;
   status: 'pending' | 'paid' | 'cancelled';
   paymentKey: string | null;
+  hasDownloaded?: boolean;
+  downloadedAt?: Date | null;
 }
 
 export const extractTossError = (data: unknown): string => {
@@ -37,7 +39,7 @@ export async function processRefund(
 
   const order = await Order.findOne(
     { orderId },
-    { orderId: 1, userId: 1, status: 1, paymentKey: 1 },
+    { orderId: 1, userId: 1, status: 1, paymentKey: 1, hasDownloaded: 1, downloadedAt: 1 },
   ).lean() as RefundOrderDoc | null;
 
   if (!order) {
@@ -45,6 +47,9 @@ export async function processRefund(
   }
   if (order.status !== 'paid') {
     return { success: false, error: '결제 완료 주문만 환불할 수 있습니다.', status: 400 };
+  }
+  if (order.hasDownloaded || order.downloadedAt) {
+    return { success: false, error: '다운로드 이력이 있는 주문은 환불할 수 없습니다.', status: 400 };
   }
   if (!order.paymentKey) {
     return { success: false, error: '토스 결제 건만 환불할 수 있습니다.', status: 400 };
