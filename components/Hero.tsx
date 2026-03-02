@@ -104,10 +104,10 @@ export default function Hero() {
                             <div className="absolute inset-0 bg-gray-100 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
                         </Link>
                         <Link
-                            href="#system"
+                            href="/m"
                             className="px-8 py-4 border border-white/30 bg-white/5 backdrop-blur-sm text-white rounded-full font-bold text-lg hover:bg-white/10 hover:border-white transition-all duration-300"
                         >
-                            시스템 자세히 보기
+                            DRE M 자료실 바로가기
                         </Link>
                     </div>
                 </motion.div>
