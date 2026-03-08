@@ -76,9 +76,11 @@ const defaultForm: MaterialFormData = {
 export default function MaterialFormWithPreview({
   mode,
   initialData,
+  subjectOptions = [],
 }: {
   mode: 'create' | 'edit';
   initialData?: MaterialFormData;
+  subjectOptions?: string[];
 }) {
   const [preview, setPreview] = useState<MaterialFormData>(initialData || defaultForm);
 
@@ -89,6 +91,7 @@ export default function MaterialFormWithPreview({
         <MaterialForm
           mode={mode}
           initialData={initialData}
+          subjectCandidates={subjectOptions}
           onFormChange={setPreview}
         />
       </div>

@@ -1,11 +1,13 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import MaterialFormWithPreview from '../MaterialFormWithPreview';
+import { getMaterialSubjectOptions } from '@/lib/material-subject-options';
 
 export default async function NewMaterialPage() {
   const session = await auth();
   const role = (session?.user as { role?: string })?.role;
   if (!session || role !== 'admin') redirect('/m/admin/materials');
+  const subjectOptions = await getMaterialSubjectOptions();
 
   return (
     <div className="m-detail-page min-h-screen">
@@ -16,7 +18,7 @@ export default async function NewMaterialPage() {
         </div>
       </div>
       <div className="m-detail-container max-w-7xl py-8">
-        <MaterialFormWithPreview mode="create" />
+        <MaterialFormWithPreview mode="create" subjectOptions={subjectOptions} />
       </div>
     </div>
   );

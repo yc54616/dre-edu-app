@@ -5,11 +5,13 @@ import Material from '@/lib/models/Material';
 import MaterialFormWithPreview from '../../MaterialFormWithPreview';
 import { resolveSourceCategory } from '@/lib/material-display';
 import { resolveMaterialCurriculumFromSubject } from '@/lib/constants/material';
+import { getMaterialSubjectOptions } from '@/lib/material-subject-options';
 
 export default async function EditMaterialPage({ params }: { params: Promise<{ materialId: string }> }) {
   const session = await auth();
   const role = (session?.user as { role?: string })?.role;
   if (!session || role !== 'admin') redirect('/m/admin/materials');
+  const subjectOptions = await getMaterialSubjectOptions();
 
   const { materialId } = await params;
   await connectMongo();
@@ -64,7 +66,7 @@ export default async function EditMaterialPage({ params }: { params: Promise<{ m
         </div>
       </div>
       <div className="m-detail-container max-w-7xl py-8">
-        <MaterialFormWithPreview mode="edit" initialData={data} />
+        <MaterialFormWithPreview mode="edit" initialData={data} subjectOptions={subjectOptions} />
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   MATERIAL_CURRICULUMS,
   MATERIAL_CURRICULUM_LABEL,
+  MATERIAL_SUBJECTS,
   MATERIAL_SUBJECTS_BY_CURRICULUM,
   MATERIAL_TYPES_BY_SOURCE,
   TOPIC_MAP,
@@ -108,14 +109,17 @@ const SCHOOL_NAME_REQUIRED_TYPES = new Set([
   '기말고사',
   '학교시험',
 ]);
+const BUILTIN_SUBJECT_SET = new Set<string>(MATERIAL_SUBJECTS as readonly string[]);
 
 export default function MaterialForm({
   mode,
   initialData,
+  subjectCandidates = [],
   onFormChange,
 }: {
   mode: 'create' | 'edit';
   initialData?: MaterialFormData;
+  subjectCandidates?: string[];
   onFormChange?: (data: MaterialFormData) => void;
 }) {
   const router = useRouter();
@@ -127,6 +131,25 @@ export default function MaterialForm({
   const [uploadingPreview, setUploadingPreview] = useState(false);
   const [previewNotice, setPreviewNotice] = useState<string>('');
   const [previewNoticeTone, setPreviewNoticeTone] = useState<'success' | 'warning'>('success');
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [customSubjectOptions, setCustomSubjectOptions] = useState<string[]>(
+    Array.from(
+      new Set(
+        (subjectCandidates || [])
+          .map((subject) => subject.trim())
+          .filter((subject) => !!subject && subject !== '전자책' && !BUILTIN_SUBJECT_SET.has(subject))
+      )
+    )
+  );
+
+  const getSubjectOptionsForCurriculum = (curriculum: MaterialCurriculum) => (
+    Array.from(
+      new Set([
+        ...(MATERIAL_SUBJECTS_BY_CURRICULUM[curriculum] || []),
+        ...customSubjectOptions,
+      ])
+    ).filter((subject) => !!subject && subject !== '전자책')
+  );
 
   const parseJsonSafely = <T,>(raw: string): T | null => {
     if (!raw) return null;
@@ -228,7 +251,7 @@ export default function MaterialForm({
   const typeOptions = MATERIAL_TYPES_BY_SOURCE[form.sourceCategory] || MATERIAL_TYPES_BY_SOURCE.school_exam;
   const curriculumSubjectOptionsBase = isEbook
     ? []
-    : [...(MATERIAL_SUBJECTS_BY_CURRICULUM[form.curriculum] || [])];
+    : getSubjectOptionsForCurriculum(form.curriculum);
   const subjectOptions = form.subject && !curriculumSubjectOptionsBase.includes(form.subject)
     ? [form.subject, ...curriculumSubjectOptionsBase]
     : curriculumSubjectOptionsBase;
@@ -273,7 +296,7 @@ export default function MaterialForm({
       }
     } else if (key === 'curriculum') {
       const nextCurriculum = value as MaterialCurriculum;
-      const nextSubjectCandidates = MATERIAL_SUBJECTS_BY_CURRICULUM[nextCurriculum] || [];
+      const nextSubjectCandidates = getSubjectOptionsForCurriculum(nextCurriculum);
       const canKeepSubject = !!form.subject && nextSubjectCandidates.includes(form.subject);
       next = {
         ...form,
@@ -282,10 +305,13 @@ export default function MaterialForm({
         topic: canKeepSubject ? form.topic : '',
       };
     } else if (key === 'subject') {
-      const nextSubject = value as string;
-      const inferredCurriculum = isSharedMaterialSubject(nextSubject)
+      const nextSubject = (value as string).trim();
+      const isKnownSubject = BUILTIN_SUBJECT_SET.has(nextSubject);
+      const inferredCurriculum = !nextSubject
         ? form.curriculum
-        : resolveMaterialCurriculumFromSubject(nextSubject);
+        : (isKnownSubject
+            ? (isSharedMaterialSubject(nextSubject) ? form.curriculum : resolveMaterialCurriculumFromSubject(nextSubject))
+            : form.curriculum);
       next = { ...form, subject: nextSubject, topic: '', curriculum: inferredCurriculum };
     } else if (key === 'isFree') {
       const nextIsFree = Boolean(value);
@@ -309,6 +335,23 @@ export default function MaterialForm({
     }
     setForm(next);
     onFormChange?.(next);
+  };
+
+  const addCustomSubjectOption = () => {
+    const normalized = newSubjectName.trim();
+    if (!normalized) return;
+    if (normalized === '전자책') {
+      showFormError('전자책은 과목으로 추가할 수 없습니다.');
+      return;
+    }
+
+    setCustomSubjectOptions((prev) => {
+      if (prev.includes(normalized) || BUILTIN_SUBJECT_SET.has(normalized)) return prev;
+      return [...prev, normalized].sort((a, b) => a.localeCompare(b, 'ko-KR'));
+    });
+    set('subject', normalized);
+    setNewSubjectName('');
+    setError('');
   };
 
   const setFileType = (fileType: 'pdf' | 'hwp' | 'both') => {
@@ -496,10 +539,34 @@ export default function MaterialForm({
 
           {!isEbook && (
             <FormField label="과목 *">
-              <select value={form.subject} onChange={(e) => set('subject', e.target.value)} className={selectClass} required>
-                <option value="">선택</option>
-                {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <div className="space-y-2">
+                <select value={form.subject} onChange={(e) => set('subject', e.target.value)} className={selectClass} required>
+                  <option value="">선택</option>
+                  {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newSubjectName}
+                    onChange={(e) => setNewSubjectName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter') return;
+                      e.preventDefault();
+                      addCustomSubjectOption();
+                    }}
+                    placeholder="새 과목명 입력"
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomSubjectOption}
+                    className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2.5 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-100"
+                  >
+                    과목 추가
+                  </button>
+                </div>
+                <p className="text-[11px] text-gray-400">목록에 없는 과목은 직접 입력 후 추가할 수 있습니다.</p>
+              </div>
             </FormField>
           )}
 

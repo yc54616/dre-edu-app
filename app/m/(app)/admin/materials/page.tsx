@@ -11,11 +11,11 @@ import {
   TARGET_AUDIENCES,
   MATERIAL_SOURCE_CATEGORIES,
   MATERIAL_SOURCE_CATEGORY_LABEL,
-  MATERIAL_SUBJECTS,
   FILE_TYPE_LABEL,
   resolveMaterialCurriculumFromSubject,
   TARGET_AUDIENCE_LABEL,
 } from '@/lib/constants/material';
+import { getMaterialSubjectOptions } from '@/lib/material-subject-options';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PlusCircle, Edit2, Eye, Download, ToggleLeft, ToggleRight, BookOpen } from 'lucide-react';
@@ -72,7 +72,7 @@ export default async function TeacherMaterialsPage({
       ? sp.curriculum
       : '';
   const sourceCategory = MATERIAL_SOURCE_CATEGORIES.includes(sp.sourceCategory as typeof MATERIAL_SOURCE_CATEGORIES[number]) ? sp.sourceCategory : '';
-  const subject = MATERIAL_SUBJECTS.includes(sp.subject as typeof MATERIAL_SUBJECTS[number]) ? sp.subject : '';
+  const subject = (sp.subject || '').trim();
   const difficulty = ['1', '2', '3', '4', '5'].includes(sp.difficulty || '') ? sp.difficulty : '';
   const fileType = FILE_TYPES.includes(sp.fileType as typeof FILE_TYPES[number]) ? sp.fileType : '';
   const targetAudience = TARGET_AUDIENCES.includes(sp.targetAudience as typeof TARGET_AUDIENCES[number]) ? sp.targetAudience : '';
@@ -131,10 +131,11 @@ export default async function TeacherMaterialsPage({
   const sortObj = SORT_MAP[sort] ?? SORT_MAP.newest;
 
   await connectMongo();
-  const [materials, total, totalAll] = await Promise.all([
+  const [materials, total, totalAll, subjectOptions] = await Promise.all([
     Material.find(filter).sort(sortObj).skip((page - 1) * limit).limit(limit).lean(),
     Material.countDocuments(filter),
     Material.countDocuments(),
+    getMaterialSubjectOptions(),
   ]);
   const totalPage = Math.ceil(total / limit);
 
@@ -257,7 +258,7 @@ export default async function TeacherMaterialsPage({
                 className="px-3 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:border-[var(--color-dre-blue)] focus:ring-4 focus:ring-blue-500/10 outline-none"
               >
                 <option value="">과목 전체</option>
-                {MATERIAL_SUBJECTS.map((item) => (
+                {subjectOptions.map((item) => (
                   <option key={item} value={item}>{item}</option>
                 ))}
               </select>
