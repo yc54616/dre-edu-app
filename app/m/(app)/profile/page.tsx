@@ -33,10 +33,6 @@ export default function ProfilePage() {
     const [pwdError, setPwdError] = useState('');
     const [pwdSuccess, setPwdSuccess] = useState('');
 
-    useEffect(() => {
-        fetchProfile();
-    }, [fetchProfile]);
-
     const fetchProfile = useCallback(async () => {
         try {
             const res = await fetch('/api/m/user/profile');
@@ -55,6 +51,10 @@ export default function ProfilePage() {
             setLoading(false);
         }
     }, [router]);
+
+    useEffect(() => {
+        fetchProfile();
+    }, [fetchProfile]);
 
     function formatPhone(val: string) {
         const digits = val.replace(/\D/g, '').slice(0, 11);

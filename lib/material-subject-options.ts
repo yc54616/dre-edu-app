@@ -2,8 +2,8 @@ import connectMongo from '@/lib/mongoose';
 import Material from '@/lib/models/Material';
 import { MATERIAL_SUBJECTS } from '@/lib/constants/material';
 
-const HIDDEN_SUBJECTS = new Set(['', '전자책']);
-const BASE_SUBJECT_OPTIONS = [...MATERIAL_SUBJECTS];
+const HIDDEN_SUBJECTS = new Set<string>(['', '전자책']);
+const BASE_SUBJECT_OPTIONS: string[] = [...MATERIAL_SUBJECTS];
 
 const normalizeSubject = (value: unknown): string => (
   typeof value === 'string' ? value.trim() : ''
@@ -16,7 +16,7 @@ export async function getMaterialSubjectOptions(): Promise<string[]> {
     subject: { $exists: true, $nin: ['', '전자책'] },
   });
 
-  const baseSet = new Set(BASE_SUBJECT_OPTIONS);
+  const baseSet = new Set<string>(BASE_SUBJECT_OPTIONS);
   const extras = Array.from(
     new Set(
       existingSubjects

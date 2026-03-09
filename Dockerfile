@@ -1,5 +1,7 @@
 # ── Stage 1: base ──────────────────────────────────────────────
 FROM node:20-bookworm-slim AS base
+ARG NPM_VERSION=11.11.0
+RUN npm install -g "npm@${NPM_VERSION}"
 WORKDIR /app
 
 # ── Stage 2: deps ─────────────────────────────────────────────
