@@ -331,10 +331,9 @@ export default async function MaterialsPage({
   searchParams: Promise<Record<string, string>>;
 }) {
   const session = await auth();
-  if (!session) redirect('/m');
-
-  const user = session.user as { role?: string; teacherApprovalStatus?: string };
-  const role = user.role || 'student';
+  const isLoggedIn = !!session;
+  const user = (session?.user || {}) as { role?: string; teacherApprovalStatus?: string };
+  const role = user.role || 'guest';
 
   if (role === 'teacher' && user.teacherApprovalStatus !== 'approved') {
     redirect('/m?approval=pending');
@@ -343,6 +342,7 @@ export default async function MaterialsPage({
   const cookieStore = await cookies();
   const modeCookie = cookieStore.get('dre-mode')?.value;
   const currentMode: 'teacher' | 'student' =
+    !isLoggedIn ? 'student' :
     role === 'student' ? 'student' :
       role === 'teacher'
         ? (modeCookie === 'student' ? 'student' : 'teacher')
@@ -526,14 +526,24 @@ export default async function MaterialsPage({
             </div>
 
             <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto">
-              <Link
-                href="/m/recommend"
-                className="m-detail-btn-primary inline-flex w-full justify-center px-5 py-3 text-[14px] sm:text-[15px]"
-              >
-                <Sparkles size={16} />
-                맞춤추천
-                <ArrowRight size={14} />
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  href="/m/recommend"
+                  className="m-detail-btn-primary inline-flex w-full justify-center px-5 py-3 text-[14px] sm:text-[15px]"
+                >
+                  <Sparkles size={16} />
+                  맞춤추천
+                  <ArrowRight size={14} />
+                </Link>
+              ) : (
+                <Link
+                  href="/m"
+                  className="m-detail-btn-primary inline-flex w-full justify-center px-5 py-3 text-[14px] sm:text-[15px]"
+                >
+                  로그인 후 구매
+                  <ArrowRight size={14} />
+                </Link>
+              )}
               {(role === 'teacher' || role === 'admin') && (
                 <ModeToggleButton currentMode={currentMode} />
               )}

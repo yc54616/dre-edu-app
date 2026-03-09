@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 interface Props {
   userName: string;
+  isLoggedIn: boolean;
   isAdmin: boolean;
   currentMode: 'teacher' | 'student';
   pendingTeacherCount?: number;
@@ -47,6 +48,7 @@ function formatBadgeCount(count: number) {
    ═══════════════════════════════════════════════════ */
 export default function TopNav({
   userName,
+  isLoggedIn,
   isAdmin,
   currentMode,
   pendingTeacherCount = 0,
@@ -104,10 +106,14 @@ export default function TopNav({
           href: '/m/materials', label: currentMode === 'teacher' ? '교사용 자료' : '학생용 스토어', icon: <BookOpen size={17} />,
           matcher: (path) => path.startsWith('/m/materials') || path.startsWith('/m/purchase'),
         },
-        { href: '/m/recommend', label: 'ELO 맞춤 추천', icon: <Sparkles size={17} /> },
-        { href: '/m/my-orders', label: '내 구매 내역', icon: <ShoppingBag size={17} /> },
+        ...(isLoggedIn
+          ? [
+              { href: '/m/recommend', label: 'ELO 맞춤 추천', icon: <Sparkles size={17} /> },
+              { href: '/m/my-orders', label: '내 구매 내역', icon: <ShoppingBag size={17} /> },
+            ]
+          : []),
       ]),
-    [isAdmin, currentMode, pendingTeacherCount, pendingConsultationCount, pendingScheduleCount]
+    [isAdmin, isLoggedIn, currentMode, pendingTeacherCount, pendingConsultationCount, pendingScheduleCount]
   );
 
   const primaryNavItems = isAdmin ? navItems.slice(0, ADMIN_PRIMARY_COUNT) : navItems;
@@ -192,83 +198,110 @@ export default function TopNav({
                 <PolicyLinks textClassName="text-[11px] font-medium text-gray-400" />
               </div>
 
-              {/* User menu */}
-              <div className="relative">
-                <button
-                  onClick={toggleUserMenu}
-                  className="flex max-w-[128px] items-center gap-2 rounded-full bg-[var(--color-dre-blue)] px-3 py-2 text-sm font-bold text-white shadow-md transition-all hover:scale-105 hover:bg-blue-800 hover:shadow-lg"
-                >
-                  <span className="truncate">{userName}</span>
-                  <svg className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+              {isLoggedIn ? (
+                <div className="relative">
+                  <button
+                    onClick={toggleUserMenu}
+                    className="flex max-w-[128px] items-center gap-2 rounded-full bg-[var(--color-dre-blue)] px-3 py-2 text-sm font-bold text-white shadow-md transition-all hover:scale-105 hover:bg-blue-800 hover:shadow-lg"
+                  >
+                    <span className="truncate">{userName}</span>
+                    <svg className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                {/* Dropdown */}
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-[calc(100%+4px)] w-48 bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 z-[100]">
-                    <div className="py-2">
-                      <Link
-                        href="/"
-                        onClick={closeUserMenu}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
-                      >
-                        <Home size={15} />
-                        DRE 홈
-                      </Link>
-                      <Link
-                        href="/m/profile"
-                        onClick={closeUserMenu}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
-                      >
-                        <UserCog size={15} />
-                        내 정보
-                      </Link>
-                      <button
-                        onClick={() => signOut({ callbackUrl: '/m' })}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
-                      >
-                        <LogOut size={15} />
-                        로그아웃
-                      </button>
+                  {/* Dropdown */}
+                  {userMenuOpen && (
+                    <div className="absolute right-0 top-[calc(100%+4px)] w-48 bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 z-[100]">
+                      <div className="py-2">
+                        <Link
+                          href="/"
+                          onClick={closeUserMenu}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
+                        >
+                          <Home size={15} />
+                          DRE 홈
+                        </Link>
+                        <Link
+                          href="/m/profile"
+                          onClick={closeUserMenu}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
+                        >
+                          <UserCog size={15} />
+                          내 정보
+                        </Link>
+                        <button
+                          onClick={() => signOut({ callbackUrl: '/m' })}
+                          className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)] transition-colors"
+                        >
+                          <LogOut size={15} />
+                          로그아웃
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/m"
+                    className="rounded-full border border-blue-200 px-4 py-2 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-50"
+                  >
+                    로그인
+                  </Link>
+                  <Link
+                    href="/m/signup"
+                    className="rounded-full bg-[var(--color-dre-blue)] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-800"
+                  >
+                    회원가입
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Mobile user button */}
             <div className="flex items-center lg:hidden">
-              <button
-                onClick={toggleUserMenu}
-                className="bg-[var(--color-dre-blue)] text-white font-bold px-3 py-1.5 rounded-full text-sm hover:bg-blue-800 transition-all shadow-md"
-              >
-                {userName.charAt(0)}
-              </button>
-              {userMenuOpen && (
-                <div className="absolute right-4 top-14 w-48 bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 z-[100]">
-                  <div className="py-2">
-                    <Link
-                      href="/"
-                      onClick={closeUserMenu}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]"
-                    >
-                      <Home size={15} />
-                      DRE 홈
-                    </Link>
-                    <Link
-                      href="/m/profile"
-                      onClick={closeUserMenu}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]"
-                    >
-                      <UserCog size={15} />
-                      내 정보
-                    </Link>
-                    <button onClick={() => signOut({ callbackUrl: '/m' })} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]">
-                      로그아웃
-                    </button>
-                  </div>
-                </div>
+              {isLoggedIn ? (
+                <>
+                  <button
+                    onClick={toggleUserMenu}
+                    className="bg-[var(--color-dre-blue)] text-white font-bold px-3 py-1.5 rounded-full text-sm hover:bg-blue-800 transition-all shadow-md"
+                  >
+                    {(userName || 'G').charAt(0)}
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute right-4 top-14 w-48 bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100 z-[100]">
+                      <div className="py-2">
+                        <Link
+                          href="/"
+                          onClick={closeUserMenu}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]"
+                        >
+                          <Home size={15} />
+                          DRE 홈
+                        </Link>
+                        <Link
+                          href="/m/profile"
+                          onClick={closeUserMenu}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]"
+                        >
+                          <UserCog size={15} />
+                          내 정보
+                        </Link>
+                        <button onClick={() => signOut({ callbackUrl: '/m' })} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[var(--color-dre-blue)]">
+                          로그아웃
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link
+                  href="/m"
+                  className="bg-[var(--color-dre-blue)] text-white font-bold px-3 py-1.5 rounded-full text-sm hover:bg-blue-800 transition-all shadow-md"
+                >
+                  로그인
+                </Link>
               )}
             </div>
           </div>

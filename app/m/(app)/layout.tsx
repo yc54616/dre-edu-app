@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { unstable_cache } from 'next/cache';
@@ -41,11 +40,10 @@ const getAdminPendingCounts = unstable_cache(
 
 export default async function MAppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session) redirect('/m');
-
-  const user = session.user as { name?: string; email?: string; role?: string; id?: string };
+  const user = (session?.user || {}) as { name?: string; email?: string; role?: string; id?: string };
   const role    = user.role || 'student';
   const isAdmin = role === 'admin';
+  const isLoggedIn = !!session;
   let pendingTeacherCount = 0;
   let pendingConsultationCount = 0;
   let pendingScheduleCount = 0;
@@ -65,6 +63,7 @@ export default async function MAppLayout({ children }: { children: React.ReactNo
   const modeCookie  = cookieStore.get('dre-mode')?.value;
   // student 역할은 항상 student 모드 고정 (쿠키 무시)
   const currentMode: 'teacher' | 'student' =
+    !isLoggedIn ? 'student' :
     role === 'student' ? 'student' :
     role === 'teacher'
       ? (modeCookie === 'student' ? 'student' : 'teacher')
@@ -74,6 +73,7 @@ export default async function MAppLayout({ children }: { children: React.ReactNo
     <div className="m-theme m-page-bg min-h-screen">
       <TopNav
         userName={user.name || ''}
+        isLoggedIn={isLoggedIn}
         isAdmin={isAdmin}
         currentMode={currentMode}
         pendingTeacherCount={pendingTeacherCount}

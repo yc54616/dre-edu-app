@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { User, Phone, Lock, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface ProfileData {
@@ -15,6 +16,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
+    const router = useRouter();
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -33,14 +35,17 @@ export default function ProfilePage() {
 
     useEffect(() => {
         fetchProfile();
-    }, []);
+    }, [fetchProfile]);
 
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         try {
             const res = await fetch('/api/m/user/profile');
             if (res.ok) {
                 const data = await res.json();
                 setProfile(data);
+            } else if (res.status === 401) {
+                router.replace('/m');
+                return;
             } else {
                 setError('프로필 정보를 불러오는데 실패했습니다.');
             }
@@ -49,7 +54,7 @@ export default function ProfilePage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [router]);
 
     function formatPhone(val: string) {
         const digits = val.replace(/\D/g, '').slice(0, 11);
