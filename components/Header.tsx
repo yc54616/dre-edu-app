@@ -100,7 +100,7 @@ export default function Header() {
                     <div className="hidden lg:flex items-center space-x-6">
                         {/* DRE M Button */}
                         <Link
-                            href="/m"
+                            href="/m/materials"
                             className="bg-[var(--color-dre-blue)] text-white font-bold px-4 py-2 rounded-full text-sm hover:bg-blue-800 transition-all shadow-md hover:shadow-lg flex items-center transform hover:scale-105"
                         >
                             DRE M (자료실)
@@ -156,7 +156,7 @@ export default function Header() {
                             ))}
                             <div className="pt-4 pb-2">
                                 <Link
-                                    href="/m"
+                                    href="/m/materials"
                                     onClick={() => setIsOpen(false)}
                                     className="block w-full text-center bg-[var(--color-dre-blue)] text-white px-4 py-3 rounded-md text-base font-medium hover:bg-[var(--color-dre-blue-dark)]"
                                 >
